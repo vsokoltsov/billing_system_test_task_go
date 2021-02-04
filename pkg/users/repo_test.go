@@ -62,6 +62,51 @@ var UserRepoTestCases = []userRepoTestCase{
 			},
 		},
 	},
+	userRepoTestCase{
+		name:     "Success user retrieving with id",
+		funcName: "GetByID",
+		queryMock: sqlQueryMock{
+			query:       "select id, email from users",
+			args:        []driver.Value{1},
+			columns:     []string{"id", "email"},
+			requestType: "select",
+			values: []map[string]interface{}{
+				map[string]interface{}{
+					"id":    1,
+					"email": "test@example.com",
+				},
+			},
+			mockQuery: func(mock sqlmock.Sqlmock, query string, args []driver.Value, result driver.Result, rows *sqlmock.Rows, err error) {
+				mock.
+					ExpectQuery(query).
+					WithArgs(args...).
+					WillReturnRows(rows)
+			},
+		},
+	},
+	userRepoTestCase{
+		name:     "Failed user retrieving with id",
+		funcName: "GetByID",
+		queryMock: sqlQueryMock{
+			query:       "select id, email from users",
+			args:        []driver.Value{1},
+			columns:     []string{"id", "email"},
+			requestType: "select",
+			err:         fmt.Errorf("Select error"),
+			values: []map[string]interface{}{
+				map[string]interface{}{
+					"id":    1,
+					"email": "test@example.com",
+				},
+			},
+			mockQuery: func(mock sqlmock.Sqlmock, query string, args []driver.Value, result driver.Result, rows *sqlmock.Rows, err error) {
+				mock.
+					ExpectExec(query).
+					WithArgs(args...).
+					WillReturnError(err)
+			},
+		},
+	},
 }
 
 func TestUsersRepo(t *testing.T) {
