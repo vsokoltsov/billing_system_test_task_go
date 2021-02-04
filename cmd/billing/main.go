@@ -1,7 +1,7 @@
 package main
 
 import (
-	"exness_test_task/pkg/app"
+	"billing_system_test_task/pkg/app"
 	"fmt"
 	"log"
 	"os"
@@ -63,9 +63,9 @@ func main() {
 		dbProvider    = getEnv("DB_PROVIDER", "postgre")
 	)
 
-	dbConnString := fmt.Sprintf("port=%d host=%s user=%s "+
+	dbConnString := fmt.Sprintf("port=%s host=%s user=%s "+
 		"password=%s dbname=%s sslmode=disable",
-		sqlDbPort, sqlDbHost, sqlDbUser, sqlDbPassword, sqlDbPort, sqlDbName)
+		sqlDbPort, sqlDbHost, sqlDbUser, sqlDbPassword, sqlDbName)
 
 	app := app.App{}
 	app.Initialize(env, host, port, pathDelimiter, dbProvider, dbConnString)
