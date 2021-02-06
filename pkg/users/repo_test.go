@@ -1,6 +1,7 @@
 package users
 
 import (
+	"context"
 	"database/sql/driver"
 	"fmt"
 	"reflect"
@@ -39,9 +40,23 @@ var UserRepoTestCases = []userRepoTestCase{
 			mockResult:  sqlmock.NewResult(1, 1),
 			mockQuery: func(mock sqlmock.Sqlmock, query string, args []driver.Value, result driver.Result, rows *sqlmock.Rows, err error) {
 				mock.
+					ExpectExec("select pg_advisory_lock").
+					WithArgs(CreateUser).
+					WillReturnResult(sqlmock.NewResult(2, 2))
+
+				mock.ExpectBegin()
+
+				mock.
 					ExpectExec(query).
 					WithArgs(args...).
 					WillReturnResult(result)
+
+				mock.ExpectCommit()
+
+				mock.
+					ExpectExec("select pg_advisory_unlock").
+					WithArgs(CreateUser).
+					WillReturnResult(sqlmock.NewResult(2, 2))
 			},
 		},
 	},
@@ -55,10 +70,122 @@ var UserRepoTestCases = []userRepoTestCase{
 			requestType: "insert-error",
 			err:         fmt.Errorf("Insert error"),
 			mockQuery: func(mock sqlmock.Sqlmock, query string, args []driver.Value, result driver.Result, rows *sqlmock.Rows, err error) {
+
+				mock.
+					ExpectExec("select pg_advisory_lock").
+					WithArgs(CreateUser).
+					WillReturnResult(sqlmock.NewResult(2, 2))
+
+				mock.ExpectBegin()
+
 				mock.
 					ExpectExec(query).
 					WithArgs(args...).
 					WillReturnError(err)
+
+				mock.ExpectRollback()
+				mock.
+					ExpectExec("select pg_advisory_unlock").
+					WithArgs(CreateUser).
+					WillReturnResult(sqlmock.NewResult(2, 2))
+			},
+		},
+	},
+	userRepoTestCase{
+		name:     "Failed user creation (advisory lock error)",
+		funcName: "Create",
+		queryMock: sqlQueryMock{
+			query:       "insert into users",
+			args:        []driver.Value{"example@mail.com"},
+			columns:     []string{"id", "email"},
+			requestType: "insert-error",
+			err:         fmt.Errorf("Insert error (advisory_lock)"),
+			mockQuery: func(mock sqlmock.Sqlmock, query string, args []driver.Value, result driver.Result, rows *sqlmock.Rows, err error) {
+				mock.
+					ExpectExec("select pg_advisory_lock").
+					WithArgs(CreateUser).
+					WillReturnError(fmt.Errorf("Insert error (advisory_lock)"))
+			},
+		},
+	},
+	userRepoTestCase{
+		name:     "Failed user creation (begin transaction error)",
+		funcName: "Create",
+		queryMock: sqlQueryMock{
+			query:       "insert into users",
+			args:        []driver.Value{"example@mail.com"},
+			columns:     []string{"id", "email"},
+			requestType: "insert-error",
+			err:         fmt.Errorf("Insert error (begin transaction error)"),
+			mockQuery: func(mock sqlmock.Sqlmock, query string, args []driver.Value, result driver.Result, rows *sqlmock.Rows, err error) {
+
+				mock.
+					ExpectExec("select pg_advisory_lock").
+					WithArgs(CreateUser).
+					WillReturnResult(sqlmock.NewResult(2, 2))
+
+				mock.ExpectBegin().WillReturnError(fmt.Errorf("Errof of transaction start"))
+			},
+		},
+	},
+	userRepoTestCase{
+		name:     "Failed user creation (transaction commit error)",
+		funcName: "Create",
+		queryMock: sqlQueryMock{
+			query:       "insert into users",
+			args:        []driver.Value{"example@mail.com"},
+			columns:     []string{"id", "email"},
+			requestType: "insert-error",
+			err:         fmt.Errorf("Insert error (transaction commit error)"),
+			mockResult:  sqlmock.NewResult(1, 1),
+			mockQuery: func(mock sqlmock.Sqlmock, query string, args []driver.Value, result driver.Result, rows *sqlmock.Rows, err error) {
+
+				mock.
+					ExpectExec("select pg_advisory_lock").
+					WithArgs(CreateUser).
+					WillReturnResult(sqlmock.NewResult(2, 2))
+
+				mock.ExpectBegin()
+
+				mock.
+					ExpectExec(query).
+					WithArgs(args...).
+					WillReturnResult(result)
+
+				mock.ExpectCommit().WillReturnError(fmt.Errorf("Transaction commit error"))
+			},
+		},
+	},
+	userRepoTestCase{
+		name:     "Failed user creation (advisory unlock error)",
+		funcName: "Create",
+		queryMock: sqlQueryMock{
+			query:       "insert into users",
+			args:        []driver.Value{"example@mail.com"},
+			columns:     []string{"id", "email"},
+			requestType: "insert-error",
+			mockResult:  sqlmock.NewResult(1, 1),
+			err:         fmt.Errorf("Insert error (advisor unlock error)"),
+			mockQuery: func(mock sqlmock.Sqlmock, query string, args []driver.Value, result driver.Result, rows *sqlmock.Rows, err error) {
+
+				mock.
+					ExpectExec("select pg_advisory_lock").
+					WithArgs(CreateUser).
+					WillReturnResult(sqlmock.NewResult(2, 2))
+
+				mock.ExpectBegin()
+
+				mock.
+					ExpectExec(query).
+					WithArgs(args...).
+					WillReturnResult(result)
+
+				mock.ExpectCommit()
+
+				mock.
+					ExpectExec("select pg_advisory_unlock").
+					WithArgs(CreateUser).
+					WillReturnError(fmt.Errorf("advisory unlock error"))
 			},
 		},
 	},
@@ -113,7 +240,10 @@ func TestUsersRepo(t *testing.T) {
 	for _, tc := range UserRepoTestCases {
 		testLabel := strings.Join([]string{"Repo", "User", tc.name}, " ")
 		t.Run(testLabel, func(t *testing.T) {
-			realArgs := []reflect.Value{}
+			ctx := context.Background()
+			realArgs := []reflect.Value{
+				reflect.ValueOf(ctx),
+			}
 			db, mock, err := sqlmock.New()
 			if err != nil {
 				t.Fatalf("cant create mock: %s", err)
