@@ -39,10 +39,10 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 			requestType: "insert",
 			mockResult:  sqlmock.NewResult(1, 1),
 			mockQuery: func(mock sqlmock.Sqlmock, query string, args []driver.Value, result driver.Result, rows *sqlmock.Rows, err error) {
-				mock.
-					ExpectExec("select pg_advisory_lock").
-					WithArgs(CreateWallet).
-					WillReturnResult(sqlmock.NewResult(2, 2))
+				// mock.
+				// 	ExpectExec("select pg_advisory_lock").
+				// 	WithArgs(CreateWallet).
+				// 	WillReturnResult(sqlmock.NewResult(2, 2))
 
 				mock.ExpectBegin()
 
@@ -53,10 +53,10 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 
 				mock.ExpectCommit()
 
-				mock.
-					ExpectExec("select pg_advisory_unlock").
-					WithArgs(CreateWallet).
-					WillReturnResult(sqlmock.NewResult(2, 2))
+				// mock.
+				// 	ExpectExec("select pg_advisory_unlock").
+				// 	WithArgs(CreateWallet).
+				// 	WillReturnResult(sqlmock.NewResult(2, 2))
 			},
 		},
 	},
@@ -71,10 +71,10 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 			err:         fmt.Errorf("Insert error"),
 			mockQuery: func(mock sqlmock.Sqlmock, query string, args []driver.Value, result driver.Result, rows *sqlmock.Rows, err error) {
 
-				mock.
-					ExpectExec("select pg_advisory_lock").
-					WithArgs(CreateWallet).
-					WillReturnResult(sqlmock.NewResult(2, 2))
+				// mock.
+				// 	ExpectExec("select pg_advisory_lock").
+				// 	WithArgs(CreateWallet).
+				// 	WillReturnResult(sqlmock.NewResult(2, 2))
 
 				mock.ExpectBegin()
 
@@ -84,50 +84,50 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 					WillReturnError(err)
 
 				mock.ExpectRollback()
-				mock.
-					ExpectExec("select pg_advisory_unlock").
-					WithArgs(CreateWallet).
-					WillReturnResult(sqlmock.NewResult(2, 2))
+				// mock.
+				// 	ExpectExec("select pg_advisory_unlock").
+				// 	WithArgs(CreateWallet).
+				// 	WillReturnResult(sqlmock.NewResult(2, 2))
 			},
 		},
 	},
-	walletRepoTestCase{
-		name:     "Failed user creation (advisory lock error)",
-		funcName: "Create",
-		queryMock: sqlQueryMock{
-			query:       "insert into wallets",
-			args:        []driver.Value{1},
-			columns:     []string{"user_id"},
-			requestType: "insert-error",
-			err:         fmt.Errorf("Insert error (advisory_lock)"),
-			mockQuery: func(mock sqlmock.Sqlmock, query string, args []driver.Value, result driver.Result, rows *sqlmock.Rows, err error) {
-				mock.
-					ExpectExec("select pg_advisory_lock").
-					WithArgs(CreateWallet).
-					WillReturnError(fmt.Errorf("Insert error (advisory_lock)"))
-			},
-		},
-	},
-	walletRepoTestCase{
-		name:     "Failed user creation (begin transaction error)",
-		funcName: "Create",
-		queryMock: sqlQueryMock{
-			query:       "insert into wallets",
-			args:        []driver.Value{1},
-			columns:     []string{"user_id"},
-			requestType: "insert-error",
-			err:         fmt.Errorf("Insert error (begin transaction error)"),
-			mockQuery: func(mock sqlmock.Sqlmock, query string, args []driver.Value, result driver.Result, rows *sqlmock.Rows, err error) {
+	// walletRepoTestCase{
+	// 	name:     "Failed user creation (advisory lock error)",
+	// 	funcName: "Create",
+	// 	queryMock: sqlQueryMock{
+	// 		query:       "insert into wallets",
+	// 		args:        []driver.Value{1},
+	// 		columns:     []string{"user_id"},
+	// 		requestType: "insert-error",
+	// 		err:         fmt.Errorf("Insert error (advisory_lock)"),
+	// 		mockQuery: func(mock sqlmock.Sqlmock, query string, args []driver.Value, result driver.Result, rows *sqlmock.Rows, err error) {
+	// 			mock.
+	// 				ExpectExec("select pg_advisory_lock").
+	// 				WithArgs(CreateWallet).
+	// 				WillReturnError(fmt.Errorf("Insert error (advisory_lock)"))
+	// 		},
+	// 	},
+	// },
+	// walletRepoTestCase{
+	// 	name:     "Failed user creation (begin transaction error)",
+	// 	funcName: "Create",
+	// 	queryMock: sqlQueryMock{
+	// 		query:       "insert into wallets",
+	// 		args:        []driver.Value{1},
+	// 		columns:     []string{"user_id"},
+	// 		requestType: "insert-error",
+	// 		err:         fmt.Errorf("Insert error (begin transaction error)"),
+	// 		mockQuery: func(mock sqlmock.Sqlmock, query string, args []driver.Value, result driver.Result, rows *sqlmock.Rows, err error) {
 
-				mock.
-					ExpectExec("select pg_advisory_lock").
-					WithArgs(CreateWallet).
-					WillReturnResult(sqlmock.NewResult(2, 2))
+	// 			mock.
+	// 				ExpectExec("select pg_advisory_lock").
+	// 				WithArgs(CreateWallet).
+	// 				WillReturnResult(sqlmock.NewResult(2, 2))
 
-				mock.ExpectBegin().WillReturnError(fmt.Errorf("Errof of transaction start"))
-			},
-		},
-	},
+	// 			mock.ExpectBegin().WillReturnError(fmt.Errorf("Errof of transaction start"))
+	// 		},
+	// 	},
+	// },
 	walletRepoTestCase{
 		name:     "Failed user creation (transaction commit error)",
 		funcName: "Create",
@@ -140,10 +140,10 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 			mockResult:  sqlmock.NewResult(1, 1),
 			mockQuery: func(mock sqlmock.Sqlmock, query string, args []driver.Value, result driver.Result, rows *sqlmock.Rows, err error) {
 
-				mock.
-					ExpectExec("select pg_advisory_lock").
-					WithArgs(CreateWallet).
-					WillReturnResult(sqlmock.NewResult(2, 2))
+				// mock.
+				// 	ExpectExec("select pg_advisory_lock").
+				// 	WithArgs(CreateWallet).
+				// 	WillReturnResult(sqlmock.NewResult(2, 2))
 
 				mock.ExpectBegin()
 
@@ -156,44 +156,44 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 			},
 		},
 	},
-	walletRepoTestCase{
-		name:     "Failed user creation (advisory unlock error)",
-		funcName: "Create",
-		queryMock: sqlQueryMock{
-			query:       "insert into wallets",
-			args:        []driver.Value{1},
-			columns:     []string{"user_id"},
-			requestType: "insert-error",
-			mockResult:  sqlmock.NewResult(1, 1),
-			err:         fmt.Errorf("Insert error (advisor unlock error)"),
-			mockQuery: func(mock sqlmock.Sqlmock, query string, args []driver.Value, result driver.Result, rows *sqlmock.Rows, err error) {
+	// walletRepoTestCase{
+	// 	name:     "Failed user creation (advisory unlock error)",
+	// 	funcName: "Create",
+	// 	queryMock: sqlQueryMock{
+	// 		query:       "insert into wallets",
+	// 		args:        []driver.Value{1},
+	// 		columns:     []string{"user_id"},
+	// 		requestType: "insert-error",
+	// 		mockResult:  sqlmock.NewResult(1, 1),
+	// 		err:         fmt.Errorf("Insert error (advisor unlock error)"),
+	// 		mockQuery: func(mock sqlmock.Sqlmock, query string, args []driver.Value, result driver.Result, rows *sqlmock.Rows, err error) {
 
-				mock.
-					ExpectExec("select pg_advisory_lock").
-					WithArgs(CreateWallet).
-					WillReturnResult(sqlmock.NewResult(2, 2))
+	// 			// mock.
+	// 			// 	ExpectExec("select pg_advisory_lock").
+	// 			// 	WithArgs(CreateWallet).
+	// 			// 	WillReturnResult(sqlmock.NewResult(2, 2))
 
-				mock.ExpectBegin()
+	// 			mock.ExpectBegin()
 
-				mock.
-					ExpectExec(query).
-					WithArgs(args...).
-					WillReturnResult(result)
+	// 			mock.
+	// 				ExpectExec(query).
+	// 				WithArgs(args...).
+	// 				WillReturnResult(result)
 
-				mock.ExpectCommit()
+	// 			mock.ExpectCommit()
 
-				mock.
-					ExpectExec("select pg_advisory_unlock").
-					WithArgs(CreateWallet).
-					WillReturnError(fmt.Errorf("advisory unlock error"))
-			},
-		},
-	},
+	// 			// mock.
+	// 			// 	ExpectExec("select pg_advisory_unlock").
+	// 			// 	WithArgs(CreateWallet).
+	// 			// 	WillReturnError(fmt.Errorf("advisory unlock error"))
+	// 		},
+	// 	},
+	// },
 }
 
 func TestWalletRepo(t *testing.T) {
 	for _, tc := range WalletsRepoTestCase {
-		testLabel := strings.Join([]string{"Repo", "User", tc.name}, " ")
+		testLabel := strings.Join([]string{"Repo", "Wallet", tc.name}, " ")
 		t.Run(testLabel, func(t *testing.T) {
 			ctx := context.Background()
 			realArgs := []reflect.Value{
@@ -204,6 +204,9 @@ func TestWalletRepo(t *testing.T) {
 				t.Fatalf("cant create mock: %s", err)
 			}
 			defer db.Close()
+
+			conn, _ := db.Conn(ctx)
+			realArgs = append(realArgs, reflect.ValueOf(conn))
 
 			repo := WalletService{
 				db: db,
