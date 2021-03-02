@@ -11,7 +11,7 @@ const (
 )
 
 type SQLRepository interface {
-	Create(ctx context.Context, conn *sql.Conn, userID int) (int64, error)
+	Create(ctx context.Context, conn *sql.Conn, userID int64) (int64, error)
 	// Enroll(walletID int, amount decimal.Decimal) (*Wallet, error)
 	// GetByUserId(userID int) (*Wallet, error)
 	// Transfer(walletFrom, walletTo int, amount decimal.Decimal) (*Wallet, error)
@@ -28,13 +28,7 @@ func NewWalletService(db *sql.DB) SQLRepository {
 }
 
 // Create creates new wallet for user
-func (ws WalletService) Create(ctx context.Context, conn *sql.Conn, userID int) (int64, error) {
-	// conn, _ := ws.db.Conn(ctx)
-	// _, alErr := conn.ExecContext(ctx, `select pg_advisory_lock($1)`, CreateWallet)
-	// if alErr != nil {
-	// 	return 0, fmt.Errorf("Error of starting advisory lock: %s", alErr)
-	// }
-
+func (ws WalletService) Create(ctx context.Context, conn *sql.Conn, userID int64) (int64, error) {
 	tx, txErr := conn.BeginTx(ctx, nil)
 	if txErr != nil {
 		return 0, fmt.Errorf("Error of transaction initialization: %s", txErr)
@@ -56,16 +50,6 @@ func (ws WalletService) Create(ctx context.Context, conn *sql.Conn, userID int) 
 		tx.Rollback()
 		return 0, fmt.Errorf("Error of transaction commit: %s", txCommitErr)
 	}
-
-	// _, auErr := conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateWallet)
-	// if auErr != nil {
-	// 	return 0, fmt.Errorf(
-	// 		"Error of unlocking wallet's %d postgres lock: %s",
-	// 		CreateWallet,
-	// 		auErr,
-	// 	)
-	// }
-	// conn.Close()
 
 	return insertRes.LastInsertId()
 }

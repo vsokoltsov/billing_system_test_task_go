@@ -1,6 +1,7 @@
 package users
 
 import (
+	"billing_system_test_task/pkg/wallets"
 	"context"
 	"database/sql"
 	"fmt"
@@ -19,12 +20,14 @@ type SQLRepository interface {
 
 // UsersService implements SQLRepository
 type UsersService struct {
-	db *sql.DB
+	db          *sql.DB
+	walletsRepo wallets.SQLRepository
 }
 
-func NewUsersService(db *sql.DB) SQLRepository {
+func NewUsersService(db *sql.DB, wallets wallets.SQLRepository) SQLRepository {
 	return UsersService{
-		db: db,
+		db:          db,
+		walletsRepo: wallets,
 	}
 }
 
@@ -46,7 +49,6 @@ func (ds UsersService) GetByID(ctx context.Context, userID int) (*User, error) {
 // }
 
 func (ds UsersService) Create(ctx context.Context, email string) (int64, error) {
-
 	conn, _ := ds.db.Conn(ctx)
 	_, alErr := conn.ExecContext(ctx, `select pg_advisory_lock($1)`, CreateUser)
 	if alErr != nil {
@@ -59,6 +61,7 @@ func (ds UsersService) Create(ctx context.Context, email string) (int64, error) 
 	}
 	transaction.ExecContext(ctx, "set transaction isolation level serializable")
 
+	// Creates new user
 	insertRes, insertErr := transaction.ExecContext(
 		ctx,
 		"insert into users(email) values(?)",
@@ -69,6 +72,21 @@ func (ds UsersService) Create(ctx context.Context, email string) (int64, error) 
 		transaction.Rollback()
 		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
 		return 0, fmt.Errorf("Error user creation: %s", insertErr)
+	}
+
+	userID, userIDErr := insertRes.LastInsertId()
+	if userIDErr != nil {
+		transaction.Rollback()
+		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
+		return 0, fmt.Errorf("Error user retrieving id: %s", userIDErr)
+	}
+
+	// Creates wallet for user
+	_, insertWalletErr := ds.walletsRepo.Create(ctx, conn, userID)
+	if insertWalletErr != nil {
+		transaction.Rollback()
+		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
+		return 0, fmt.Errorf("Error of wallet transaction commit: %s", insertWalletErr)
 	}
 
 	transactionCommitErr := transaction.Commit()
@@ -88,5 +106,5 @@ func (ds UsersService) Create(ctx context.Context, email string) (int64, error) 
 	}
 	conn.Close()
 
-	return insertRes.LastInsertId()
+	return userID, nil
 }
