@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/shopspring/decimal"
 )
 
 type walletRepoTestCase struct {
@@ -121,77 +122,161 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 		},
 		err: fmt.Errorf("Commit error"),
 	},
-	// walletRepoTestCase{
-	// 	name:     "Failed user creation (advisory lock error)",
-	// 	funcName: "Create",
-	// 	queryMock: sqlQueryMock{
-	// 		query:       "insert into wallets",
-	// 		args:        []driver.Value{1},
-	// 		columns:     []string{"user_id"},
-	// 		requestType: "insert-error",
-	// 		err:         fmt.Errorf("Insert error (advisory_lock)"),
-	// 		mockQuery: func(mock sqlmock.Sqlmock, query string, args []driver.Value, result driver.Result, rows *sqlmock.Rows, err error) {
-	// 			mock.
-	// 				ExpectExec("select pg_advisory_lock").
-	// 				WithArgs(CreateWallet).
-	// 				WillReturnError(fmt.Errorf("Insert error (advisory_lock)"))
-	// 		},
-	// 	},
-	// },
-	// walletRepoTestCase{
-	// 	name:     "Failed user creation (begin transaction error)",
-	// 	funcName: "Create",
-	// 	queryMock: sqlQueryMock{
-	// 		query:       "insert into wallets",
-	// 		args:        []driver.Value{1},
-	// 		columns:     []string{"user_id"},
-	// 		requestType: "insert-error",
-	// 		err:         fmt.Errorf("Insert error (begin transaction error)"),
-	// 		mockQuery: func(mock sqlmock.Sqlmock, query string, args []driver.Value, result driver.Result, rows *sqlmock.Rows, err error) {
+	walletRepoTestCase{
+		name:     "Success wallet enroll",
+		funcName: "Enroll",
+		queryMock: sqlQueryMock{
+			query: "update wallets set",
+			args:  []driver.Value{2, decimal.NewFromInt(100)},
+		},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			// Lock operation
+			mock.
+				ExpectExec("select pg_advisory_lock").
+				WithArgs(EnrollWallet).
+				WillReturnResult(sqlmock.NewResult(2, 2))
 
-	// 			mock.
-	// 				ExpectExec("select pg_advisory_lock").
-	// 				WithArgs(CreateWallet).
-	// 				WillReturnResult(sqlmock.NewResult(2, 2))
+			// Start wallet enroll transaction
+			mock.ExpectBegin()
 
-	// 			mock.ExpectBegin().WillReturnError(fmt.Errorf("Errof of transaction start"))
-	// 		},
-	// 	},
-	// },
+			// Exec update wallet balance query
+			mock.
+				ExpectExec("update wallets").
+				WithArgs([]driver.Value{decimal.NewFromInt(100), 2}...).
+				WillReturnResult(sqlmock.NewResult(1, 1))
 
-	// walletRepoTestCase{
-	// 	name:     "Failed user creation (advisory unlock error)",
-	// 	funcName: "Create",
-	// 	queryMock: sqlQueryMock{
-	// 		query:       "insert into wallets",
-	// 		args:        []driver.Value{1},
-	// 		columns:     []string{"user_id"},
-	// 		requestType: "insert-error",
-	// 		mockResult:  sqlmock.NewResult(1, 1),
-	// 		err:         fmt.Errorf("Insert error (advisor unlock error)"),
-	// 		mockQuery: func(mock sqlmock.Sqlmock, query string, args []driver.Value, result driver.Result, rows *sqlmock.Rows, err error) {
+			// Commit update wallet transaction
+			mock.ExpectCommit()
 
-	// 			// mock.
-	// 			// 	ExpectExec("select pg_advisory_lock").
-	// 			// 	WithArgs(CreateWallet).
-	// 			// 	WillReturnResult(sqlmock.NewResult(2, 2))
+			// Unlock operation
+			mock.
+				ExpectExec("select pg_advisory_unlock").
+				WithArgs(EnrollWallet).
+				WillReturnResult(sqlmock.NewResult(2, 2))
+		},
+	},
+	walletRepoTestCase{
+		name:     "Failed wallet enroll (advisory lock error)",
+		funcName: "Enroll",
+		queryMock: sqlQueryMock{
+			query: "update wallets set",
+			args:  []driver.Value{2, decimal.NewFromInt(100)},
+		},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			// Lock operation
+			mock.
+				ExpectExec("select pg_advisory_lock").
+				WithArgs(EnrollWallet).
+				WillReturnError(fmt.Errorf("Update error (advisory_lock)"))
+		},
+		err: fmt.Errorf("Update error (advisory_lock)"),
+	},
+	walletRepoTestCase{
+		name:     "Failed wallet enroll (begin transaction error)",
+		funcName: "Enroll",
+		queryMock: sqlQueryMock{
+			query: "update wallets set",
+			args:  []driver.Value{2, decimal.NewFromInt(100)},
+		},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			// Lock operation
+			mock.
+				ExpectExec("select pg_advisory_lock").
+				WithArgs(EnrollWallet).
+				WillReturnResult(sqlmock.NewResult(2, 2))
 
-	// 			mock.ExpectBegin()
+			// Start wallet enroll transaction
+			mock.ExpectBegin().WillReturnError(fmt.Errorf("Update error (Begin transaction error)"))
+		},
+		err: fmt.Errorf("Update error (Begin transaction error)"),
+	},
+	walletRepoTestCase{
+		name:     "Failed wallet enroll (update query error)",
+		funcName: "Enroll",
+		queryMock: sqlQueryMock{
+			query: "update wallets set",
+			args:  []driver.Value{2, decimal.NewFromInt(100)},
+		},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			// Lock operation
+			mock.
+				ExpectExec("select pg_advisory_lock").
+				WithArgs(EnrollWallet).
+				WillReturnResult(sqlmock.NewResult(2, 2))
 
-	// 			mock.
-	// 				ExpectExec(query).
-	// 				WithArgs(args...).
-	// 				WillReturnResult(result)
+			// Start wallet enroll transaction
+			mock.ExpectBegin()
 
-	// 			mock.ExpectCommit()
+			// Exec update wallet balance query
+			mock.
+				ExpectExec("update wallets").
+				WithArgs([]driver.Value{decimal.NewFromInt(100), 2}...).
+				WillReturnError(fmt.Errorf("Update error (SQL update error)"))
+		},
+		err: fmt.Errorf("Update error (SQL update error)"),
+	},
+	walletRepoTestCase{
+		name:     "Failed wallet enroll (transaction commit error)",
+		funcName: "Enroll",
+		queryMock: sqlQueryMock{
+			query: "update wallets set",
+			args:  []driver.Value{2, decimal.NewFromInt(100)},
+		},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			// Lock operation
+			mock.
+				ExpectExec("select pg_advisory_lock").
+				WithArgs(EnrollWallet).
+				WillReturnResult(sqlmock.NewResult(2, 2))
 
-	// 			// mock.
-	// 			// 	ExpectExec("select pg_advisory_unlock").
-	// 			// 	WithArgs(CreateWallet).
-	// 			// 	WillReturnError(fmt.Errorf("advisory unlock error"))
-	// 		},
-	// 	},
-	// },
+			// Start wallet enroll transaction
+			mock.ExpectBegin()
+
+			// Exec update wallet balance query
+			mock.
+				ExpectExec("update wallets").
+				WithArgs([]driver.Value{decimal.NewFromInt(100), 2}...).
+				WillReturnResult(sqlmock.NewResult(1, 1))
+
+			// Commit update wallet transaction
+			mock.ExpectCommit().WillReturnError(fmt.Errorf("Update error (Trasnaction commit error)"))
+		},
+		err: fmt.Errorf("Update error (Trasnaction commit error)"),
+	},
+	walletRepoTestCase{
+		name:     "Failed wallet enroll (advisory unlock error)",
+		funcName: "Enroll",
+		queryMock: sqlQueryMock{
+			query: "update wallets set",
+			args:  []driver.Value{2, decimal.NewFromInt(100)},
+		},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			// Lock operation
+			mock.
+				ExpectExec("select pg_advisory_lock").
+				WithArgs(EnrollWallet).
+				WillReturnResult(sqlmock.NewResult(2, 2))
+
+			// Start wallet enroll transaction
+			mock.ExpectBegin()
+
+			// Exec update wallet balance query
+			mock.
+				ExpectExec("update wallets").
+				WithArgs([]driver.Value{decimal.NewFromInt(100), 2}...).
+				WillReturnResult(sqlmock.NewResult(1, 1))
+
+			// Commit update wallet transaction
+			mock.ExpectCommit()
+
+			// Unlock operation
+			mock.
+				ExpectExec("select pg_advisory_unlock").
+				WithArgs(EnrollWallet).
+				WillReturnError(fmt.Errorf("Update error (Advisory unlock error)"))
+		},
+		err: fmt.Errorf("Update error (Advisory unlock error)"),
+	},
 }
 
 func TestWalletRepo(t *testing.T) {
@@ -208,23 +293,15 @@ func TestWalletRepo(t *testing.T) {
 			}
 			defer db.Close()
 
-			conn, _ := db.Conn(ctx)
-			realArgs = append(realArgs, reflect.ValueOf(conn))
+			// Create Connection instance for Create wallet tests
+			if tc.funcName == "Create" {
+				conn, _ := db.Conn(ctx)
+				realArgs = append(realArgs, reflect.ValueOf(conn))
+			}
 
 			repo := WalletService{
 				db: db,
 			}
-
-			// rows := sqlmock.
-			// 	NewRows(tc.queryMock.columns)
-
-			// for _, row := range tc.queryMock.values {
-			// 	if tc.queryMock.err != nil {
-			// 		rows = rows.AddRow(nil, row["email"]).RowError(row["id"].(int), tc.queryMock.err)
-			// 	} else {
-			// 		rows = rows.AddRow(row["id"], row["email"])
-			// 	}
-			// }
 
 			for _, arg := range tc.queryMock.args {
 				realArgs = append(realArgs, reflect.ValueOf(arg))
@@ -251,12 +328,12 @@ func TestWalletRepo(t *testing.T) {
 				reflectErr = rerr.(error)
 			}
 
-			if reflectErr != nil && tc.queryMock.err == nil {
+			if reflectErr != nil && tc.err == nil {
 				t.Errorf("unexpected err: %s", reflectErr)
 				return
 			}
 
-			if tc.queryMock.err != nil {
+			if tc.err != nil {
 				if reflectErr == nil {
 					t.Errorf("expected error, got nil: %s", reflectErr)
 					return
