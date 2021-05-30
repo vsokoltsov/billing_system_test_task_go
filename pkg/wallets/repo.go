@@ -16,7 +16,7 @@ const (
 type SQLRepository interface {
 	Create(ctx context.Context, conn *sql.Conn, userID int64) (int64, error)
 	Enroll(ctx context.Context, walletID int, amount decimal.Decimal) (int, error)
-	// GetByUserId(userID int) (*Wallet, error)
+	GetByUserId(ctx context.Context, userID int) (*Wallet, error)
 	// Transfer(walletFrom, walletTo int, amount decimal.Decimal) (*Wallet, error)
 }
 
@@ -101,4 +101,16 @@ func (ws WalletService) Enroll(ctx context.Context, walletID int, amount decimal
 	conn.Close()
 
 	return walletID, nil
+}
+
+// GetByUserId retrieves wallet by user ID
+func (ws WalletService) GetByUserId(ctx context.Context, userID int) (*Wallet, error) {
+	wallet := Wallet{}
+	getWalletErr := ws.db.
+		QueryRowContext(ctx, "select id, user_id, balance, currency from wallets where user_id=?", userID).
+		Scan(&wallet.ID, &wallet.UserID, &wallet.Balance, &wallet.Currency)
+	if getWalletErr != nil {
+		return nil, getWalletErr
+	}
+	return &wallet, nil
 }

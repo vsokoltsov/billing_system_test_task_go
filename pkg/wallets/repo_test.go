@@ -277,6 +277,37 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 		},
 		err: fmt.Errorf("Update error (Advisory unlock error)"),
 	},
+	walletRepoTestCase{
+		name:     "Success wallet retrieving by user id",
+		funcName: "GetByUserId",
+		queryMock: sqlQueryMock{
+			query: "select id, user_id, balance, currency from wallets",
+			args:  []driver.Value{1},
+		},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			rows := sqlmock.NewRows([]string{"id", "user_id", "balance", "currency"})
+			rows = rows.AddRow(1, 1, 100, "USD")
+			mock.
+				ExpectQuery("select id, user_id, balance, currency from wallets").
+				WithArgs([]driver.Value{1}...).
+				WillReturnRows(rows)
+		},
+	},
+	walletRepoTestCase{
+		name:     "failed wallet retrieving by user id",
+		funcName: "GetByUserId",
+		queryMock: sqlQueryMock{
+			query: "select id, user_id, balance, currency from wallets",
+			args:  []driver.Value{1},
+		},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			mock.
+				ExpectQuery("select id, user_id, balance, currency from wallets").
+				WithArgs([]driver.Value{1}...).
+				WillReturnError(fmt.Errorf("Wallet retrieving error"))
+		},
+		err: fmt.Errorf("Wallet retrieving error"),
+	},
 }
 
 func TestWalletRepo(t *testing.T) {
