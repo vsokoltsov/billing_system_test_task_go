@@ -11,13 +11,14 @@ import (
 const (
 	CreateWallet = iota + 1
 	EnrollWallet
+	TransferFunds
 )
 
 type SQLRepository interface {
 	Create(ctx context.Context, conn *sql.Conn, userID int64) (int64, error)
 	Enroll(ctx context.Context, walletID int, amount decimal.Decimal) (int, error)
 	GetByUserId(ctx context.Context, userID int) (*Wallet, error)
-	// Transfer(walletFrom, walletTo int, amount decimal.Decimal) (*Wallet, error)
+	Transfer(ctx context.Context, walletFrom, walletTo int, amount decimal.Decimal) (int, error)
 }
 
 type WalletService struct {
@@ -119,4 +120,74 @@ func (ws WalletService) GetByUserId(ctx context.Context, userID int) (*Wallet, e
 		return nil, getWalletErr
 	}
 	return &wallet, nil
+}
+
+// Transfer moves financial resources from one wallet to another
+func (ws WalletService) Transfer(ctx context.Context, walletFrom, walletTo int, amount decimal.Decimal) (int, error) {
+
+	// Receive source wallet
+	sourceWallet := Wallet{}
+	getSourceWalletErr := ws.db.
+		QueryRowContext(ctx, "select id, user_id, balance, currency from wallets where id=?", walletFrom).
+		Scan(&sourceWallet.ID, &sourceWallet.UserID, &sourceWallet.Balance, &sourceWallet.Currency)
+	if getSourceWalletErr != nil {
+		return 0, fmt.Errorf("error of receiving source wallet data: %s", getSourceWalletErr)
+	}
+
+	if sourceWallet.Balance.LessThanOrEqual(decimal.Zero) {
+		return 0, fmt.Errorf("source wallet balance is less or equal to zero")
+	}
+
+	// Get connection from the pool
+	conn, _ := ws.db.Conn(ctx)
+
+	// Apply AdvisoryLock for operation
+	_, alErr := conn.ExecContext(ctx, "select pg_advisory_lock(?)", TransferFunds)
+	if alErr != nil {
+		return 0, fmt.Errorf("error of starting advisory lock: %s", alErr)
+	}
+
+	// Begin transaction
+	tx, txErr := conn.BeginTx(ctx, nil)
+	if txErr != nil {
+		return 0, fmt.Errorf("error of transaction initialization: %s", txErr)
+	}
+	tx.ExecContext(ctx, "set transaction isolation level serializable")
+
+	// Update source wallet 'balance' column
+	_, updateSourceErr := tx.ExecContext(ctx, "update wallets set balance=balance-? where id=?", amount, walletFrom)
+	if updateSourceErr != nil {
+		tx.Rollback()
+		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
+		return 0, fmt.Errorf("error source wallet debit: %s", updateSourceErr)
+	}
+
+	// Update target wallet 'balance' column
+	_, updateTargetErr := tx.ExecContext(ctx, "update wallets set balance=balance+? where id=?", amount, walletTo)
+	if updateTargetErr != nil {
+		tx.Rollback()
+		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
+		return 0, fmt.Errorf("error target wallet transfer: %s", updateTargetErr)
+	}
+
+	// Commit transaction
+	txCommitErr := tx.Commit()
+	if txCommitErr != nil {
+		tx.Rollback()
+		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
+		return 0, fmt.Errorf("error of transaction commit: %s", txCommitErr)
+	}
+
+	// Perform advisory unlock
+	_, auErr := conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
+	if auErr != nil {
+		return 0, fmt.Errorf(
+			"error of unlocking user's %d postgres lock: %s",
+			TransferFunds,
+			auErr,
+		)
+	}
+	conn.Close()
+
+	return walletFrom, nil
 }
