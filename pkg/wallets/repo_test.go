@@ -156,6 +156,40 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 		},
 	},
 	walletRepoTestCase{
+		name:     "Success wallet enroll",
+		funcName: "Enroll",
+		queryMock: sqlQueryMock{
+			query: "update wallets set",
+			args:  []driver.Value{2, decimal.NewFromInt(0)},
+		},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			// Lock operation
+			// mock.
+			// 	ExpectExec("select pg_advisory_lock").
+			// 	WithArgs(EnrollWallet).
+			// 	WillReturnResult(sqlmock.NewResult(2, 2))
+
+			// // Start wallet enroll transaction
+			// mock.ExpectBegin()
+
+			// // Exec update wallet balance query
+			// mock.
+			// 	ExpectExec("update wallets").
+			// 	WithArgs([]driver.Value{decimal.NewFromInt(100), 2}...).
+			// 	WillReturnResult(sqlmock.NewResult(1, 1))
+
+			// // Commit update wallet transaction
+			// mock.ExpectCommit()
+
+			// // Unlock operation
+			// mock.
+			// 	ExpectExec("select pg_advisory_unlock").
+			// 	WithArgs(EnrollWallet).
+			// 	WillReturnResult(sqlmock.NewResult(2, 2))
+		},
+		err: fmt.Errorf("Error of amount value"),
+	},
+	walletRepoTestCase{
 		name:     "Failed wallet enroll (advisory lock error)",
 		funcName: "Enroll",
 		queryMock: sqlQueryMock{

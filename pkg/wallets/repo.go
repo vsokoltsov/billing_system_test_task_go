@@ -59,6 +59,12 @@ func (ws WalletService) Create(ctx context.Context, conn *sql.Conn, userID int64
 
 // Enroll updates wallet's balance
 func (ws WalletService) Enroll(ctx context.Context, walletID int, amount decimal.Decimal) (int, error) {
+
+	// Check if amount is less or equal to 0
+	if amount.LessThanOrEqual(decimal.Zero) {
+		return 0, fmt.Errorf("amount should be greater than 0")
+	}
+
 	// Get connection from the pool
 	conn, _ := ws.db.Conn(ctx)
 
