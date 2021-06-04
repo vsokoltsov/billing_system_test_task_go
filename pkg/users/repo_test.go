@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/shopspring/decimal"
 )
 
 type userRepoTestCase struct {
@@ -275,6 +276,53 @@ var UserRepoTestCases = []userRepoTestCase{
 				WillReturnError(fmt.Errorf("Row error"))
 		},
 		err: fmt.Errorf("Row error"),
+	},
+	userRepoTestCase{
+		name:     "Success user retrieving with wallet ID",
+		funcName: "GetByWalletID",
+		args:     []driver.Value{1},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			rows := sqlmock.NewRows([]string{"id", "email", "balance", "currency"})
+			rows = rows.AddRow(1, "test@example.com", decimal.NewFromInt(100), "USD")
+			mock.
+				ExpectQuery("select u.id, u.email, w.balance, w.currency from users as u").
+				WithArgs([]driver.Value{1}...).
+				WillReturnRows(rows)
+		},
+	},
+	userRepoTestCase{
+		name:     "Failed user retrieving with wallet ID (sql error)",
+		funcName: "GetByWalletID",
+		args:     []driver.Value{1},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			mock.
+				ExpectQuery("select u.id, u.email, w.balance, w.currency from users as u").
+				WithArgs([]driver.Value{1}...).
+				WillReturnError(fmt.Errorf("Error of user retrieving"))
+		},
+		err: fmt.Errorf("Error of user retrieving"),
+	},
+	userRepoTestCase{
+		name:     "failed user retrieving with wallet ID (scan error)",
+		funcName: "GetByWalletID",
+		args:     []driver.Value{1},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			query := `
+				select u.id, u.email, w.balance, w.currency
+				from users as u
+				join wallets as w
+				join u.id = w.user_id
+				where w.id = ?
+			`
+			rows := sqlmock.NewRows([]string{"id", "email", "balance", "currency"}).
+				AddRow(nil, "test@example.com", decimal.NewFromInt(100), "USD").
+				RowError(1, fmt.Errorf("Scan error"))
+			mock.
+				ExpectQuery(query).
+				WithArgs([]driver.Value{1}...).
+				WillReturnRows(rows)
+		},
+		err: fmt.Errorf("Scan error"),
 	},
 }
 

@@ -14,7 +14,7 @@ const (
 // SQLRepository represents communcation with users
 type SQLRepository interface {
 	GetByID(ctx context.Context, userID int) (*User, error)
-	// GetByWalletID(walletID int) (*User, error)
+	GetByWalletID(ctx context.Context, walletID int) (*User, error)
 	Create(ctx context.Context, email string) (int64, error)
 }
 
@@ -24,6 +24,7 @@ type UsersService struct {
 	walletsRepo wallets.SQLRepository
 }
 
+// NewUsersService returns instance of UserService
 func NewUsersService(db *sql.DB, wallets wallets.SQLRepository) SQLRepository {
 	return UsersService{
 		db:          db,
@@ -31,6 +32,7 @@ func NewUsersService(db *sql.DB, wallets wallets.SQLRepository) SQLRepository {
 	}
 }
 
+// GetByID receives user information by id
 func (ds UsersService) GetByID(ctx context.Context, userID int) (*User, error) {
 	user := User{}
 	getUserErr := ds.db.
@@ -44,10 +46,38 @@ func (ds UsersService) GetByID(ctx context.Context, userID int) (*User, error) {
 	return &user, nil
 }
 
-// func (ds UsersService) GetByWalletID(walletID int) (*User, error) {
+// GetByWalletID receives user information by wallet id
+func (ds UsersService) GetByWalletID(ctx context.Context, walletID int) (*User, error) {
+	user := User{}
+	query := `
+		select u.id, u.email, w.balance, w.currency
+		from users as u
+		join wallets as w
+		join u.id = w.user_id
+		where w.id = ?
+	`
+	userRow, userGetErr := ds.db.Query(query, walletID)
+	if userGetErr != nil {
+		return nil, fmt.Errorf("GetByWalletID: error of receiving user: %s", userGetErr)
+	}
 
-// }
+	for userRow.Next() {
+		wallet := wallets.Wallet{}
+		scanErr := userRow.Scan(
+			&user.ID,
+			&user.Email,
+			&wallet.Balance,
+			&wallet.Currency,
+		)
+		if scanErr != nil {
+			return nil, fmt.Errorf("GetByWalletID: Error of reading the result: %s", scanErr)
+		}
+		user.Wallet = &wallet
+	}
+	return &user, nil
+}
 
+// Create creates new user
 func (ds UsersService) Create(ctx context.Context, email string) (int64, error) {
 	conn, _ := ds.db.Conn(ctx)
 	_, alErr := conn.ExecContext(ctx, `select pg_advisory_lock($1)`, CreateUser)
