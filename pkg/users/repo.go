@@ -35,12 +35,30 @@ func NewUsersService(db *sql.DB, wallets wallets.SQLRepository) SQLRepository {
 // GetByID receives user information by id
 func (ds UsersService) GetByID(ctx context.Context, userID int) (*User, error) {
 	user := User{}
-	getUserErr := ds.db.
-		QueryRow("select id, email from users where id = ?", userID).
-		Scan(&user.ID, &user.Email)
+	query := `
+		select u.id, u.email, w.balance, w.currency
+		from users as u
+		join wallets as w
+		join u.id = w.user_id
+		where u.id = ?
+	`
 
+	userRow, getUserErr := ds.db.Query(query, userID)
 	if getUserErr != nil {
 		return nil, getUserErr
+	}
+	for userRow.Next() {
+		wallet := wallets.Wallet{}
+		scanErr := userRow.Scan(
+			&user.ID,
+			&user.Email,
+			&wallet.Balance,
+			&wallet.Currency,
+		)
+		if scanErr != nil {
+			return nil, fmt.Errorf("GetByID: Error of reading the result: %s", scanErr)
+		}
+		user.Wallet = &wallet
 	}
 
 	return &user, nil
