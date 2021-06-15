@@ -1,6 +1,7 @@
 package users
 
 import (
+	"billing_system_test_task/pkg/utils"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -34,11 +35,7 @@ func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	decodeErr := decoder.Decode(&userForm)
 	if decodeErr != nil {
-		// utils.JsonResponseError(w, http.StatusInternalServerError, fmt.Sprintf("Error json form decoding: %s", decodeErr))
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{
-			"message": fmt.Sprintf("Error json form decoding: %s", decodeErr),
-		})
+		utils.JsonResponseError(w, http.StatusBadRequest, fmt.Sprintf("Error json form decoding: %s", decodeErr))
 		return
 	}
 
