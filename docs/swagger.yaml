@@ -1,0 +1,76 @@
+basePath: /
+definitions:
+  users.ErrorMsg:
+    properties:
+      message:
+        type: string
+    type: object
+  users.UserForm:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  users.UserSerializer:
+    properties:
+      balance:
+        type: number
+      currency:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+    type: object
+  users.formErrorSerializer:
+    properties:
+      messages:
+        additionalProperties:
+          items:
+            type: string
+          type: array
+        type: object
+    type: object
+host: localhost:8000
+info:
+  contact: {}
+  description: Simple billing system
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Billing System API
+  version: "1.0"
+paths:
+  /api/users/:
+    post:
+      consumes:
+      - application/json
+      description: Create new user and wallet
+      parameters:
+      - description: User attributes
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/users.UserForm'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Create user response
+          schema:
+            $ref: '#/definitions/users.UserSerializer'
+        "400":
+          description: User form validation error
+          schema:
+            $ref: '#/definitions/users.formErrorSerializer'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/users.ErrorMsg'
+      summary: Create new user
+      tags:
+      - users
+swagger: "2.0"
