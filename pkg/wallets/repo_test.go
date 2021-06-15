@@ -36,66 +36,39 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 		name:     "Success wallet creation",
 		funcName: "Create",
 		queryMock: sqlQueryMock{
-			query:       "insert into wallets",
-			args:        []driver.Value{int64(1)},
-			columns:     []string{"user_id"},
-			requestType: "insert",
-			mockResult:  sqlmock.NewResult(1, 1),
+			query:   "insert into wallets",
+			args:    []driver.Value{int64(1)},
+			columns: []string{"user_id"},
 		},
 		mockQuery: func(mock sqlmock.Sqlmock) {
 			// Begin transaction
-			mock.ExpectBegin()
+			rows := sqlmock.NewRows([]string{"id"})
+			rows = rows.AddRow(1)
 
 			// Exec insert wallets
 			mock.
-				ExpectExec("insert into wallets").
+				ExpectQuery("insert into wallets").
 				WithArgs([]driver.Value{int64(1)}...).
-				WillReturnResult(sqlmock.NewResult(1, 1))
+				WillReturnRows(rows)
 
-			// Commit transaction
-			mock.ExpectCommit()
 		},
 	},
 	walletRepoTestCase{
 		name:     "Failed wallet creation (insert error)",
 		funcName: "Create",
 		queryMock: sqlQueryMock{
-			query:       "insert into wallets",
-			args:        []driver.Value{int64(1)},
-			columns:     []string{"user_id"},
-			requestType: "insert-error",
-			err:         fmt.Errorf("Insert error"),
+			query: "insert into wallets",
+			args:  []driver.Value{int64(1)},
+			err:   fmt.Errorf("Insert error"),
 		},
 		mockQuery: func(mock sqlmock.Sqlmock) {
-			// Begin transaction
-			mock.ExpectBegin()
-
 			// Exec insert wallets
 			mock.
-				ExpectExec("insert into wallets").
+				ExpectQuery("insert into wallets").
 				WithArgs([]driver.Value{int64(1)}...).
 				WillReturnError(fmt.Errorf("Insert error"))
-
-			// Rollback transaction
-			mock.ExpectRollback()
 		},
 		err: fmt.Errorf("Insert error"),
-	},
-	walletRepoTestCase{
-		name:     "Failed wallet creation (transaction begin error)",
-		funcName: "Create",
-		queryMock: sqlQueryMock{
-			query:       "insert into wallets",
-			args:        []driver.Value{int64(1)},
-			columns:     []string{"user_id"},
-			requestType: "insert-error",
-			err:         fmt.Errorf("Insert error"),
-		},
-		mockQuery: func(mock sqlmock.Sqlmock) {
-			// Begin transaction
-			mock.ExpectBegin().WillReturnError(fmt.Errorf("Begin transaction error"))
-		},
-		err: fmt.Errorf("Begin error"),
 	},
 	walletRepoTestCase{
 		name:     "Failed wallet creation (transaction commit error)",
@@ -109,7 +82,7 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 		},
 		mockQuery: func(mock sqlmock.Sqlmock) {
 			// Begin transaction
-			mock.ExpectBegin()
+			// mock.ExpectBegin()
 
 			// Exec insert wallets
 			mock.
@@ -118,7 +91,7 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 				WillReturnResult(sqlmock.NewResult(1, 1))
 
 			// Commit transaction with error
-			mock.ExpectCommit().WillReturnError(fmt.Errorf("Commit error"))
+			// mock.ExpectCommit().WillReturnError(fmt.Errorf("Commit error"))
 		},
 		err: fmt.Errorf("Commit error"),
 	},
@@ -630,8 +603,13 @@ func TestWalletRepo(t *testing.T) {
 
 			// Create Connection instance for Create wallet tests
 			if tc.funcName == "Create" {
+				mock.ExpectBegin()
 				conn, _ := db.Conn(ctx)
-				realArgs = append(realArgs, reflect.ValueOf(conn))
+				tx, txErr := conn.BeginTx(ctx, nil)
+				if txErr != nil {
+					fmt.Printf("error of transaction initialization: %s", txErr)
+				}
+				realArgs = append(realArgs, reflect.ValueOf(tx))
 			}
 
 			repo := WalletService{

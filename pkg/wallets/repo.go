@@ -15,7 +15,7 @@ const (
 )
 
 type SQLRepository interface {
-	Create(ctx context.Context, conn *sql.Conn, userID int64) (int64, error)
+	Create(ctx context.Context, tx *sql.Tx, userID int64) (int64, error)
 	Enroll(ctx context.Context, walletID int, amount decimal.Decimal) (int, error)
 	GetByUserId(ctx context.Context, userID int) (*Wallet, error)
 	Transfer(ctx context.Context, walletFrom, walletTo int, amount decimal.Decimal) (int, error)
@@ -32,30 +32,37 @@ func NewWalletService(db *sql.DB) SQLRepository {
 }
 
 // Create creates new wallet for user
-func (ws WalletService) Create(ctx context.Context, conn *sql.Conn, userID int64) (int64, error) {
-	tx, txErr := conn.BeginTx(ctx, nil)
-	if txErr != nil {
-		return 0, fmt.Errorf("Error of transaction initialization: %s", txErr)
-	}
-	tx.ExecContext(ctx, "set transaction isolation level serializable")
-
-	insertRes, insertErr := tx.ExecContext(
+func (ws WalletService) Create(ctx context.Context, tx *sql.Tx, userID int64) (int64, error) {
+	// tx, txErr := conn.BeginTx(ctx, nil)
+	// if txErr != nil {
+	// 	return 0, fmt.Errorf("Error of transaction initialization: %s", txErr)
+	// }
+	// tx.ExecContext(ctx, "set transaction isolation level serializable")
+	var walletID int64
+	stmt, insertErr := tx.QueryContext(
 		ctx,
-		"insert into wallets(user_id) values(?)",
+		"insert into wallets(user_id) values($1) returning id",
 		userID,
 	)
 
 	if insertErr != nil {
-		return 0, fmt.Errorf("Error wallet creation: %s", insertErr)
+		return 0, fmt.Errorf("error wallet creation: %s", insertErr)
 	}
 
-	txCommitErr := tx.Commit()
-	if txCommitErr != nil {
-		tx.Rollback()
-		return 0, fmt.Errorf("Error of transaction commit: %s", txCommitErr)
+	for stmt.Next() {
+		scanErr := stmt.Scan(&walletID)
+		if scanErr != nil {
+			return 0, fmt.Errorf("error wallet id retrieving: %s", insertErr)
+		}
 	}
 
-	return insertRes.LastInsertId()
+	// txCommitErr := tx.Commit()
+	// if txCommitErr != nil {
+	// 	tx.Rollback()
+	// 	return 0, fmt.Errorf("Error of transaction commit: %s", txCommitErr)
+	// }
+
+	return walletID, nil
 }
 
 // Enroll updates wallet's balance
