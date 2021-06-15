@@ -36,14 +36,14 @@ func NewUsersService(db *sql.DB, wallets wallets.SQLRepository) SQLRepository {
 func (ds UsersService) GetByID(ctx context.Context, userID int) (*User, error) {
 	user := User{}
 	query := `
-		select u.id, u.email, w.balance, w.currency
-		from users as u
-		join wallets as w
-		join u.id = w.user_id
-		where u.id = ?
+		select u.id, u.email, w.balance, w.currency 
+		from users as u 
+		join wallets as w 
+		on u.id = w.user_id 
+		where u.id = $1
 	`
 
-	userRow, getUserErr := ds.db.Query(query, userID)
+	userRow, getUserErr := ds.db.QueryContext(ctx, query, userID)
 	if getUserErr != nil {
 		return nil, getUserErr
 	}
@@ -71,10 +71,10 @@ func (ds UsersService) GetByWalletID(ctx context.Context, walletID int) (*User, 
 		select u.id, u.email, w.balance, w.currency
 		from users as u
 		join wallets as w
-		join u.id = w.user_id
-		where w.id = ?
+		on u.id = w.user_id
+		where w.id = $1
 	`
-	userRow, userGetErr := ds.db.Query(query, walletID)
+	userRow, userGetErr := ds.db.QueryContext(ctx, query, walletID)
 	if userGetErr != nil {
 		return nil, fmt.Errorf("GetByWalletID: error of receiving user: %s", userGetErr)
 	}
@@ -109,28 +109,28 @@ func (ds UsersService) Create(ctx context.Context, email string) (int64, error) 
 	}
 	transaction.ExecContext(ctx, "set transaction isolation level serializable")
 
+	var userID int
 	// Creates new user
-	insertRes, insertErr := transaction.ExecContext(
-		ctx,
-		"insert into users(email) values(?)",
-		email,
-	)
+	statement, insertErr := transaction.QueryContext(ctx, "insert into users(\"email\") values($1) returning id", email)
 
 	if insertErr != nil {
 		transaction.Rollback()
 		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
 		return 0, fmt.Errorf("Error user creation: %s", insertErr)
 	}
+	defer statement.Close()
 
-	userID, userIDErr := insertRes.LastInsertId()
-	if userIDErr != nil {
-		transaction.Rollback()
-		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
-		return 0, fmt.Errorf("Error user retrieving id: %s", userIDErr)
+	for statement.Next() {
+		userIDErr := statement.Scan(&userID)
+		if userIDErr != nil {
+			transaction.Rollback()
+			conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
+			return 0, fmt.Errorf("Error user retrieving id: %s", userIDErr)
+		}
 	}
 
 	// Creates wallet for user
-	_, insertWalletErr := ds.walletsRepo.Create(ctx, conn, userID)
+	_, insertWalletErr := ds.walletsRepo.Create(ctx, transaction, int64(userID))
 	if insertWalletErr != nil {
 		transaction.Rollback()
 		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
@@ -154,5 +154,5 @@ func (ds UsersService) Create(ctx context.Context, email string) (int64, error) 
 	}
 	conn.Close()
 
-	return userID, nil
+	return int64(userID), nil
 }
