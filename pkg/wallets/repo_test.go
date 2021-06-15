@@ -71,7 +71,7 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 		err: fmt.Errorf("Insert error"),
 	},
 	walletRepoTestCase{
-		name:     "Failed wallet creation (transaction commit error)",
+		name:     "Failed wallet creation (Scan error)",
 		funcName: "Create",
 		queryMock: sqlQueryMock{
 			query:       "insert into wallets",
@@ -81,19 +81,19 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 			err:         fmt.Errorf("Insert error"),
 		},
 		mockQuery: func(mock sqlmock.Sqlmock) {
-			// Begin transaction
-			// mock.ExpectBegin()
+			rows := sqlmock.NewRows([]string{"id"})
+			rows = rows.AddRow(nil).RowError(1, fmt.Errorf("Scan error"))
 
 			// Exec insert wallets
 			mock.
-				ExpectExec("insert into wallets").
+				ExpectQuery("insert into wallets").
 				WithArgs([]driver.Value{int64(1)}...).
-				WillReturnResult(sqlmock.NewResult(1, 1))
+				WillReturnRows(rows)
 
 			// Commit transaction with error
 			// mock.ExpectCommit().WillReturnError(fmt.Errorf("Commit error"))
 		},
-		err: fmt.Errorf("Commit error"),
+		err: fmt.Errorf("Scan error"),
 	},
 	walletRepoTestCase{
 		name:     "Success wallet enroll",

@@ -33,11 +33,6 @@ func NewWalletService(db *sql.DB) SQLRepository {
 
 // Create creates new wallet for user
 func (ws WalletService) Create(ctx context.Context, tx *sql.Tx, userID int64) (int64, error) {
-	// tx, txErr := conn.BeginTx(ctx, nil)
-	// if txErr != nil {
-	// 	return 0, fmt.Errorf("Error of transaction initialization: %s", txErr)
-	// }
-	// tx.ExecContext(ctx, "set transaction isolation level serializable")
 	var walletID int64
 	stmt, insertErr := tx.QueryContext(
 		ctx,
@@ -55,12 +50,6 @@ func (ws WalletService) Create(ctx context.Context, tx *sql.Tx, userID int64) (i
 			return 0, fmt.Errorf("error wallet id retrieving: %s", insertErr)
 		}
 	}
-
-	// txCommitErr := tx.Commit()
-	// if txCommitErr != nil {
-	// 	tx.Rollback()
-	// 	return 0, fmt.Errorf("Error of transaction commit: %s", txCommitErr)
-	// }
 
 	return walletID, nil
 }
