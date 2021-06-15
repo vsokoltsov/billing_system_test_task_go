@@ -11,6 +11,7 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
 )
 
 type App struct {
@@ -54,6 +55,6 @@ func (a *App) Initialize(env, host, port, pathDelimiter, dbProvider, sqlDbConnSt
 }
 
 func (a *App) Run() {
-	log.Printf("Starting web server on port %s...", a.Port)
+	log.Printf("Starting web server on port %s...", a.port)
 	log.Fatal(a.server.ListenAndServe())
 }
