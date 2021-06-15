@@ -59,8 +59,8 @@ func main() {
 		sqlDbPassword = getEnv("DB_PASSWORD", "password")
 		sqlDbHost     = getEnv("DB_HOST", "localhost")
 		sqlDbPort     = getEnv("DB_PORT", "3306")
-		sqlDbName     = getEnv("DATABASE_NAME", "redditclone")
-		dbProvider    = getEnv("DB_PROVIDER", "postgre")
+		sqlDbName     = getEnv("POSTGRES_DB", "billing")
+		dbProvider    = getEnv("DB_PROVIDER", "postgres")
 	)
 
 	dbConnString := fmt.Sprintf("port=%s host=%s user=%s "+
