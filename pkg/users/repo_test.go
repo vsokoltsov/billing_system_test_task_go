@@ -165,10 +165,14 @@ var UserRepoTestCases = []userRepoTestCase{
 		err: fmt.Errorf("Insert error (wallet transaction error)"),
 	},
 	userRepoTestCase{
-		name:     "Failed user creation (users transaction commit error)",
+		name:     "Failed user creation (wallet repo create error)",
 		funcName: "Create",
 		args:     []driver.Value{"example@mail.com"},
 		mockQuery: func(mock sqlmock.Sqlmock) {
+			userRows := sqlmock.NewRows([]string{"id"})
+			userRows = userRows.AddRow(1)
+
+			// Lock operation
 			mock.
 				ExpectExec("select pg_advisory_lock").
 				WithArgs(CreateUser).
@@ -179,21 +183,58 @@ var UserRepoTestCases = []userRepoTestCase{
 
 			// Exec insert users query
 			mock.
-				ExpectExec("insert into users").
+				ExpectQuery("insert into users").
 				WithArgs([]driver.Value{"example@mail.com"}...).
-				WillReturnResult(sqlmock.NewResult(1, 1))
-
-			// Start wallets create transaction
-			mock.ExpectBegin()
+				WillReturnRows(userRows)
 
 			// Exec insert wallets query
 			mock.
-				ExpectExec("insert into wallets").
-				WithArgs([]driver.Value{1}...).
-				WillReturnResult(sqlmock.NewResult(1, 2))
+				ExpectQuery("insert into wallets").
+				WithArgs([]driver.Value{int64(1)}...).
+				WillReturnError(fmt.Errorf("User wallet creation error"))
 
-			// Commit wallets create transaction
-			mock.ExpectCommit()
+			// Commit users create transaction with error
+			mock.ExpectRollback()
+
+			// Unlock operation
+			mock.
+				ExpectExec("select pg_advisory_unlock").
+				WithArgs(CreateUser).
+				WillReturnResult(sqlmock.NewResult(2, 2))
+		},
+		err: fmt.Errorf("User wallet creation error"),
+	},
+	userRepoTestCase{
+		name:     "Failed user creation (users transaction commit error)",
+		funcName: "Create",
+		args:     []driver.Value{"example@mail.com"},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			userRows := sqlmock.NewRows([]string{"id"})
+			userRows = userRows.AddRow(1)
+
+			walletRows := sqlmock.NewRows([]string{"id"})
+			walletRows = walletRows.AddRow(1)
+
+			mock.
+				ExpectExec("select pg_advisory_lock").
+				WithArgs(CreateUser).
+				WillReturnResult(sqlmock.NewResult(2, 2))
+
+			// Start users create transaction
+			mock.ExpectBegin()
+
+			// Exec insert users query
+			mock.
+				ExpectQuery("insert into users").
+				WithArgs([]driver.Value{"example@mail.com"}...).
+				WillReturnRows(userRows)
+
+			// Exec insert wallets query
+			mock.
+				ExpectQuery("insert into wallets").
+				WithArgs([]driver.Value{int64(1)}...).
+				WillReturnRows(walletRows)
+
 			// Commit users create transaction with error
 			mock.ExpectCommit().WillReturnError(fmt.Errorf("Transaction commit error"))
 
@@ -213,6 +254,12 @@ var UserRepoTestCases = []userRepoTestCase{
 		funcName: "Create",
 		args:     []driver.Value{"example@mail.com"},
 		mockQuery: func(mock sqlmock.Sqlmock) {
+			userRows := sqlmock.NewRows([]string{"id"})
+			userRows = userRows.AddRow(1)
+
+			walletRows := sqlmock.NewRows([]string{"id"})
+			walletRows = walletRows.AddRow(1)
+
 			// Lock operation
 			mock.
 				ExpectExec("select pg_advisory_lock").
@@ -224,21 +271,16 @@ var UserRepoTestCases = []userRepoTestCase{
 
 			// Exec insert users query
 			mock.
-				ExpectExec("insert into users").
+				ExpectQuery("insert into users").
 				WithArgs([]driver.Value{"example@mail.com"}...).
-				WillReturnResult(sqlmock.NewResult(1, 1))
-
-			// Start wallets create transaction
-			mock.ExpectBegin()
+				WillReturnRows(userRows)
 
 			// Exec insert wallets query
 			mock.
-				ExpectExec("insert into wallets").
-				WithArgs([]driver.Value{1}...).
-				WillReturnResult(sqlmock.NewResult(1, 2))
+				ExpectQuery("insert into wallets").
+				WithArgs([]driver.Value{int64(1)}...).
+				WillReturnRows(walletRows)
 
-			// Commit wallets create transaction
-			mock.ExpectCommit()
 			// Commit users create transaction
 			mock.ExpectCommit()
 
@@ -249,6 +291,32 @@ var UserRepoTestCases = []userRepoTestCase{
 				WillReturnError(fmt.Errorf("advisory unlock error"))
 		},
 		err: fmt.Errorf("Insert error (advisor unlock error)"),
+	},
+	userRepoTestCase{
+		name:     "Failed user creation (scan error)",
+		funcName: "Create",
+		args:     []driver.Value{"example@mail.com"},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			rows := sqlmock.NewRows([]string{"id", "email", "balance", "currency"}).
+				AddRow(nil, "test@example.com", decimal.NewFromInt(100), "USD").
+				RowError(1, fmt.Errorf("Scan error"))
+
+			// Lock operation
+			mock.
+				ExpectExec("select pg_advisory_lock").
+				WithArgs(CreateUser).
+				WillReturnResult(sqlmock.NewResult(2, 2))
+
+			// Start users create transaction
+			mock.ExpectBegin()
+
+			// Exec insert users query
+			mock.
+				ExpectQuery("insert into users").
+				WithArgs([]driver.Value{"example@mail.com"}...).
+				WillReturnRows(rows)
+		},
+		err: fmt.Errorf("Scan error"),
 	},
 	userRepoTestCase{
 		name:     "Success user retrieving with id",
@@ -273,10 +341,6 @@ var UserRepoTestCases = []userRepoTestCase{
 		mockQuery: func(mock sqlmock.Sqlmock) {
 			query := `
 				select u.id, u.email, w.balance, w.currency
-				from users as u
-				join wallets as w
-				on u.id = w.user_id
-				where u.id = $1
 			`
 			rows := sqlmock.NewRows([]string{"id", "email", "balance", "currency"})
 			rows = rows.AddRow(nil, "test@example.com", decimal.NewFromInt(100), "USD")
@@ -295,10 +359,6 @@ var UserRepoTestCases = []userRepoTestCase{
 		mockQuery: func(mock sqlmock.Sqlmock) {
 			query := `
 				select u.id, u.email, w.balance, w.currency
-				from users as u
-				join wallets as w
-				on u.id = w.user_id
-				where u.id = $1
 			`
 			rows := sqlmock.NewRows([]string{"id", "email", "balance", "currency"}).
 				AddRow(nil, "test@example.com", decimal.NewFromInt(100), "USD").
@@ -342,10 +402,6 @@ var UserRepoTestCases = []userRepoTestCase{
 		mockQuery: func(mock sqlmock.Sqlmock) {
 			query := `
 				select u.id, u.email, w.balance, w.currency
-				from users as u
-				join wallets as w
-				on u.id = w.user_id
-				where w.id = $1
 			`
 			rows := sqlmock.NewRows([]string{"id", "email", "balance", "currency"}).
 				AddRow(nil, "test@example.com", decimal.NewFromInt(100), "USD").
