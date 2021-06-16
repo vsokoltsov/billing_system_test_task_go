@@ -9,7 +9,7 @@ import (
 )
 
 type UsersHandler struct {
-	UsersRepo SQLRepository
+	UsersRepo IUserRepo
 }
 
 type ErrorMsg struct {
