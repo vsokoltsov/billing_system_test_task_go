@@ -14,7 +14,7 @@ const (
 	TransferFunds
 )
 
-type SQLRepository interface {
+type IWalletRepo interface {
 	Create(ctx context.Context, tx *sql.Tx, userID int64) (int64, error)
 	Enroll(ctx context.Context, walletID int, amount decimal.Decimal) (int, error)
 	GetByUserId(ctx context.Context, userID int) (*Wallet, error)
@@ -25,7 +25,7 @@ type WalletService struct {
 	db *sql.DB
 }
 
-func NewWalletService(db *sql.DB) SQLRepository {
+func NewWalletService(db *sql.DB) IWalletRepo {
 	return WalletService{
 		db: db,
 	}
