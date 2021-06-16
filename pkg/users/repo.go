@@ -12,7 +12,7 @@ const (
 )
 
 // SQLRepository represents communcation with users
-type SQLRepository interface {
+type IUserRepo interface {
 	GetByID(ctx context.Context, userID int) (*User, error)
 	GetByWalletID(ctx context.Context, walletID int) (*User, error)
 	Create(ctx context.Context, email string) (int64, error)
@@ -21,11 +21,11 @@ type SQLRepository interface {
 // UsersService implements SQLRepository
 type UsersService struct {
 	db          *sql.DB
-	walletsRepo wallets.SQLRepository
+	walletsRepo wallets.IWalletRepo
 }
 
 // NewUsersService returns instance of UserService
-func NewUsersService(db *sql.DB, wallets wallets.SQLRepository) SQLRepository {
+func NewUsersService(db *sql.DB, wallets wallets.IWalletRepo) IUserRepo {
 	return UsersService{
 		db:          db,
 		walletsRepo: wallets,
