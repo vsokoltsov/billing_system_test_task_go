@@ -128,11 +128,13 @@ func TestUsersHandlers(t *testing.T) {
 			defer sqlDB.Close()
 
 			mockUsersRepo := NewMockIUserRepo(ctrl)
+			mockWalletsRepo := wallets.NewMockIWalletRepo(ctrl)
 
 			r := mux.NewRouter()
 
 			handler := UsersHandler{
-				UsersRepo: mockUsersRepo,
+				UsersRepo:   mockUsersRepo,
+				WalletsRepo: mockWalletsRepo,
 			}
 			api_router := r.PathPrefix("/api").Subrouter()
 			api_router.HandleFunc("/users/", handler.Create).Methods("POST")
