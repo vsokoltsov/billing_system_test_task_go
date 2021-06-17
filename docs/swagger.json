@@ -59,9 +59,73 @@
                     }
                 }
             }
+        },
+        "/api/users/{id}/enroll/": {
+            "post": {
+                "description": "Enroll particular users wallet",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Enroll wallet",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Enrollment attributes",
+                        "name": "enroll",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/users.EnrollForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Retrieving user information with updated balance",
+                        "schema": {
+                            "$ref": "#/definitions/users.UserSerializer"
+                        }
+                    },
+                    "400": {
+                        "description": "Enroll form validation error",
+                        "schema": {
+                            "$ref": "#/definitions/users.formErrorSerializer"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/users.ErrorMsg"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "users.EnrollForm": {
+            "type": "object",
+            "required": [
+                "amount"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "number"
+                }
+            }
+        },
         "users.ErrorMsg": {
             "type": "object",
             "properties": {

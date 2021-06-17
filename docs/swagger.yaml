@@ -1,5 +1,12 @@
 basePath: /
 definitions:
+  users.EnrollForm:
+    properties:
+      amount:
+        type: number
+    required:
+    - amount
+    type: object
   users.ErrorMsg:
     properties:
       message:
@@ -71,6 +78,41 @@ paths:
           schema:
             $ref: '#/definitions/users.ErrorMsg'
       summary: Create new user
+      tags:
+      - users
+  /api/users/{id}/enroll/:
+    post:
+      consumes:
+      - application/json
+      description: Enroll particular users wallet
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Enrollment attributes
+        in: body
+        name: enroll
+        required: true
+        schema:
+          $ref: '#/definitions/users.EnrollForm'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Retrieving user information with updated balance
+          schema:
+            $ref: '#/definitions/users.UserSerializer'
+        "400":
+          description: Enroll form validation error
+          schema:
+            $ref: '#/definitions/users.formErrorSerializer'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/users.ErrorMsg'
+      summary: Enroll wallet
       tags:
       - users
 swagger: "2.0"
