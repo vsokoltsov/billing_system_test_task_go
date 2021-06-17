@@ -66,7 +66,7 @@ func (ws WalletService) Enroll(ctx context.Context, walletID int, amount decimal
 	conn, _ := ws.db.Conn(ctx)
 
 	// Apply AdvisoryLock for operation
-	_, alErr := conn.ExecContext(ctx, "select pg_advisory_lock(?)", EnrollWallet)
+	_, alErr := conn.ExecContext(ctx, "select pg_advisory_lock($1)", EnrollWallet)
 	if alErr != nil {
 		return 0, fmt.Errorf("error of starting advisory lock: %s", alErr)
 	}
@@ -79,7 +79,7 @@ func (ws WalletService) Enroll(ctx context.Context, walletID int, amount decimal
 	tx.ExecContext(ctx, "set transaction isolation level serializable")
 
 	// Update wallet 'balance' column
-	_, updateErr := tx.ExecContext(ctx, "update wallets set balance=balance+? where id=?", amount, walletID)
+	_, updateErr := tx.ExecContext(ctx, "update wallets set balance=balance+$1 where id=$2", amount, walletID)
 	if updateErr != nil {
 		tx.Rollback()
 		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, EnrollWallet)
@@ -110,7 +110,7 @@ func (ws WalletService) Enroll(ctx context.Context, walletID int, amount decimal
 func (ws WalletService) GetByUserId(ctx context.Context, userID int) (*Wallet, error) {
 	wallet := Wallet{}
 	getWalletErr := ws.db.
-		QueryRowContext(ctx, "select id, user_id, balance, currency from wallets where user_id=?", userID).
+		QueryRowContext(ctx, "select id, user_id, balance, currency from wallets where user_id=$1", userID).
 		Scan(&wallet.ID, &wallet.UserID, &wallet.Balance, &wallet.Currency)
 	if getWalletErr != nil {
 		return nil, getWalletErr
@@ -124,7 +124,7 @@ func (ws WalletService) Transfer(ctx context.Context, walletFrom, walletTo int, 
 	// Receive source wallet
 	sourceWallet := Wallet{}
 	getSourceWalletErr := ws.db.
-		QueryRowContext(ctx, "select id, user_id, balance, currency from wallets where id=?", walletFrom).
+		QueryRowContext(ctx, "select id, user_id, balance, currency from wallets where id=$1", walletFrom).
 		Scan(&sourceWallet.ID, &sourceWallet.UserID, &sourceWallet.Balance, &sourceWallet.Currency)
 	if getSourceWalletErr != nil {
 		return 0, fmt.Errorf("error of receiving source wallet data: %s", getSourceWalletErr)
@@ -138,7 +138,7 @@ func (ws WalletService) Transfer(ctx context.Context, walletFrom, walletTo int, 
 	conn, _ := ws.db.Conn(ctx)
 
 	// Apply AdvisoryLock for operation
-	_, alErr := conn.ExecContext(ctx, "select pg_advisory_lock(?)", TransferFunds)
+	_, alErr := conn.ExecContext(ctx, "select pg_advisory_lock($1)", TransferFunds)
 	if alErr != nil {
 		return 0, fmt.Errorf("error of starting advisory lock: %s", alErr)
 	}
@@ -151,7 +151,7 @@ func (ws WalletService) Transfer(ctx context.Context, walletFrom, walletTo int, 
 	tx.ExecContext(ctx, "set transaction isolation level serializable")
 
 	// Update source wallet 'balance' column
-	_, updateSourceErr := tx.ExecContext(ctx, "update wallets set balance=balance-? where id=?", amount, walletFrom)
+	_, updateSourceErr := tx.ExecContext(ctx, "update wallets set balance=balance-$1 where id=$1", amount, walletFrom)
 	if updateSourceErr != nil {
 		tx.Rollback()
 		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
@@ -159,7 +159,7 @@ func (ws WalletService) Transfer(ctx context.Context, walletFrom, walletTo int, 
 	}
 
 	// Update target wallet 'balance' column
-	_, updateTargetErr := tx.ExecContext(ctx, "update wallets set balance=balance+? where id=?", amount, walletTo)
+	_, updateTargetErr := tx.ExecContext(ctx, "update wallets set balance=balance+$1 where id=$1", amount, walletTo)
 	if updateTargetErr != nil {
 		tx.Rollback()
 		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
