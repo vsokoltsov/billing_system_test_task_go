@@ -323,11 +323,9 @@ var UserRepoTestCases = []userRepoTestCase{
 		funcName: "GetByID",
 		args:     []driver.Value{1},
 		mockQuery: func(mock sqlmock.Sqlmock) {
-			query := `
-				select u.id, u.email, w.balance, w.currency
-			`
-			rows := sqlmock.NewRows([]string{"id", "email", "balance", "currency"})
-			rows = rows.AddRow(1, "test@example.com", decimal.NewFromInt(100), "USD")
+			query := "select u.id, u.email, w.id, w.user_id, w.balance, w.currency  from users as u"
+			rows := sqlmock.NewRows([]string{"id", "email", "wallets.id", "user_id", "balance", "currency"})
+			rows = rows.AddRow(1, "test@example.com", 1, 1, decimal.NewFromInt(100), "USD")
 			mock.
 				ExpectQuery(query).
 				WithArgs([]driver.Value{1}...).
@@ -340,10 +338,10 @@ var UserRepoTestCases = []userRepoTestCase{
 		args:     []driver.Value{1},
 		mockQuery: func(mock sqlmock.Sqlmock) {
 			query := `
-				select u.id, u.email, w.balance, w.currency
+				select u.id, u.email, w.id, w.user_id, w.balance, w.currency
 			`
-			rows := sqlmock.NewRows([]string{"id", "email", "balance", "currency"})
-			rows = rows.AddRow(nil, "test@example.com", decimal.NewFromInt(100), "USD")
+			rows := sqlmock.NewRows([]string{"id", "email", "wallets.id", "user_id", "balance", "currency"})
+			rows = rows.AddRow(nil, "test@example.com", 1, 1, decimal.NewFromInt(100), "USD")
 
 			mock.
 				ExpectQuery(query).
@@ -358,10 +356,10 @@ var UserRepoTestCases = []userRepoTestCase{
 		args:     []driver.Value{1},
 		mockQuery: func(mock sqlmock.Sqlmock) {
 			query := `
-				select u.id, u.email, w.balance, w.currency
+				select u.id, u.email, w.id, w.user_id, w.balance, w.currency
 			`
-			rows := sqlmock.NewRows([]string{"id", "email", "balance", "currency"}).
-				AddRow(nil, "test@example.com", decimal.NewFromInt(100), "USD").
+			rows := sqlmock.NewRows([]string{"id", "email", "wallets.id", "user_id", "balance", "currency"}).
+				AddRow(nil, "test@example.com", nil, 1, decimal.NewFromInt(100), "USD").
 				RowError(1, fmt.Errorf("Scan error"))
 			mock.
 				ExpectQuery(query).
@@ -375,10 +373,10 @@ var UserRepoTestCases = []userRepoTestCase{
 		funcName: "GetByWalletID",
 		args:     []driver.Value{1},
 		mockQuery: func(mock sqlmock.Sqlmock) {
-			rows := sqlmock.NewRows([]string{"id", "email", "balance", "currency"})
-			rows = rows.AddRow(1, "test@example.com", decimal.NewFromInt(100), "USD")
+			rows := sqlmock.NewRows([]string{"id", "email", "wallets.id", "user_id", "balance", "currency"})
+			rows = rows.AddRow(1, "test@example.com", 1, 1, decimal.NewFromInt(100), "USD")
 			mock.
-				ExpectQuery("select u.id, u.email, w.balance, w.currency from users as u").
+				ExpectQuery("select u.id, u.email, w.id, w.user_id, w.balance, w.currency from users as u").
 				WithArgs([]driver.Value{1}...).
 				WillReturnRows(rows)
 		},
@@ -389,7 +387,7 @@ var UserRepoTestCases = []userRepoTestCase{
 		args:     []driver.Value{1},
 		mockQuery: func(mock sqlmock.Sqlmock) {
 			mock.
-				ExpectQuery("select u.id, u.email, w.balance, w.currency from users as u").
+				ExpectQuery("select u.id, u.email, w.id, w.user_id, w.balance, w.currency from users as u").
 				WithArgs([]driver.Value{1}...).
 				WillReturnError(fmt.Errorf("Error of user retrieving"))
 		},
@@ -401,10 +399,10 @@ var UserRepoTestCases = []userRepoTestCase{
 		args:     []driver.Value{1},
 		mockQuery: func(mock sqlmock.Sqlmock) {
 			query := `
-				select u.id, u.email, w.balance, w.currency
+				select u.id, u.email, w.id, w.user_id, w.balance, w.currency
 			`
-			rows := sqlmock.NewRows([]string{"id", "email", "balance", "currency"}).
-				AddRow(nil, "test@example.com", decimal.NewFromInt(100), "USD").
+			rows := sqlmock.NewRows([]string{"id", "email", "wallets.id", "user_id", "balance", "currency"}).
+				AddRow(nil, "test@example.com", nil, 1, decimal.NewFromInt(100), "USD").
 				RowError(1, fmt.Errorf("Scan error"))
 			mock.
 				ExpectQuery(query).

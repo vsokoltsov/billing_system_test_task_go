@@ -36,7 +36,7 @@ func NewUsersService(db *sql.DB, wallets wallets.IWalletRepo) IUserRepo {
 func (ds UsersService) GetByID(ctx context.Context, userID int) (*User, error) {
 	user := User{}
 	query := `
-		select u.id, u.email, w.balance, w.currency 
+		select u.id, u.email, w.id, w.user_id, w.balance, w.currency 
 		from users as u 
 		join wallets as w 
 		on u.id = w.user_id 
@@ -52,6 +52,8 @@ func (ds UsersService) GetByID(ctx context.Context, userID int) (*User, error) {
 		scanErr := userRow.Scan(
 			&user.ID,
 			&user.Email,
+			&wallet.ID,
+			&wallet.UserID,
 			&wallet.Balance,
 			&wallet.Currency,
 		)
@@ -68,7 +70,7 @@ func (ds UsersService) GetByID(ctx context.Context, userID int) (*User, error) {
 func (ds UsersService) GetByWalletID(ctx context.Context, walletID int) (*User, error) {
 	user := User{}
 	query := `
-		select u.id, u.email, w.balance, w.currency
+		select u.id, u.email, w.id, w.user_id, w.balance, w.currency 
 		from users as u
 		join wallets as w
 		on u.id = w.user_id
@@ -84,6 +86,8 @@ func (ds UsersService) GetByWalletID(ctx context.Context, walletID int) (*User, 
 		scanErr := userRow.Scan(
 			&user.ID,
 			&user.Email,
+			&wallet.ID,
+			&wallet.UserID,
 			&wallet.Balance,
 			&wallet.Currency,
 		)
