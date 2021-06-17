@@ -2,14 +2,19 @@ package users
 
 import (
 	"billing_system_test_task/pkg/utils"
+	"billing_system_test_task/pkg/wallets"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 type UsersHandler struct {
-	UsersRepo IUserRepo
+	UsersRepo   IUserRepo
+	WalletsRepo wallets.IWalletRepo
 }
 
 type ErrorMsg struct {
@@ -73,6 +78,77 @@ func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// @Summary Enroll wallet
+// @Description Enroll particular users wallet
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Param id path int true "User ID"
+// @Param enroll body EnrollForm true "Enrollment attributes"
+// @Success 200 {object} UserSerializer "Retrieving user information with updated balance"
+// @Failure 400 {object} formErrorSerializer "Enroll form validation error"
+// @Failure default {object} ErrorMsg
+// @Router /api/users/{id}/enroll/ [post]
 func (uh *UsersHandler) Enroll(w http.ResponseWriter, r *http.Request) {
+	var (
+		enrollForm EnrollForm
+		ctx        = context.Background()
+		user       *User
+		userGetErr error
+	)
 
+	vars := mux.Vars(r)
+	userIDVar, userIDExists := vars["id"]
+	if !userIDExists {
+		utils.JsonResponseError(w, http.StatusBadRequest, "userID attribute does not exists")
+		return
+	}
+
+	userID, errIntConv := strconv.Atoi(userIDVar)
+	if errIntConv != nil {
+		errorMsg := fmt.Sprintf("Error formatting user id to int: %s", errIntConv)
+		utils.JsonResponseError(w, http.StatusInternalServerError, errorMsg)
+		return
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	decodeErr := decoder.Decode(&enrollForm)
+	if decodeErr != nil {
+		utils.JsonResponseError(w, http.StatusBadRequest, fmt.Sprintf("Error json form decoding: %s", decodeErr))
+		return
+	}
+
+	// Validate body parameters
+	formError := enrollForm.Submit()
+	if formError != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(formErrorSerializer{Messages: *formError})
+		return
+	}
+
+	user, userGetErr = uh.UsersRepo.GetByID(ctx, userID)
+	if userGetErr != nil {
+		utils.JsonResponseError(w, http.StatusInternalServerError, userGetErr.Error())
+		return
+	}
+
+	walletID, walletEnrollErr := uh.WalletsRepo.Enroll(ctx, user.Wallet.ID, enrollForm.Amount)
+	if walletEnrollErr != nil {
+		utils.JsonResponseError(w, http.StatusBadRequest, fmt.Sprintf("Error of wallet enroll: %s", walletEnrollErr.Error()))
+		return
+	}
+
+	user, userGetErr = uh.UsersRepo.GetByWalletID(ctx, walletID)
+	if userGetErr != nil {
+		utils.JsonResponseError(w, http.StatusInternalServerError, userGetErr.Error())
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(UserSerializer{
+		ID:       user.ID,
+		Email:    user.Email,
+		Balance:  user.Wallet.Balance,
+		Currency: user.Wallet.Currency,
+	})
 }
