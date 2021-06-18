@@ -21,7 +21,7 @@ type userHandlerTestCase struct {
 	name           string
 	method         string
 	url            string
-	body           map[string]string
+	body           map[string]interface{}
 	expectedStatus int
 	mockData       func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo)
 	formError      bool
@@ -32,7 +32,7 @@ var testCases = []userHandlerTestCase{
 		name:   "Success user creation",
 		method: "POST",
 		url:    "/api/users/",
-		body: map[string]string{
+		body: map[string]interface{}{
 			"email": "example@mail.com",
 		},
 		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
@@ -60,7 +60,7 @@ var testCases = []userHandlerTestCase{
 		name:   "Failed user creation (form decode error)",
 		method: "POST",
 		url:    "/api/users/",
-		body: map[string]string{
+		body: map[string]interface{}{
 			"email": "example@mail.com",
 		},
 		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
@@ -72,7 +72,7 @@ var testCases = []userHandlerTestCase{
 		name:   "Failed user creation (wrong parameters)",
 		method: "POST",
 		url:    "/api/users/",
-		body: map[string]string{
+		body: map[string]interface{}{
 			"email": "test",
 		},
 		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
@@ -83,7 +83,7 @@ var testCases = []userHandlerTestCase{
 		name:   "Failed user creation (failed user repo Create())",
 		method: "POST",
 		url:    "/api/users/",
-		body: map[string]string{
+		body: map[string]interface{}{
 			"email": "example@mail.com",
 		},
 		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
@@ -97,7 +97,7 @@ var testCases = []userHandlerTestCase{
 		name:   "Failed user creation (failed user repo GetByID())",
 		method: "POST",
 		url:    "/api/users/",
-		body: map[string]string{
+		body: map[string]interface{}{
 			"email": "example@mail.com",
 		},
 		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
@@ -108,6 +108,146 @@ var testCases = []userHandlerTestCase{
 			userService.EXPECT().
 				GetByID(ctx, gomock.Any()).
 				Return(nil, fmt.Errorf("error of user retrieving"))
+		},
+		expectedStatus: 400,
+	},
+	userHandlerTestCase{
+		name:   "Success wallet enroll",
+		method: "POST",
+		url:    "/api/users/1/enroll/",
+		body: map[string]interface{}{
+			"amount": "100",
+		},
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+			amount := decimal.NewFromInt(100)
+			user := User{
+				ID:    1,
+				Email: "example@mail.com",
+				Wallet: &wallets.Wallet{
+					ID:       1,
+					UserID:   1,
+					Balance:  decimal.NewFromInt(0),
+					Currency: "USD",
+				},
+			}
+			userService.EXPECT().GetByID(ctx, user.ID).Return(&user, nil)
+
+			walletRepo.EXPECT().Enroll(ctx, user.Wallet.ID, amount).Return(user.Wallet.ID, nil)
+
+			user.Wallet.Balance = user.Wallet.Balance.Add(amount)
+
+			userService.EXPECT().GetByWalletID(ctx, user.Wallet.ID).Return(&user, nil)
+		},
+		expectedStatus: 200,
+	},
+	userHandlerTestCase{
+		name:   "Failed wallet enroll (vars parameter does not exists)",
+		method: "POST",
+		url:    "/api/users/1/enroll/",
+		body: map[string]interface{}{
+			"amount": "100",
+		},
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+		},
+		expectedStatus: 500,
+	},
+	userHandlerTestCase{
+		name:   "Failed wallet enroll (error of user id to int conversion)",
+		method: "POST",
+		url:    "/api/users/test/enroll/",
+		body: map[string]interface{}{
+			"amount": "100",
+		},
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+		},
+		expectedStatus: 400,
+	},
+	userHandlerTestCase{
+		name:   "Failed wallet enroll (form decoding error)",
+		method: "POST",
+		url:    "/api/users/1/enroll/",
+		body: map[string]interface{}{
+			"amount": "100",
+		},
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+		},
+		expectedStatus: 400,
+		formError:      true,
+	},
+	userHandlerTestCase{
+		name:   "Failed wallet enroll (form validation error)",
+		method: "POST",
+		url:    "/api/users/1/enroll/",
+		body: map[string]interface{}{
+			"amount": 0,
+		},
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+		},
+		expectedStatus: 400,
+	},
+	userHandlerTestCase{
+		name:   "Failed wallet enroll (user not found)",
+		method: "POST",
+		url:    "/api/users/1/enroll/",
+		body: map[string]interface{}{
+			"amount": "100",
+		},
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+			userService.EXPECT().GetByID(ctx, 1).Return(nil, fmt.Errorf("user not found"))
+		},
+		expectedStatus: 404,
+	},
+	userHandlerTestCase{
+		name:   "Failed wallet enroll (wallet repo Enroll() failed)",
+		method: "POST",
+		url:    "/api/users/1/enroll/",
+		body: map[string]interface{}{
+			"amount": "100",
+		},
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+			amount := decimal.NewFromInt(100)
+			user := User{
+				ID:    1,
+				Email: "example@mail.com",
+				Wallet: &wallets.Wallet{
+					ID:       1,
+					UserID:   1,
+					Balance:  decimal.NewFromInt(0),
+					Currency: "USD",
+				},
+			}
+			userService.EXPECT().GetByID(ctx, user.ID).Return(&user, nil)
+
+			walletRepo.EXPECT().Enroll(ctx, user.Wallet.ID, amount).Return(0, fmt.Errorf("enroll has failed"))
+		},
+		expectedStatus: 400,
+	},
+	userHandlerTestCase{
+		name:   "Failed wallet enroll (failed user repo GetByWalletID())",
+		method: "POST",
+		url:    "/api/users/1/enroll/",
+		body: map[string]interface{}{
+			"amount": "100",
+		},
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+			amount := decimal.NewFromInt(100)
+			user := User{
+				ID:    1,
+				Email: "example@mail.com",
+				Wallet: &wallets.Wallet{
+					ID:       1,
+					UserID:   1,
+					Balance:  decimal.NewFromInt(0),
+					Currency: "USD",
+				},
+			}
+			userService.EXPECT().GetByID(ctx, user.ID).Return(&user, nil)
+
+			walletRepo.EXPECT().Enroll(ctx, user.Wallet.ID, amount).Return(user.Wallet.ID, nil)
+
+			user.Wallet.Balance = user.Wallet.Balance.Add(amount)
+
+			userService.EXPECT().GetByWalletID(ctx, user.Wallet.ID).Return(nil, fmt.Errorf("error of user retrieving"))
 		},
 		expectedStatus: 400,
 	},
@@ -130,6 +270,11 @@ func TestUsersHandlers(t *testing.T) {
 			mockUsersRepo := NewMockIUserRepo(ctrl)
 			mockWalletsRepo := wallets.NewMockIWalletRepo(ctrl)
 
+			enrollRoute := "/users/{id}/enroll/"
+			if tc.name == "Failed wallet enroll (vars parameter does not exists)" {
+				enrollRoute = "/users/{test}/enroll/"
+			}
+
 			r := mux.NewRouter()
 
 			handler := UsersHandler{
@@ -138,6 +283,7 @@ func TestUsersHandlers(t *testing.T) {
 			}
 			api_router := r.PathPrefix("/api").Subrouter()
 			api_router.HandleFunc("/users/", handler.Create).Methods("POST")
+			api_router.HandleFunc(enrollRoute, handler.Enroll).Methods("POST")
 			tc.mockData(ctrl, ctx, mockUsersRepo, mockWalletsRepo)
 
 			testServer := httptest.NewServer(r)

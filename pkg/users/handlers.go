@@ -100,14 +100,14 @@ func (uh *UsersHandler) Enroll(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userIDVar, userIDExists := vars["id"]
 	if !userIDExists {
-		utils.JsonResponseError(w, http.StatusBadRequest, "userID attribute does not exists")
+		utils.JsonResponseError(w, http.StatusInternalServerError, "user's id attribute does not exists")
 		return
 	}
 
 	userID, errIntConv := strconv.Atoi(userIDVar)
 	if errIntConv != nil {
 		errorMsg := fmt.Sprintf("Error formatting user id to int: %s", errIntConv)
-		utils.JsonResponseError(w, http.StatusInternalServerError, errorMsg)
+		utils.JsonResponseError(w, http.StatusBadRequest, errorMsg)
 		return
 	}
 
@@ -128,7 +128,7 @@ func (uh *UsersHandler) Enroll(w http.ResponseWriter, r *http.Request) {
 
 	user, userGetErr = uh.UsersRepo.GetByID(ctx, userID)
 	if userGetErr != nil {
-		utils.JsonResponseError(w, http.StatusInternalServerError, userGetErr.Error())
+		utils.JsonResponseError(w, http.StatusNotFound, userGetErr.Error())
 		return
 	}
 
@@ -140,7 +140,7 @@ func (uh *UsersHandler) Enroll(w http.ResponseWriter, r *http.Request) {
 
 	user, userGetErr = uh.UsersRepo.GetByWalletID(ctx, walletID)
 	if userGetErr != nil {
-		utils.JsonResponseError(w, http.StatusInternalServerError, userGetErr.Error())
+		utils.JsonResponseError(w, http.StatusBadRequest, userGetErr.Error())
 		return
 	}
 
