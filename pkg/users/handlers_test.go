@@ -23,7 +23,7 @@ type userHandlerTestCase struct {
 	url            string
 	body           map[string]string
 	expectedStatus int
-	mockData       func(ctrl *gomock.Controller, ctx context.Context, collection *MockIUserRepo)
+	mockData       func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo)
 	formError      bool
 }
 
@@ -35,12 +35,12 @@ var testCases = []userHandlerTestCase{
 		body: map[string]string{
 			"email": "example@mail.com",
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, collection *MockIUserRepo) {
-			collection.EXPECT().
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+			userService.EXPECT().
 				Create(ctx, gomock.Any()).
 				Return(int64(1), nil)
 
-			collection.EXPECT().
+			userService.EXPECT().
 				GetByID(ctx, gomock.Any()).
 				Return(
 					&User{
@@ -63,7 +63,7 @@ var testCases = []userHandlerTestCase{
 		body: map[string]string{
 			"email": "example@mail.com",
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, collection *MockIUserRepo) {
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
 		},
 		expectedStatus: 400,
 		formError:      true,
@@ -75,7 +75,7 @@ var testCases = []userHandlerTestCase{
 		body: map[string]string{
 			"email": "test",
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, collection *MockIUserRepo) {
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
 		},
 		expectedStatus: 400,
 	},
@@ -86,8 +86,8 @@ var testCases = []userHandlerTestCase{
 		body: map[string]string{
 			"email": "example@mail.com",
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, collection *MockIUserRepo) {
-			collection.EXPECT().
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+			userService.EXPECT().
 				Create(ctx, gomock.Any()).
 				Return(int64(0), fmt.Errorf("User creation error"))
 		},
@@ -100,12 +100,12 @@ var testCases = []userHandlerTestCase{
 		body: map[string]string{
 			"email": "example@mail.com",
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, collection *MockIUserRepo) {
-			collection.EXPECT().
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+			userService.EXPECT().
 				Create(ctx, gomock.Any()).
 				Return(int64(1), nil)
 
-			collection.EXPECT().
+			userService.EXPECT().
 				GetByID(ctx, gomock.Any()).
 				Return(nil, fmt.Errorf("error of user retrieving"))
 		},
@@ -138,7 +138,7 @@ func TestUsersHandlers(t *testing.T) {
 			}
 			api_router := r.PathPrefix("/api").Subrouter()
 			api_router.HandleFunc("/users/", handler.Create).Methods("POST")
-			tc.mockData(ctrl, ctx, mockUsersRepo)
+			tc.mockData(ctrl, ctx, mockUsersRepo, mockWalletsRepo)
 
 			testServer := httptest.NewServer(r)
 			defer testServer.Close()
