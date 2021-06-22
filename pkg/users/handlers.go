@@ -17,10 +17,6 @@ type UsersHandler struct {
 	WalletsRepo wallets.IWalletRepo
 }
 
-type ErrorMsg struct {
-	Message string `json:"message"`
-}
-
 // Create godoc
 // @Summary Create new user
 // @Description Create new user and wallet
@@ -29,8 +25,8 @@ type ErrorMsg struct {
 // @Produce  json
 // @Param user body UserForm true "User attributes"
 // @Success 201 {object} UserSerializer "Create user response"
-// @Failure 400 {object} formErrorSerializer "User form validation error"
-// @Failure default {object} ErrorMsg
+// @Failure 400 {object} utils.FormErrorSerializer "User form validation error"
+// @Failure default {object} utils.ErrorMsg
 // @Router /api/users/ [post]
 func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var (
@@ -48,7 +44,7 @@ func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 	formError := userForm.Submit()
 	if formError != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(formErrorSerializer{Messages: *formError})
+		json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
 		return
 	}
 
@@ -86,8 +82,8 @@ func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Param id path int true "User ID"
 // @Param enroll body EnrollForm true "Enrollment attributes"
 // @Success 200 {object} UserSerializer "Retrieving user information with updated balance"
-// @Failure 400 {object} formErrorSerializer "Enroll form validation error"
-// @Failure default {object} ErrorMsg
+// @Failure 400 {object} utils.FormErrorSerializer "Enroll form validation error"
+// @Failure default {object} utils.ErrorMsg
 // @Router /api/users/{id}/enroll/ [post]
 func (uh *UsersHandler) Enroll(w http.ResponseWriter, r *http.Request) {
 	var (
@@ -122,7 +118,7 @@ func (uh *UsersHandler) Enroll(w http.ResponseWriter, r *http.Request) {
 	formError := enrollForm.Submit()
 	if formError != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(formErrorSerializer{Messages: *formError})
+		json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
 		return
 	}
 
