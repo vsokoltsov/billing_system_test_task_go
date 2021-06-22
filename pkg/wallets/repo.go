@@ -18,6 +18,7 @@ type IWalletRepo interface {
 	Create(ctx context.Context, tx *sql.Tx, userID int64) (int64, error)
 	Enroll(ctx context.Context, walletID int, amount decimal.Decimal) (int, error)
 	GetByUserId(ctx context.Context, userID int) (*Wallet, error)
+	GetByID(ctx context.Context, walletID int) (*Wallet, error)
 	Transfer(ctx context.Context, walletFrom, walletTo int, amount decimal.Decimal) (int, error)
 }
 
@@ -106,6 +107,18 @@ func (ws WalletService) Enroll(ctx context.Context, walletID int, amount decimal
 	return walletID, nil
 }
 
+// GetByID retrieves wallet by its ID
+func (ws WalletService) GetByID(ctx context.Context, walletID int) (*Wallet, error) {
+	wallet := Wallet{}
+	getWalletErr := ws.db.
+		QueryRowContext(ctx, "select id, user_id, balance, currency from wallets where id=$1", walletID).
+		Scan(&wallet.ID, &wallet.UserID, &wallet.Balance, &wallet.Currency)
+	if getWalletErr != nil {
+		return nil, getWalletErr
+	}
+	return &wallet, nil
+}
+
 // GetByUserId retrieves wallet by user ID
 func (ws WalletService) GetByUserId(ctx context.Context, userID int) (*Wallet, error) {
 	wallet := Wallet{}
@@ -122,10 +135,7 @@ func (ws WalletService) GetByUserId(ctx context.Context, userID int) (*Wallet, e
 func (ws WalletService) Transfer(ctx context.Context, walletFrom, walletTo int, amount decimal.Decimal) (int, error) {
 
 	// Receive source wallet
-	sourceWallet := Wallet{}
-	getSourceWalletErr := ws.db.
-		QueryRowContext(ctx, "select id, user_id, balance, currency from wallets where id=$1", walletFrom).
-		Scan(&sourceWallet.ID, &sourceWallet.UserID, &sourceWallet.Balance, &sourceWallet.Currency)
+	sourceWallet, getSourceWalletErr := ws.GetByID(ctx, walletFrom)
 	if getSourceWalletErr != nil {
 		return 0, fmt.Errorf("error of receiving source wallet data: %s", getSourceWalletErr)
 	}
@@ -151,7 +161,7 @@ func (ws WalletService) Transfer(ctx context.Context, walletFrom, walletTo int, 
 	tx.ExecContext(ctx, "set transaction isolation level serializable")
 
 	// Update source wallet 'balance' column
-	_, updateSourceErr := tx.ExecContext(ctx, "update wallets set balance=balance-$1 where id=$1", amount, walletFrom)
+	_, updateSourceErr := tx.ExecContext(ctx, "update wallets set balance=balance-$1 where id=$2", amount, walletFrom)
 	if updateSourceErr != nil {
 		tx.Rollback()
 		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
@@ -159,7 +169,7 @@ func (ws WalletService) Transfer(ctx context.Context, walletFrom, walletTo int, 
 	}
 
 	// Update target wallet 'balance' column
-	_, updateTargetErr := tx.ExecContext(ctx, "update wallets set balance=balance+$1 where id=$1", amount, walletTo)
+	_, updateTargetErr := tx.ExecContext(ctx, "update wallets set balance=balance+$1 where id=$2", amount, walletTo)
 	if updateTargetErr != nil {
 		tx.Rollback()
 		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)

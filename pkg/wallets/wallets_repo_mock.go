@@ -80,6 +80,21 @@ func (mr *MockIWalletRepoMockRecorder) GetByUserId(ctx, userID interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByUserId", reflect.TypeOf((*MockIWalletRepo)(nil).GetByUserId), ctx, userID)
 }
 
+// GetByID mocks base method
+func (m *MockIWalletRepo) GetByID(ctx context.Context, walletID int) (*Wallet, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByID", ctx, walletID)
+	ret0, _ := ret[0].(*Wallet)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByID indicates an expected call of GetByID
+func (mr *MockIWalletRepoMockRecorder) GetByID(ctx, walletID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockIWalletRepo)(nil).GetByID), ctx, walletID)
+}
+
 // Transfer mocks base method
 func (m *MockIWalletRepo) Transfer(ctx context.Context, walletFrom, walletTo int, amount decimal.Decimal) (int, error) {
 	m.ctrl.T.Helper()
