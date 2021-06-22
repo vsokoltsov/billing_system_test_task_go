@@ -8,6 +8,14 @@ import (
 	"github.com/go-playground/validator"
 )
 
+type FormErrorSerializer struct {
+	Messages map[string][]string `json:"messages"`
+}
+
+type ErrorMsg struct {
+	Message string `json:"message"`
+}
+
 func JsonResponseError(w http.ResponseWriter, status int, message string) {
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(map[string]string{
