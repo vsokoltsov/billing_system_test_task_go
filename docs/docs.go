@@ -63,13 +63,13 @@ var doc = `{
                     "400": {
                         "description": "User form validation error",
                         "schema": {
-                            "$ref": "#/definitions/users.formErrorSerializer"
+                            "$ref": "#/definitions/utils.FormErrorSerializer"
                         }
                     },
                     "default": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/users.ErrorMsg"
+                            "$ref": "#/definitions/utils.ErrorMsg"
                         }
                     }
                 }
@@ -116,13 +116,59 @@ var doc = `{
                     "400": {
                         "description": "Enroll form validation error",
                         "schema": {
-                            "$ref": "#/definitions/users.formErrorSerializer"
+                            "$ref": "#/definitions/utils.FormErrorSerializer"
                         }
                     },
                     "default": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/users.ErrorMsg"
+                            "$ref": "#/definitions/utils.ErrorMsg"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/wallets/transfer/": {
+            "post": {
+                "description": "Transfer funds between two users",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wallets"
+                ],
+                "summary": "Transfer funds",
+                "parameters": [
+                    {
+                        "description": "Transfer parameters",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/wallets.WalletForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Wallet from id",
+                        "schema": {
+                            "$ref": "#/definitions/wallets.walletSerializer"
+                        }
+                    },
+                    "400": {
+                        "description": "Wallet transfer validation error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.FormErrorSerializer"
+                        }
+                    },
+                    "default": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorMsg"
                         }
                     }
                 }
@@ -138,14 +184,6 @@ var doc = `{
             "properties": {
                 "amount": {
                     "type": "number"
-                }
-            }
-        },
-        "users.ErrorMsg": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
                 }
             }
         },
@@ -177,7 +215,15 @@ var doc = `{
                 }
             }
         },
-        "users.formErrorSerializer": {
+        "utils.ErrorMsg": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "utils.FormErrorSerializer": {
             "type": "object",
             "properties": {
                 "messages": {
@@ -188,6 +234,33 @@ var doc = `{
                             "type": "string"
                         }
                     }
+                }
+            }
+        },
+        "wallets.WalletForm": {
+            "type": "object",
+            "required": [
+                "amount",
+                "wallet_from",
+                "wallet_to"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "wallet_from": {
+                    "type": "integer"
+                },
+                "wallet_to": {
+                    "type": "integer"
+                }
+            }
+        },
+        "wallets.walletSerializer": {
+            "type": "object",
+            "properties": {
+                "wallet_from": {
+                    "type": "integer"
                 }
             }
         }

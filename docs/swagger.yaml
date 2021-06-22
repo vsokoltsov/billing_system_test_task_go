@@ -7,11 +7,6 @@ definitions:
     required:
     - amount
     type: object
-  users.ErrorMsg:
-    properties:
-      message:
-        type: string
-    type: object
   users.UserForm:
     properties:
       email:
@@ -30,7 +25,12 @@ definitions:
       id:
         type: integer
     type: object
-  users.formErrorSerializer:
+  utils.ErrorMsg:
+    properties:
+      message:
+        type: string
+    type: object
+  utils.FormErrorSerializer:
     properties:
       messages:
         additionalProperties:
@@ -38,6 +38,24 @@ definitions:
             type: string
           type: array
         type: object
+    type: object
+  wallets.WalletForm:
+    properties:
+      amount:
+        type: number
+      wallet_from:
+        type: integer
+      wallet_to:
+        type: integer
+    required:
+    - amount
+    - wallet_from
+    - wallet_to
+    type: object
+  wallets.walletSerializer:
+    properties:
+      wallet_from:
+        type: integer
     type: object
 host: localhost:8000
 info:
@@ -72,11 +90,11 @@ paths:
         "400":
           description: User form validation error
           schema:
-            $ref: '#/definitions/users.formErrorSerializer'
+            $ref: '#/definitions/utils.FormErrorSerializer'
         default:
           description: ""
           schema:
-            $ref: '#/definitions/users.ErrorMsg'
+            $ref: '#/definitions/utils.ErrorMsg'
       summary: Create new user
       tags:
       - users
@@ -107,12 +125,42 @@ paths:
         "400":
           description: Enroll form validation error
           schema:
-            $ref: '#/definitions/users.formErrorSerializer'
+            $ref: '#/definitions/utils.FormErrorSerializer'
         default:
           description: ""
           schema:
-            $ref: '#/definitions/users.ErrorMsg'
+            $ref: '#/definitions/utils.ErrorMsg'
       summary: Enroll wallet
       tags:
       - users
+  /api/wallets/transfer/:
+    post:
+      consumes:
+      - application/json
+      description: Transfer funds between two users
+      parameters:
+      - description: Transfer parameters
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/wallets.WalletForm'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Wallet from id
+          schema:
+            $ref: '#/definitions/wallets.walletSerializer'
+        "400":
+          description: Wallet transfer validation error
+          schema:
+            $ref: '#/definitions/utils.FormErrorSerializer'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/utils.ErrorMsg'
+      summary: Transfer funds
+      tags:
+      - wallets
 swagger: "2.0"
