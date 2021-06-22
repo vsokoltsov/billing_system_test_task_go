@@ -31,9 +31,13 @@ func SetUpRoutes(pathDelimiter string, sqlDb *sql.DB) *mux.Router {
 		UsersRepo:   usersRepo,
 		WalletsRepo: walletsRepo,
 	}
+	wallets := wallets.WalletsHandler{
+		WalletRepo: walletsRepo,
+	}
 
 	api.HandleFunc("/users/", users.Create).Methods("POST").Name("CREATE_USER")
 	api.HandleFunc("/users/{id}/enroll/", users.Enroll).Methods("POST").Name("ENROLL_USER_WALLET")
+	api.HandleFunc("/wallets/transfer/", wallets.Transfer).Methods("POST").Name("Transfer funds")
 	r.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)
 	return r
 }
