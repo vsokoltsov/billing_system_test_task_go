@@ -8,7 +8,3 @@ type UserSerializer struct {
 	Balance  decimal.Decimal `json:"balance"`
 	Currency string          `json:"currency"`
 }
-
-type formErrorSerializer struct {
-	Messages map[string][]string `json:"messages"`
-}
