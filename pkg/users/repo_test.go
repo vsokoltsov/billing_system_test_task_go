@@ -1,6 +1,7 @@
 package users
 
 import (
+	"billing_system_test_task/pkg/operations"
 	"billing_system_test_task/pkg/wallets"
 	"context"
 	"database/sql/driver"
@@ -427,7 +428,8 @@ func TestUsersRepo(t *testing.T) {
 			}
 			defer db.Close()
 
-			walletsRepo := wallets.NewWalletService(db)
+			walletOperation := operations.NewWalletOperationRepo(db)
+			walletsRepo := wallets.NewWalletService(db, walletOperation)
 			repo := UsersService{
 				db:          db,
 				walletsRepo: walletsRepo,
@@ -477,7 +479,8 @@ func TestUsersRepo(t *testing.T) {
 
 func TestNewUserService(t *testing.T) {
 	db, _, _ := sqlmock.New()
-	walletsRepo := wallets.NewWalletService(db)
+	walletOperation := operations.NewWalletOperationRepo(db)
+	walletsRepo := wallets.NewWalletService(db, walletOperation)
 	repo := NewUsersService(db, walletsRepo)
 	_, correctType := repo.(UsersService)
 	if !correctType {
