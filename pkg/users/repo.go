@@ -11,7 +11,7 @@ const (
 	CreateUser = iota + 1
 )
 
-// SQLRepository represents communcation with users
+// IUserRepo represents communication with users
 type IUserRepo interface {
 	GetByID(ctx context.Context, userID int) (*User, error)
 	GetByWalletID(ctx context.Context, walletID int) (*User, error)
