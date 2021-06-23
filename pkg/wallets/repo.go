@@ -1,6 +1,7 @@
 package wallets
 
 import (
+	"billing_system_test_task/pkg/operations"
 	"context"
 	"database/sql"
 	"fmt"
@@ -14,6 +15,7 @@ const (
 	TransferFunds
 )
 
+// IWalletRepo represents communication with wallets
 type IWalletRepo interface {
 	Create(ctx context.Context, tx *sql.Tx, userID int64) (int64, error)
 	Enroll(ctx context.Context, walletID int, amount decimal.Decimal) (int, error)
@@ -22,13 +24,17 @@ type IWalletRepo interface {
 	Transfer(ctx context.Context, walletFrom, walletTo int, amount decimal.Decimal) (int, error)
 }
 
+// WalletService shows structure for service of wallets
 type WalletService struct {
-	db *sql.DB
+	db                  *sql.DB
+	walletOperationRepo operations.IWalletOperationRepo
 }
 
-func NewWalletService(db *sql.DB) IWalletRepo {
+// NewWalletService returns instance of WalletService
+func NewWalletService(db *sql.DB, walletOperationRepo operations.IWalletOperationRepo) IWalletRepo {
 	return WalletService{
-		db: db,
+		db:                  db,
+		walletOperationRepo: walletOperationRepo,
 	}
 }
 

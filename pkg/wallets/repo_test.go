@@ -1,6 +1,7 @@
 package wallets
 
 import (
+	"billing_system_test_task/pkg/operations"
 	"context"
 	"database/sql/driver"
 	"fmt"
@@ -658,9 +659,10 @@ func TestWalletRepo(t *testing.T) {
 
 func TestNewWalletService(t *testing.T) {
 	db, _, _ := sqlmock.New()
-	walletsRepo := NewWalletService(db)
+	walletOperation := operations.NewWalletOperationRepo(db)
+	walletsRepo := NewWalletService(db, walletOperation)
 	_, correctType := walletsRepo.(WalletService)
 	if !correctType {
-		t.Errorf("Wrong type of UserService")
+		t.Errorf("Wrong type of WalletOperations")
 	}
 }
