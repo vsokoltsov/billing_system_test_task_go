@@ -1,6 +1,7 @@
 package api
 
 import (
+	"billing_system_test_task/pkg/operations"
 	"billing_system_test_task/pkg/users"
 	"billing_system_test_task/pkg/wallets"
 	"database/sql"
@@ -25,7 +26,8 @@ func SetUpRoutes(pathDelimiter string, sqlDb *sql.DB) *mux.Router {
 
 	api := r.PathPrefix("/api").Subrouter()
 
-	walletsRepo := wallets.NewWalletService(sqlDb)
+	walletOperationRepo := operations.NewWalletOperationRepo(sqlDb)
+	walletsRepo := wallets.NewWalletService(sqlDb, walletOperationRepo)
 	usersRepo := users.NewUsersService(sqlDb, walletsRepo)
 	users := users.UsersHandler{
 		UsersRepo:   usersRepo,
