@@ -46,11 +46,18 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 			rows := sqlmock.NewRows([]string{"id"})
 			rows = rows.AddRow(1)
 
+			operationRows := sqlmock.NewRows([]string{"id"}).AddRow(1)
+
 			// Exec insert wallets
 			mock.
 				ExpectQuery("insert into wallets").
 				WithArgs([]driver.Value{int64(1)}...).
 				WillReturnRows(rows)
+
+			mock.
+				ExpectQuery("insert into wallet_operations").
+				WithArgs([]driver.Value{operations.Create, nil, 1, decimal.NewFromInt(0)}...).
+				WillReturnRows(operationRows)
 
 		},
 	},
@@ -82,8 +89,8 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 			err:         fmt.Errorf("Insert error"),
 		},
 		mockQuery: func(mock sqlmock.Sqlmock) {
-			rows := sqlmock.NewRows([]string{"id"})
-			rows = rows.AddRow(nil).RowError(1, fmt.Errorf("Scan error"))
+			rows := sqlmock.NewRows([]string{"id", "balance"})
+			rows = rows.AddRow(nil, decimal.NewFromInt(0)).RowError(1, fmt.Errorf("Scan error"))
 
 			// Exec insert wallets
 			mock.
@@ -97,6 +104,34 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 		err: fmt.Errorf("Scan error"),
 	},
 	walletRepoTestCase{
+		name:     "Failed wallet creation (Operation create error)",
+		funcName: "Create",
+		queryMock: sqlQueryMock{
+			query:   "insert into wallets",
+			args:    []driver.Value{int64(1)},
+			columns: []string{"user_id"},
+			err:     fmt.Errorf("Insert error"),
+		},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			// Begin transaction
+			rows := sqlmock.NewRows([]string{"id"})
+			rows = rows.AddRow(1)
+
+			// Exec insert wallets
+			mock.
+				ExpectQuery("insert into wallets").
+				WithArgs([]driver.Value{int64(1)}...).
+				WillReturnRows(rows)
+
+			// Commit transaction with error
+
+			mock.
+				ExpectQuery("insert into wallet_operations").
+				WithArgs([]driver.Value{operations.Create, nil, 1, decimal.NewFromInt(0)}...).
+				WillReturnError(fmt.Errorf("Operation error"))
+		},
+	},
+	walletRepoTestCase{
 		name:     "Success wallet enroll",
 		funcName: "Enroll",
 		queryMock: sqlQueryMock{
@@ -104,6 +139,8 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 			args:  []driver.Value{2, decimal.NewFromInt(100)},
 		},
 		mockQuery: func(mock sqlmock.Sqlmock) {
+			operationRows := sqlmock.NewRows([]string{"id"}).AddRow(1)
+
 			// Lock operation
 			mock.
 				ExpectExec("select pg_advisory_lock").
@@ -118,6 +155,11 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 				ExpectExec("update wallets").
 				WithArgs([]driver.Value{decimal.NewFromInt(100), 2}...).
 				WillReturnResult(sqlmock.NewResult(1, 1))
+
+			mock.
+				ExpectQuery("insert into wallet_operations").
+				WithArgs([]driver.Value{operations.Deposit, nil, 2, decimal.NewFromInt(100)}...).
+				WillReturnRows(operationRows)
 
 			// Commit update wallet transaction
 			mock.ExpectCommit()
@@ -300,6 +342,9 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 			args:  []driver.Value{1, 2, decimal.NewFromInt(10)},
 		},
 		mockQuery: func(mock sqlmock.Sqlmock) {
+			sourceOperationRows := sqlmock.NewRows([]string{"id"}).AddRow(1)
+			destinationOperationRows := sqlmock.NewRows([]string{"id"}).AddRow(2)
+
 			// Select source wallet
 			rows := sqlmock.NewRows([]string{"id", "user_id", "balance", "currency"})
 			rows = rows.AddRow(1, 1, 100, "USD")
@@ -328,6 +373,16 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 				ExpectExec("update wallets").
 				WithArgs([]driver.Value{decimal.NewFromInt(10), 2}...).
 				WillReturnResult(sqlmock.NewResult(0, 1))
+
+			mock.
+				ExpectQuery("insert into wallet_operations").
+				WithArgs([]driver.Value{operations.Deposit, 1, 2, decimal.NewFromInt(10)}...).
+				WillReturnRows(sourceOperationRows)
+
+			mock.
+				ExpectQuery("insert into wallet_operations").
+				WithArgs([]driver.Value{operations.Withdrawal, 2, 1, decimal.NewFromInt(10)}...).
+				WillReturnRows(destinationOperationRows)
 
 			// Commit transfer funds transaction
 			mock.ExpectCommit()
@@ -613,8 +668,10 @@ func TestWalletRepo(t *testing.T) {
 				realArgs = append(realArgs, reflect.ValueOf(tx))
 			}
 
+			wos := operations.NewWalletOperationRepo(db)
 			repo := WalletService{
-				db: db,
+				db:                  db,
+				walletOperationRepo: wos,
 			}
 
 			for _, arg := range tc.queryMock.args {

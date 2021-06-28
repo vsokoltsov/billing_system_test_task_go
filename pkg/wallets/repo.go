@@ -6,6 +6,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	"log"
+
 	"github.com/shopspring/decimal"
 )
 
@@ -40,7 +42,11 @@ func NewWalletService(db *sql.DB, walletOperationRepo operations.IWalletOperatio
 
 // Create creates new wallet for user
 func (ws WalletService) Create(ctx context.Context, tx *sql.Tx, userID int64) (int64, error) {
-	var walletID int64
+	var (
+		walletID      int64
+		walletBalance decimal.Decimal
+	)
+
 	stmt, insertErr := tx.QueryContext(
 		ctx,
 		"insert into wallets(user_id) values($1) returning id",
@@ -54,8 +60,13 @@ func (ws WalletService) Create(ctx context.Context, tx *sql.Tx, userID int64) (i
 	for stmt.Next() {
 		scanErr := stmt.Scan(&walletID)
 		if scanErr != nil {
-			return 0, fmt.Errorf("error wallet id retrieving: %s", insertErr)
+			return 0, fmt.Errorf("error wallet id retrieving: %s", scanErr)
 		}
+	}
+
+	_, walletOperationErr := ws.walletOperationRepo.Create(ctx, tx, operations.Create, 0, int(walletID), walletBalance)
+	if walletOperationErr != nil {
+		log.Printf("Error of creating 'Create' wallet operation: %s", walletOperationErr.Error())
 	}
 
 	return walletID, nil
@@ -63,7 +74,6 @@ func (ws WalletService) Create(ctx context.Context, tx *sql.Tx, userID int64) (i
 
 // Enroll updates wallet's balance
 func (ws WalletService) Enroll(ctx context.Context, walletID int, amount decimal.Decimal) (int, error) {
-
 	// Check if amount is less or equal to 0
 	if amount.LessThanOrEqual(decimal.Zero) {
 		return 0, fmt.Errorf("amount should be greater than 0")
@@ -86,11 +96,16 @@ func (ws WalletService) Enroll(ctx context.Context, walletID int, amount decimal
 	tx.ExecContext(ctx, "set transaction isolation level serializable")
 
 	// Update wallet 'balance' column
-	_, updateErr := tx.ExecContext(ctx, "update wallets set balance=balance+$1 where id=$2", amount, walletID)
+	_, updateErr := tx.ExecContext(ctx, "update wallets set balance=balance+$1 where id=$2 returning balance", amount, walletID)
 	if updateErr != nil {
 		tx.Rollback()
 		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, EnrollWallet)
 		return 0, fmt.Errorf("error wallet enrollment: %s", updateErr)
+	}
+
+	_, walletOperationErr := ws.walletOperationRepo.Create(ctx, tx, operations.Deposit, 0, int(walletID), amount)
+	if walletOperationErr != nil {
+		log.Printf("Error of creating 'Create' wallet operation: %s", walletOperationErr.Error())
 	}
 
 	txCommitErr := tx.Commit()
@@ -139,7 +154,6 @@ func (ws WalletService) GetByUserId(ctx context.Context, userID int) (*Wallet, e
 
 // Transfer moves financial resources from one wallet to another
 func (ws WalletService) Transfer(ctx context.Context, walletFrom, walletTo int, amount decimal.Decimal) (int, error) {
-
 	// Receive source wallet
 	sourceWallet, getSourceWalletErr := ws.GetByID(ctx, walletFrom)
 	if getSourceWalletErr != nil {
@@ -180,6 +194,15 @@ func (ws WalletService) Transfer(ctx context.Context, walletFrom, walletTo int, 
 		tx.Rollback()
 		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
 		return 0, fmt.Errorf("error target wallet transfer: %s", updateTargetErr)
+	}
+
+	_, walletDepositOperationErr := ws.walletOperationRepo.Create(ctx, tx, operations.Deposit, walletFrom, walletTo, amount)
+	if walletDepositOperationErr != nil {
+		log.Printf("Error of creating 'Withdrawal' wallet operation: %s", walletDepositOperationErr.Error())
+	}
+	_, walletWithdrawalOperationErr := ws.walletOperationRepo.Create(ctx, tx, operations.Withdrawal, walletTo, walletFrom, amount)
+	if walletWithdrawalOperationErr != nil {
+		log.Printf("Error of creating 'Withdrawal' wallet operation: %s", walletWithdrawalOperationErr.Error())
 	}
 
 	// Commit transaction

@@ -39,6 +39,23 @@ var operationRepoTestCases = []operationRepoTestCase{
 		},
 	},
 	operationRepoTestCase{
+		name:     "Success operation creation (walletFrom is 0)",
+		funcName: "Create",
+		args:     []driver.Value{Create, 0, 2, decimal.NewFromInt(0)},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			// Begin transaction
+			rows := sqlmock.NewRows([]string{"id"})
+			rows = rows.AddRow(1)
+
+			// Exec insert wallets
+			mock.
+				ExpectQuery("insert into wallet_operations").
+				WithArgs([]driver.Value{Create, nil, 2, decimal.NewFromInt(0)}...).
+				WillReturnRows(rows)
+
+		},
+	},
+	operationRepoTestCase{
 		name:     "Failed wallet creation (insert error)",
 		funcName: "Create",
 		args:     []driver.Value{Create, 1, 2, decimal.NewFromInt(0)},

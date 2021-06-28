@@ -30,11 +30,21 @@ func NewWalletOperationRepo(db *sql.DB) IWalletOperationRepo {
 }
 
 func (wor WalletOperationService) Create(ctx context.Context, tx *sql.Tx, operation string, walletFrom, walletTo int, amount decimal.Decimal) (int, error) {
-	var walletOperationID int
+	var (
+		walletOperationID int
+		walletFromValue   interface{}
+	)
+
+	if walletFrom == 0 {
+		walletFromValue = nil
+	} else {
+		walletFromValue = walletFrom
+	}
+
 	stmt, insertErr := tx.QueryContext(
 		ctx,
 		"insert into wallet_operations(operation, wallet_from, wallet_to, amount) values($1, $2, $3, $4) returning id",
-		operation, walletFrom, walletTo, amount,
+		operation, walletFromValue, walletTo, amount,
 	)
 
 	if insertErr != nil {
