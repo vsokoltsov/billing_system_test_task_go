@@ -3,9 +3,9 @@ package operations
 import (
 	"bufio"
 	"context"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -28,20 +28,49 @@ type OperationsHandler struct {
 // @Header 200 {string} Expires "0"
 func (oh *OperationsHandler) List(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
+	var (
+		format      = "json"
+		csvWriter   *csv.Writer
+		headers     []string
+		f           *os.File
+		fileOpenErr error
+	)
 
-	_, b, _, _ := runtime.Caller(0)
-	basepath := filepath.Dir(b)
-	f, err := os.OpenFile(filepath.Join(basepath, "report.txt"), os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
-	if err != nil {
-		fmt.Println(err)
+	format = r.FormValue("format")
+	if format == "" {
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	defer f.Close()
+
+	fileName := "report." + format
+	_, b, _, _ := runtime.Caller(0)
+	basepath := filepath.Dir(b)
+	fullPath := filepath.Join(basepath, fileName)
+	f, fileOpenErr = os.OpenFile(fullPath, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
+	if fileOpenErr != nil {
+		fmt.Println(fileOpenErr)
+		return
+	}
+	defer func(filePathInfo string, fileData *os.File) {
+		fileData.Close()
+		os.Remove(filePathInfo)
+	}(fullPath, f)
 
 	rows, rowsErr := oh.OperationsRepo.List(ctx)
 	if rowsErr != nil {
 		fmt.Println(rowsErr)
 		return
+	}
+	if format == "csv" {
+		csvWriter = csv.NewWriter(f)
+		// defer func(writer *csv.Writer) {
+		// 	writer.Flush()
+		// }(csvWriter)
+
+		headers = []string{
+			"id", "operation", "wallet_from", "wallet_to", "amount", "created_at",
+		}
+		csvWriter.Write(headers)
 	}
 
 	for rows.Next() {
@@ -51,17 +80,33 @@ func (oh *OperationsHandler) List(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("SCAN ERROR: ", scanErr)
 			return
 		}
-		jsonBytes, jsonMarshallErr := json.Marshal(operation)
-		if jsonMarshallErr != nil {
-			fmt.Println("SCAN ERROR: ", jsonMarshallErr)
-			return
-		}
-		newLine := []byte("\n")
-		_, writeErr := f.Write(jsonBytes)
-		f.Write(newLine)
-		if writeErr != nil {
-			fmt.Println("Write err: ", writeErr)
-			return
+		if format == "json" {
+			jsonBytes, jsonMarshallErr := json.Marshal(operation)
+			if jsonMarshallErr != nil {
+				fmt.Println("SCAN ERROR: ", jsonMarshallErr)
+				return
+			}
+			newLine := []byte("\n")
+			_, writeErr := f.Write(jsonBytes)
+			f.Write(newLine)
+			if writeErr != nil {
+				fmt.Println("Write err: ", writeErr)
+				return
+			}
+		} else if format == "csv" && csvWriter != nil {
+			idStr := strconv.Itoa(operation.ID)
+			walletFromStr := strconv.Itoa(int(operation.WalletFrom.Int32))
+			walletToStr := strconv.Itoa(int(operation.WalletTo))
+			amountStr := operation.Amount.String()
+			createdAtStr := operation.CreatedAt.String()
+			row := []string{
+				idStr,
+				walletFromStr,
+				walletToStr,
+				amountStr,
+				createdAtStr,
+			}
+			csvWriter.Write(row)
 		}
 	}
 
@@ -69,6 +114,7 @@ func (oh *OperationsHandler) List(w http.ResponseWriter, r *http.Request) {
 	f.Read(header)
 	stat, _ := f.Stat()
 	size := strconv.FormatInt(stat.Size(), 10)
+	contentType := http.DetectContentType(header)
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
@@ -76,9 +122,11 @@ func (oh *OperationsHandler) List(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(line)
 	}
 	f.Seek(0, 0)
-	w.Header().Set("Content-Disposition", "attachment; filename="+"report.txt")
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
+	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Content-Length", size)
-
-	io.Copy(w, f)
+	if csvWriter != nil {
+		csvWriter.Flush()
+	}
+	http.ServeFile(w, r, fullPath)
 }
