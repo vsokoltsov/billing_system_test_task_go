@@ -29,17 +29,40 @@ type OperationsHandler struct {
 func (oh *OperationsHandler) List(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	var (
-		format      = "json"
+		format      string
 		csvWriter   *csv.Writer
 		headers     []string
 		f           *os.File
 		fileOpenErr error
+		listParams  *ListParams
 	)
+	v := r.URL.Query()
 
-	format = r.FormValue("format")
+	format = v.Get("format")
+	pageStr := v.Get("page")
+	perPageStr := v.Get("per_page")
+
 	if format == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		format = "json"
+	}
+
+	if pageStr != "" && perPageStr != "" {
+		page, pageConvError := strconv.Atoi(pageStr)
+		if pageConvError != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		perPage, perPageConvError := strconv.Atoi(perPageStr)
+		if perPageConvError != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		listParams = &ListParams{
+			page:    page,
+			perPage: perPage,
+		}
 	}
 
 	fileName := "report." + format
@@ -56,16 +79,13 @@ func (oh *OperationsHandler) List(w http.ResponseWriter, r *http.Request) {
 		os.Remove(filePathInfo)
 	}(fullPath, f)
 
-	rows, rowsErr := oh.OperationsRepo.List(ctx)
+	rows, rowsErr := oh.OperationsRepo.List(ctx, listParams)
 	if rowsErr != nil {
 		fmt.Println(rowsErr)
 		return
 	}
 	if format == "csv" {
 		csvWriter = csv.NewWriter(f)
-		// defer func(writer *csv.Writer) {
-		// 	writer.Flush()
-		// }(csvWriter)
 
 		headers = []string{
 			"id", "operation", "wallet_from", "wallet_to", "amount", "created_at",

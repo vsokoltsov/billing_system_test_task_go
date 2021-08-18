@@ -43,7 +43,7 @@ func SetUpRoutes(pathDelimiter string, sqlDb *sql.DB) *mux.Router {
 	api.HandleFunc("/users/", users.Create).Methods("POST").Name("CREATE_USER")
 	api.HandleFunc("/users/{id}/enroll/", users.Enroll).Methods("POST").Name("ENROLL_USER_WALLET")
 	api.HandleFunc("/wallets/transfer/", wallets.Transfer).Methods("POST").Name("Transfer funds")
-	api.HandleFunc("/operations/", operations.List).Queries("format", "{format}").Methods("GET").Name("OPERATIONS_LIST")
+	api.HandleFunc("/operations/", operations.List).Methods("GET").Name("OPERATIONS_LIST")
 	r.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)
 	return r
 }

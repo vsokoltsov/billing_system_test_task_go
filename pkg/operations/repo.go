@@ -17,11 +17,16 @@ const (
 
 type IWalletOperationRepo interface {
 	Create(ctx context.Context, tx *sql.Tx, operation string, walletFrom, walletTo int, amount decimal.Decimal) (int, error)
-	List(ctx context.Context) (*sql.Rows, error)
+	List(ctx context.Context, params *ListParams) (*sql.Rows, error)
 }
 
 type WalletOperationService struct {
 	db *sql.DB
+}
+
+type ListParams struct {
+	page    int
+	perPage int
 }
 
 func NewWalletOperationRepo(db *sql.DB) IWalletOperationRepo {
@@ -62,6 +67,17 @@ func (wor WalletOperationService) Create(ctx context.Context, tx *sql.Tx, operat
 	return walletOperationID, nil
 }
 
-func (wor WalletOperationService) List(ctx context.Context) (*sql.Rows, error) {
-	return wor.db.QueryContext(ctx, "select id, operation, wallet_from, wallet_to, amount, created_at from wallet_operations")
+func (wor WalletOperationService) List(ctx context.Context, params *ListParams) (*sql.Rows, error) {
+	if params != nil {
+		return wor.db.QueryContext(
+			ctx,
+			"select id, operation, wallet_from, wallet_to, amount, created_at from wallet_operations offset $1 limit $2",
+			params.page*params.perPage,
+			params.perPage,
+		)
+	}
+	return wor.db.QueryContext(
+		ctx,
+		"select id, operation, wallet_from, wallet_to, amount, created_at from wallet_operations",
+	)
 }
