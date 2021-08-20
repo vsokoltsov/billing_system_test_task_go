@@ -198,7 +198,7 @@ func (ws WalletService) Transfer(ctx context.Context, walletFrom, walletTo int, 
 
 	_, walletDepositOperationErr := ws.walletOperationRepo.Create(ctx, tx, operations.Deposit, walletFrom, walletTo, amount)
 	if walletDepositOperationErr != nil {
-		log.Printf("Error of creating 'Withdrawal' wallet operation: %s", walletDepositOperationErr.Error())
+		log.Printf("Error of creating 'Deposit' wallet operation: %s", walletDepositOperationErr.Error())
 	}
 	_, walletWithdrawalOperationErr := ws.walletOperationRepo.Create(ctx, tx, operations.Withdrawal, walletTo, walletFrom, amount)
 	if walletWithdrawalOperationErr != nil {
