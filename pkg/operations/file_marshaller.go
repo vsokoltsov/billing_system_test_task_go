@@ -1,3 +1,14 @@
+package operations
+
+import (
+	"encoding/csv"
+	"encoding/json"
+	"fmt"
+	"os"
+	"strconv"
+	"sync"
+)
+
 type IFileMarshaller interface {
 	MarshallOperation(operation *WalletOperation) (*MarshalledResult, error)
 	WriteToFile(mr *MarshalledResult) error
