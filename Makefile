@@ -5,7 +5,8 @@ SHELL := /bin/bash
 .PHONY: coverage
 coverage:
 	@echo "Create coverprofile"
-	@exec go test -coverprofile=cover.out -v ./pkg/...
+	@exec go test -coverprofile=cover.out.tmp -v ./pkg/...
+	@exec cat cover.out.tmp | grep -v "_mock.go" > cover.out
 	@echo "Generate cover.html"
 	@exec go tool cover -html=cover.out -o cover.html
 

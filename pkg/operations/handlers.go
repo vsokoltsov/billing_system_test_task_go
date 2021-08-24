@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -97,8 +98,9 @@ func (oh *OperationsHandler) List(w http.ResponseWriter, r *http.Request) {
 		}
 	} else if format == "json" {
 		fileHandler = &JSONHandler{
-			file: f,
-			mu:   fileMutex,
+			file:     f,
+			mu:       fileMutex,
+			marshall: json.Marshal,
 		}
 	}
 	readPipe := ReadPipe{

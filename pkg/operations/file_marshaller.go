@@ -2,9 +2,8 @@ package operations
 
 import (
 	"encoding/csv"
-	"encoding/json"
 	"fmt"
-	"os"
+	"io"
 	"strconv"
 	"sync"
 )
@@ -15,12 +14,13 @@ type IFileMarshaller interface {
 }
 
 type JSONHandler struct {
-	file *os.File
-	mu   *sync.Mutex
+	file     io.Writer
+	mu       *sync.Mutex
+	marshall func(v interface{}) ([]byte, error)
 }
 
 func (jh *JSONHandler) MarshallOperation(operation *WalletOperation) (*MarshalledResult, error) {
-	jsonBytes, jsonMarshallErr := json.Marshal(operation)
+	jsonBytes, jsonMarshallErr := jh.marshall(operation)
 	if jsonMarshallErr != nil {
 		return nil, fmt.Errorf("error of json marshalling: %s", jsonMarshallErr)
 	}
@@ -33,11 +33,13 @@ func (jh *JSONHandler) MarshallOperation(operation *WalletOperation) (*Marshalle
 }
 
 func (jh *JSONHandler) WriteToFile(mr *MarshalledResult) error {
+	var syncErr error
 	bytesData := mr.data.([]byte)
 	jh.mu.Lock()
-	jh.file.Sync()
-	jh.file.Write(bytesData)
-	jh.file.Sync()
+	_, writeErr := jh.file.Write(bytesData)
+	if writeErr != nil {
+		return fmt.Errorf("write file error: %s", syncErr)
+	}
 	jh.mu.Unlock()
 	return nil
 }
@@ -70,7 +72,10 @@ func (ch *CSVHandler) MarshallOperation(operation *WalletOperation) (*Marshalled
 func (ch *CSVHandler) WriteToFile(mr *MarshalledResult) error {
 	row := mr.data.([]string)
 	ch.mu.Lock()
-	ch.csvWriter.Write(row)
+	csvWriteErr := ch.csvWriter.Write(row)
+	if csvWriteErr != nil {
+		return fmt.Errorf("error fo csv writing: %s", csvWriteErr)
+	}
 	ch.mu.Unlock()
 	return nil
 }
