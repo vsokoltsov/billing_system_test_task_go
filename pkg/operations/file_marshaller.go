@@ -1,7 +1,6 @@
 package operations
 
 import (
-	"encoding/csv"
 	"fmt"
 	"io"
 	"strconv"
@@ -11,6 +10,10 @@ import (
 type IFileMarshaller interface {
 	MarshallOperation(operation *WalletOperation) (*MarshalledResult, error)
 	WriteToFile(mr *MarshalledResult) error
+}
+
+type CSVWriter interface {
+	Write(record []string) error
 }
 
 type JSONHandler struct {
@@ -45,7 +48,7 @@ func (jh *JSONHandler) WriteToFile(mr *MarshalledResult) error {
 }
 
 type CSVHandler struct {
-	csvWriter *csv.Writer
+	csvWriter CSVWriter
 	mu        *sync.Mutex
 }
 

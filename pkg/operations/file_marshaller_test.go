@@ -1,11 +1,16 @@
 package operations
 
 import (
+	"database/sql"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"os"
 	"sync"
 	"testing"
+	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 func TestJSONHandlerFileMarshallerSuccessMarshallOperation(t *testing.T) {
@@ -63,8 +68,14 @@ func TestJSONHandlerFileMarshallerSuccessWriteFile(t *testing.T) {
 
 type ErrorFile struct{}
 
+type ErrorCSVFile struct{}
+
 func (ef ErrorFile) Write(p []byte) (int, error) {
 	return 0, fmt.Errorf("Error of file writing")
+}
+
+func (ecf ErrorCSVFile) Write(record []string) error {
+	return fmt.Errorf("Error of file writing")
 }
 
 func TestJSONHandlerFileMarshallFailedWriteFile(t *testing.T) {
@@ -82,5 +93,73 @@ func TestJSONHandlerFileMarshallFailedWriteFile(t *testing.T) {
 	err := handler.WriteToFile(mr)
 	if err == nil {
 		t.Errorf("Expected receive error, but error received it")
+	}
+}
+
+func TestCSVHandlerFileMarshallSuccessMarshallOperation(t *testing.T) {
+	mu := &sync.Mutex{}
+	operation := &WalletOperation{
+		ID:         1,
+		Operation:  "deposit",
+		WalletFrom: sql.NullInt32{Int32: 1},
+		WalletTo:   1,
+		Amount:     decimal.NewFromInt(100),
+		CreatedAt:  time.Now(),
+	}
+	csvWriter := csv.NewWriter(os.Stdout)
+	handler := CSVHandler{
+		mu:        mu,
+		csvWriter: csvWriter,
+	}
+	mr, mrErr := handler.MarshallOperation(operation)
+	if mrErr != nil {
+		t.Errorf("Unexpected error: %s", mrErr)
+	}
+	if mr.id != operation.ID {
+		t.Errorf("ID of marshalled result does not matched. Expected: %d, got: %d", operation.ID, mr.id)
+	}
+}
+
+func TestCSVHandlerFileMarshallSuccessWriteFile(t *testing.T) {
+	mu := &sync.Mutex{}
+	operation := &WalletOperation{
+		ID:         1,
+		Operation:  "deposit",
+		WalletFrom: sql.NullInt32{Int32: 1},
+		WalletTo:   1,
+		Amount:     decimal.NewFromInt(100),
+		CreatedAt:  time.Now(),
+	}
+	csvWriter := ErrorCSVFile{}
+	handler := CSVHandler{
+		mu:        mu,
+		csvWriter: csvWriter,
+	}
+	mr, _ := handler.MarshallOperation(operation)
+	writeErr := handler.WriteToFile(mr)
+	if writeErr == nil {
+		t.Errorf("Expected error, got nil")
+	}
+}
+
+func TestCSVHandlerFileMarshallSuccessWroteFile(t *testing.T) {
+	mu := &sync.Mutex{}
+	operation := &WalletOperation{
+		ID:         1,
+		Operation:  "deposit",
+		WalletFrom: sql.NullInt32{Int32: 1},
+		WalletTo:   1,
+		Amount:     decimal.NewFromInt(100),
+		CreatedAt:  time.Now(),
+	}
+	csvWriter := csv.NewWriter(os.Stdout)
+	handler := CSVHandler{
+		mu:        mu,
+		csvWriter: csvWriter,
+	}
+	mr, _ := handler.MarshallOperation(operation)
+	writeErr := handler.WriteToFile(mr)
+	if writeErr != nil {
+		t.Errorf("Expected nil, got error: %s", writeErr)
 	}
 }
