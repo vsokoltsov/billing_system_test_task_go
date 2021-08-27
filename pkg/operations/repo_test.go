@@ -85,6 +85,56 @@ var operationRepoTestCases = []operationRepoTestCase{
 		},
 		err: fmt.Errorf("Scan error"),
 	},
+	operationRepoTestCase{
+		name:     "Success receiving list of items",
+		funcName: "List",
+		args:     []driver.Value{nil},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			// Begin transaction
+			rows := sqlmock.NewRows([]string{"id"})
+			rows = rows.AddRow(1)
+
+			// Exec insert wallets
+			mock.
+				ExpectQuery("select id, operation, wallet_from, wallet_to, amount, created_at from wallet_operations").
+				WillReturnRows(rows)
+
+		},
+	},
+	operationRepoTestCase{
+		name:     "Success receiving list of items with paging",
+		funcName: "List",
+		args:     []driver.Value{&ListParams{page: 1, perPage: 10}},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			// Begin transaction
+			rows := sqlmock.NewRows([]string{"id"})
+			rows = rows.AddRow(1)
+
+			// Exec insert wallets
+			mock.
+				ExpectQuery("select id, operation, wallet_from, wallet_to, amount, created_at from wallet_operations").
+				WithArgs([]driver.Value{0, 10}...).
+				WillReturnRows(rows)
+
+		},
+	},
+	operationRepoTestCase{
+		name:     "Success receiving list of items with paging more than 1",
+		funcName: "List",
+		args:     []driver.Value{&ListParams{page: 3, perPage: 10}},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			// Begin transaction
+			rows := sqlmock.NewRows([]string{"id"})
+			rows = rows.AddRow(1)
+
+			// Exec insert wallets
+			mock.
+				ExpectQuery("select id, operation, wallet_from, wallet_to, amount, created_at from wallet_operations").
+				WithArgs([]driver.Value{20, 10}...).
+				WillReturnRows(rows)
+
+		},
+	},
 }
 
 func TestWalletRepo(t *testing.T) {
@@ -117,7 +167,12 @@ func TestWalletRepo(t *testing.T) {
 			}
 
 			for _, arg := range tc.args {
-				realArgs = append(realArgs, reflect.ValueOf(arg))
+				if arg == nil {
+					pointer := (*ListParams)(nil)
+					realArgs = append(realArgs, reflect.ValueOf(pointer))
+				} else {
+					realArgs = append(realArgs, reflect.ValueOf(arg))
+				}
 			}
 			tc.mockQuery(mock)
 
