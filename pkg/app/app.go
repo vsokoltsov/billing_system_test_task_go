@@ -2,10 +2,12 @@ package app
 
 import (
 	"billing_system_test_task/pkg/api"
+	"context"
 	"database/sql"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
 	"time"
 
@@ -21,6 +23,7 @@ type App struct {
 	pathDelimiter string
 	router        *mux.Router
 	server        *http.Server
+	wait          time.Duration
 }
 
 func (a *App) Initialize(env, host, port, pathDelimiter, dbProvider, sqlDbConnStr string) {
@@ -33,6 +36,7 @@ func (a *App) Initialize(env, host, port, pathDelimiter, dbProvider, sqlDbConnSt
 	a.host = host
 	a.port = port
 	a.pathDelimiter = pathDelimiter
+	a.wait = time.Second * 5
 
 	sqlDB, sqlDbOpenErr = sql.Open(dbProvider, sqlDbConnStr)
 	if sqlDbOpenErr != nil {
@@ -56,5 +60,22 @@ func (a *App) Initialize(env, host, port, pathDelimiter, dbProvider, sqlDbConnSt
 
 func (a *App) Run() {
 	log.Printf("Starting web server on port %s...", a.port)
-	log.Fatal(a.server.ListenAndServe())
+	go func() {
+		if err := a.server.ListenAndServe(); err != nil {
+			log.Println(err)
+		}
+	}()
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+
+	<-c
+
+	ctx, cancel := context.WithTimeout(context.Background(), a.wait)
+	defer cancel()
+
+	a.server.Shutdown(ctx)
+
+	log.Println("Shutting down the service...")
+	os.Exit(0)
 }
