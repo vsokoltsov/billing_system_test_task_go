@@ -1,10 +1,57 @@
 package operations
 
 import (
+	"billing_system_test_task/pkg/pipeline"
 	"context"
 	"fmt"
 	"sync"
 )
+
+type IOperationsProcessor interface {
+	Process(ctx context.Context, or IWalletOperationRepo, listParams *ListParams, marshaller IFileMarshaller) error
+}
+
+type OperationsProcessor struct{}
+
+func (op OperationsProcessor) Process(ctx context.Context, or IWalletOperationRepo, listParams *ListParams, marshaller IFileMarshaller) error {
+	var (
+		wg     = &sync.WaitGroup{}
+		errors = make(chan error, 1)
+	)
+	readPipe := ReadPipe{
+		or:     or,
+		wg:     wg,
+		params: listParams,
+		ctx:    ctx,
+		errors: errors,
+	}
+	marshallPipe := MarshallPipe{
+		wg:     wg,
+		fm:     marshaller,
+		errors: errors,
+	}
+	writePipe := WritePipe{
+		wg:     wg,
+		fm:     marshaller,
+		errors: errors,
+	}
+	pipes := []pipeline.Pipe{
+		readPipe,
+		marshallPipe,
+		writePipe,
+	}
+
+	wg.Add(len(pipes))
+	pipeline.ExecutePipeline(pipes...)
+	wg.Wait()
+
+	select {
+	case err := <-errors:
+		return fmt.Errorf("operations read failed: %s", err)
+	default:
+		return nil
+	}
+}
 
 type ReadPipe struct {
 	or     IWalletOperationRepo

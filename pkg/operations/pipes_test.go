@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -380,5 +381,78 @@ func TestFailedWritePipe(t *testing.T) {
 	err := <-errCh
 	if err == nil {
 		t.Errorf("Expected error, got nil")
+	}
+}
+
+func TestSuccessPipelineRun(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockFileMarshaller := NewMockIFileMarshaller(ctrl)
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	or := NewWalletOperationRepo(db)
+	ctx := context.Background()
+	op := WalletOperation{
+		ID:         1,
+		Operation:  "deposit",
+		WalletFrom: sql.NullInt32{Int32: 1, Valid: true},
+		WalletTo:   2,
+		Amount:     decimal.NewFromInt(100),
+		CreatedAt:  time.Now(),
+	}
+	mr := MarshalledResult{
+		id:   op.ID,
+		data: op,
+	}
+
+	rows := sqlmock.NewRows([]string{"id", "operation", "wallet_from", "wallet_to", "amount", "created_at"})
+	rows = rows.AddRow(op.ID, op.Operation, op.WalletFrom.Int32, op.WalletTo, op.Amount, op.CreatedAt)
+	mock.ExpectQuery("select").WillReturnRows(rows)
+	mockFileMarshaller.EXPECT().MarshallOperation(&op).Return(&mr, nil)
+	mockFileMarshaller.EXPECT().WriteToFile(&mr).Return(nil)
+
+	oProcessor := OperationsProcessor{}
+	processErr := oProcessor.Process(ctx, or, nil, mockFileMarshaller)
+	if processErr != nil {
+		t.Errorf("Unexpected error: %s", processErr)
+	}
+}
+
+func TestFailedPipelineRun(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockFileMarshaller := NewMockIFileMarshaller(ctrl)
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	or := NewWalletOperationRepo(db)
+	ctx := context.Background()
+	op := WalletOperation{
+		ID:         1,
+		Operation:  "deposit",
+		WalletFrom: sql.NullInt32{Int32: 1, Valid: true},
+		WalletTo:   2,
+		Amount:     decimal.NewFromInt(100),
+		CreatedAt:  time.Now(),
+	}
+
+	rows := sqlmock.NewRows([]string{"id", "operation", "wallet_from", "wallet_to", "amount", "created_at"})
+	rows = rows.AddRow(op.ID, op.Operation, op.WalletFrom.Int32, op.WalletTo, op.Amount, op.CreatedAt)
+	mock.ExpectQuery("select").WillReturnRows(rows)
+	mockFileMarshaller.EXPECT().MarshallOperation(&op).Return(nil, fmt.Errorf("marshall error"))
+
+	oProcessor := OperationsProcessor{}
+	processErr := oProcessor.Process(ctx, or, nil, mockFileMarshaller)
+	if processErr == nil {
+		t.Errorf("Expected error, got nil")
+	}
+
+	if !strings.Contains(processErr.Error(), "marshall error") {
+		t.Errorf("Wrong error message string")
 	}
 }
