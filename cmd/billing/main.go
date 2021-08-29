@@ -53,11 +53,11 @@ func main() {
 
 	var (
 		env           = getEnv("APP_ENV", "development")
-		host          = getEnv("APP_HOST", "localhost")
+		host          = getEnv("APP_HOST", "app")
 		port          = getEnv("APP_PORT", "8000")
 		sqlDbUser     = getEnv("DB_USER", "user")
 		sqlDbPassword = getEnv("DB_PASSWORD", "password")
-		sqlDbHost     = getEnv("DB_HOST", "localhost")
+		sqlDbHost     = getEnv("DB_HOST", "postgres")
 		sqlDbPort     = getEnv("DB_PORT", "3306")
 		sqlDbName     = getEnv("POSTGRES_DB", "billing")
 		dbProvider    = getEnv("DB_PROVIDER", "postgres")

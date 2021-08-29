@@ -1,6 +1,21 @@
 version: "3.9"
 
 services:
+  app:
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+    container_name: app
+    ports:
+      - 8000:8000
+    depends_on:
+      - postgres
+    volumes:
+      - ./:/app
+    env_file: .env
+    # networks:
+    #   - dev
+
   postgres:
     image: postgres
     container_name: billing_db
@@ -10,8 +25,8 @@ services:
     volumes:
       - go_volume:/var/lib/postgresql
       - ./postgresql.conf:/var/lib/postgresql/data/postgresql.conf
-    networks:
-      - dev
+    # networks:
+    #   - dev
 
   pgadmin:
     container_name: pgadmin
@@ -21,8 +36,8 @@ services:
       - "5050:80"
     depends_on:
       - postgres
-    networks:
-      - dev
+    # networks:
+    #   - dev
 
 volumes:
   go_volume:

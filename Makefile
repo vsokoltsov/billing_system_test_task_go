@@ -14,3 +14,8 @@ coverage:
 swagger:
 	@echo "Generate Swagger documentation"
 	@exec ~/go/bin/swag init -g pkg/api/api.go
+
+.PHONY: build
+build:
+	@echo "Build application server"
+	@exec go build -o ./tmp/app/server cmd/billing/main.go
