@@ -1,5 +1,7 @@
 # Billing system test task
 
+[![Go](https://github.com/vsokoltsov/billing_system_test_task_go/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/vsokoltsov/billing_system_test_task_go/actions/workflows/go.yml)
+
 ## How to run
 
 1. Populate `.env` file with necessary variables (you can find them in `.env.sample`)
