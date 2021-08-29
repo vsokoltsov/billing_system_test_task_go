@@ -1,22 +1,27 @@
 package operations
 
 import (
-	"billing_system_test_task/pkg/pipeline"
-	"bufio"
+	"billing_system_test_task/pkg/utils"
 	"context"
-	"encoding/csv"
-	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
-	"path/filepath"
-	"runtime"
 	"strconv"
-	"sync"
 )
 
 type OperationsHandler struct {
-	OperationsRepo IWalletOperationRepo
+	or IWalletOperationRepo
+	op IOperationsProcessor
+	pr IQueryParamsReader
+	fh IFileHandling
+}
+
+func NewOperationsHandler(or IWalletOperationRepo, pr IQueryParamsReader, fh IFileHandling, op IOperationsProcessor) OperationsHandler {
+	return OperationsHandler{
+		or: or,
+		pr: pr,
+		fh: fh,
+		op: op,
+	}
 }
 
 // Create godoc
@@ -30,122 +35,50 @@ type OperationsHandler struct {
 // @Header 200 {string} Expires "0"
 func (oh *OperationsHandler) List(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-	var (
-		format         string
-		csvWriter      *csv.Writer
-		headers        []string
-		f              *os.File
-		fileOpenErr    error
-		listParams     *ListParams
-		operationsChan = make(chan *WalletOperation, 1)
-		waitGroup      = &sync.WaitGroup{}
-		fileMutex      = &sync.Mutex{}
-		fileHandler    IFileMarshaller
-	)
+
 	v := r.URL.Query()
-
-	format = v.Get("format")
-	pageStr := v.Get("page")
-	perPageStr := v.Get("per_page")
-
-	if format == "" {
-		format = "json"
-	}
-
-	if pageStr != "" && perPageStr != "" {
-		page, pageConvError := strconv.Atoi(pageStr)
-		if pageConvError != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		perPage, perPageConvError := strconv.Atoi(perPageStr)
-		if perPageConvError != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		listParams = &ListParams{
-			page:    page,
-			perPage: perPage,
-		}
-	}
-
-	fileName := "report." + format
-	_, b, _, _ := runtime.Caller(0)
-	basepath := filepath.Dir(b)
-	fullPath := filepath.Join(basepath, fileName)
-	f, fileOpenErr = os.OpenFile(fullPath, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
-	if fileOpenErr != nil {
-		fmt.Println(fileOpenErr)
+	queryParams, qpErr := oh.pr.Parse(v)
+	if qpErr != nil {
+		utils.JsonResponseError(w, http.StatusBadRequest, qpErr.Error())
 		return
 	}
-	defer func(filePathInfo string, fileData *os.File) {
-		fileData.Close()
-		os.Remove(filePathInfo)
-	}(fullPath, f)
 
-	if format == "csv" {
-		csvWriter = csv.NewWriter(f)
-
-		headers = []string{
-			"id", "operation", "wallet_from", "wallet_to", "amount", "created_at",
-		}
-		csvWriter.Write(headers)
-		fileHandler = &CSVHandler{
-			csvWriter: csvWriter,
-			mu:        fileMutex,
-		}
-	} else if format == "json" {
-		fileHandler = &JSONHandler{
-			file:     f,
-			mu:       fileMutex,
-			marshall: json.Marshal,
-		}
-	}
-	readPipe := ReadPipe{
-		or:     oh.OperationsRepo,
-		oc:     operationsChan,
-		wg:     waitGroup,
-		params: listParams,
-		ctx:    ctx,
-	}
-	MarshallPipe := MarshallPipe{
-		wg: waitGroup,
-		fm: fileHandler,
-	}
-	WritePipe := WritePipe{
-		wg: waitGroup,
-		fm: fileHandler,
-	}
-	pipes := []pipeline.Pipe{
-		readPipe,
-		MarshallPipe,
-		WritePipe,
+	fileParams, fileCreateErr := oh.fh.Create(queryParams.format)
+	if fileCreateErr != nil {
+		utils.JsonResponseError(w, http.StatusBadRequest, fileCreateErr.Error())
+		return
 	}
 
-	waitGroup.Add(3)
-	pipeline.ExecutePipeline(pipes...)
+	defer func(path string, f *os.File) {
+		f.Close()
+		os.Remove(path)
+	}(fileParams.path, fileParams.f)
 
-	waitGroup.Wait()
+	fileHandler := oh.fh.CreateMarshaller(
+		fileParams.f,
+		queryParams.format,
+		fileParams.csvWriter,
+	)
+
+	processErr := oh.op.Process(ctx, oh.or, queryParams.listParams, fileHandler)
+	if processErr != nil {
+		utils.JsonResponseError(w, http.StatusBadRequest, processErr.Error())
+		return
+	}
 
 	header := make([]byte, 512)
-	f.Read(header)
-	stat, _ := f.Stat()
+	fileParams.f.Read(header)
+	stat, _ := fileParams.f.Stat()
 	size := strconv.FormatInt(stat.Size(), 10)
 	contentType := http.DetectContentType(header)
-
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := scanner.Text()
-		fmt.Println(line)
-	}
-	f.Seek(0, 0)
-	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
+	fileParams.f.Seek(0, 0)
+	w.Header().Set("Content-Disposition", "attachment; filename="+fileParams.name)
 	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Content-Length", size)
-	if csvWriter != nil {
-		csvWriter.Flush()
+	w.WriteHeader(http.StatusOK)
+	if fileParams.csvWriter != nil {
+		fileParams.csvWriter.Flush()
 	}
-	http.ServeFile(w, r, fullPath)
+
+	http.ServeFile(w, r, fileParams.path)
 }
