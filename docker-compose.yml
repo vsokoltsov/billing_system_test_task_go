@@ -47,7 +47,7 @@ services:
     ports:
       - 9090:9090
     volumes:
-      - ./prom/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./metrics/prom/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
       # - ./prom/rules.yml:/etc/prometheus/rules.yml
 
@@ -57,10 +57,10 @@ services:
     ports:
       - 3000:3000
     volumes:
-      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - ./grafana/config.ini:/etc/grafana/config.ini
-      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
-      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - ./metrics/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./metrics/grafana/config.ini:/etc/grafana/config.ini
+      - ./metrics/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./metrics/grafana/dashboards:/var/lib/grafana/dashboards
 
 volumes:
   go_volume: {}
