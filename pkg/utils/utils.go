@@ -2,6 +2,8 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -17,6 +19,7 @@ type ErrorMsg struct {
 }
 
 func JsonResponseError(w http.ResponseWriter, status int, message string) {
+	log.Println(fmt.Sprintf("[ERROR]: %s", message))
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(map[string]string{
 		"message": message,

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -38,6 +39,7 @@ func (wh *WalletsHandler) Transfer(w http.ResponseWriter, r *http.Request) {
 	// Validate body parameters
 	formError := walletForm.Submit()
 	if formError != nil {
+		log.Println(fmt.Sprintf("[ERROR] Transfer error - %s", *formError))
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
 		return

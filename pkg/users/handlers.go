@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -43,6 +44,7 @@ func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 	// Validate body parameters
 	formError := userForm.Submit()
 	if formError != nil {
+		log.Println(fmt.Sprintf("[ERROR] Create user: %s", formError))
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
 		return
@@ -50,14 +52,12 @@ func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	userID, createdUserError := uh.UsersRepo.Create(ctx, userForm.Email)
 	if createdUserError != nil {
-		w.WriteHeader(http.StatusBadRequest)
 		utils.JsonResponseError(w, http.StatusBadRequest, createdUserError.Error())
 		return
 	}
 
 	user, getUserError := uh.UsersRepo.GetByID(ctx, int(userID))
 	if getUserError != nil {
-		w.WriteHeader(http.StatusBadRequest)
 		utils.JsonResponseError(w, http.StatusBadRequest, getUserError.Error())
 		return
 	}
@@ -113,6 +113,7 @@ func (uh *UsersHandler) Enroll(w http.ResponseWriter, r *http.Request) {
 	// Validate body parameters
 	formError := enrollForm.Submit()
 	if formError != nil {
+		log.Println(fmt.Sprintf("[ERROR] Enroll user wallet: %s", formError))
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
 		return
