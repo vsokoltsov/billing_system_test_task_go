@@ -105,43 +105,51 @@ import (
         "sync"
 )
 
+// IFileHandling represents interface for file handler
 type IFileHandling interface {
         Create(format string) (*FileParams, error)
-        CreateMarshaller(file *os.File, format string, csvWriter *csv.Writer) IFileMarshaller
+        CreateMarshaller(file *os.File, format string, csvWriter CSVWriter) (IFileMarshaller, error)
 }
 
+// IFileStorage represents interface for file storage
 type IFileStorage interface {
         Create(path string, flag int, perm os.FileMode) (*os.File, error)
 }
 
+// FileHandler implements IFileHandling interface
 type FileHandler struct {
         fileStorage IFileStorage
 }
 
+// FileStorage implements IFileStorage interface
 type FileStorage struct{}
 
+// NewFileHandler returns new instance of FileHandler
 func NewFileHandler(storage IFileStorage) FileHandler <span class="cov8" title="1">{
         return FileHandler{
                 fileStorage: storage,
         }
 }</span>
 
+// Create creates new file
 func (fs FileStorage) Create(path string, flag int, perm os.FileMode) (*os.File, error) <span class="cov8" title="1">{
         return os.OpenFile(path, flag, perm)
 }</span>
 
+// FileParams represents information about created file
 type FileParams struct {
         f         *os.File
         path      string
         name      string
-        csvWriter *csv.Writer
+        csvWriter CSVWriter
 }
 
+// Create file with attributes
 func (fh FileHandler) Create(format string) (*FileParams, error) <span class="cov8" title="1">{
         var (
                 path      string
                 name      string
-                csvWriter *csv.Writer
+                csvWriter CSVWriter
         )
 
         name = "report." + format
@@ -165,7 +173,8 @@ func (fh FileHandler) Create(format string) (*FileParams, error) <span class="co
         }, nil</span>
 }
 
-func (fh FileHandler) CreateMarshaller(file *os.File, format string, csvWriter *csv.Writer) IFileMarshaller <span class="cov8" title="1">{
+// CreateMarshaller returns file marshaller for particular format
+func (fh FileHandler) CreateMarshaller(file *os.File, format string, csvWriter CSVWriter) (IFileMarshaller, error) <span class="cov8" title="1">{
         var (
                 mu          = &amp;sync.Mutex{}
                 fileHandler IFileMarshaller
@@ -175,19 +184,22 @@ func (fh FileHandler) CreateMarshaller(file *os.File, format string, csvWriter *
                 headers := []string{
                         "id", "operation", "wallet_from", "wallet_to", "amount", "created_at",
                 }
-                csvWriter.Write(headers)
-                fileHandler = &amp;CSVHandler{
+                writeErr := csvWriter.Write(headers)
+                if writeErr != nil </span><span class="cov8" title="1">{
+                        return nil, fmt.Errorf("error fo csv writing: %s", writeErr)
+                }</span>
+                <span class="cov8" title="1">fileHandler = &amp;CSVHandler{
                         csvWriter: csvWriter,
                         mu:        mu,
-                }
-        }</span> else<span class="cov8" title="1"> if format == "json" </span><span class="cov8" title="1">{
+                }</span>
+        } else<span class="cov8" title="1"> if format == "json" </span><span class="cov8" title="1">{
                 fileHandler = &amp;JSONHandler{
                         file:     file,
                         mu:       mu,
                         marshall: json.Marshal,
                 }
         }</span>
-        <span class="cov8" title="1">return fileHandler</span>
+        <span class="cov8" title="1">return fileHandler, nil</span>
 }
 </pre>
 		
@@ -207,6 +219,7 @@ type IFileMarshaller interface {
 
 type CSVWriter interface {
         Write(record []string) error
+        Flush()
 }
 
 type JSONHandler struct {
@@ -294,6 +307,7 @@ type OperationsHandler struct {
         fh IFileHandling
 }
 
+// NewOperationsHandler returns controller instance
 func NewOperationsHandler(or IWalletOperationRepo, pr IQueryParamsReader, fh IFileHandling, op IOperationsProcessor) OperationsHandler <span class="cov8" title="1">{
         return OperationsHandler{
                 or: or,
@@ -309,6 +323,9 @@ func NewOperationsHandler(or IWalletOperationRepo, pr IQueryParamsReader, fh IFi
 // @Tags operations
 // @Accept  json
 // @Produce application/octet-stream
+// @Param format query string false "Report format"
+// @Param page query int false "Page number"
+// @Param per_page query int false "Number of items per page"
 // @Router /api/operations/ [get]
 // @Header 200 {string} Content-Type "application/octet-stream"
 // @Header 200 {string} Expires "0"
@@ -333,24 +350,28 @@ func (oh *OperationsHandler) List(w http.ResponseWriter, r *http.Request) <span 
                 os.Remove(path)
         }</span>(fileParams.path, fileParams.f)
 
-        <span class="cov8" title="1">fileHandler := oh.fh.CreateMarshaller(
+        <span class="cov8" title="1">fileHandler, fileHandlerErr := oh.fh.CreateMarshaller(
                 fileParams.f,
                 queryParams.format,
                 fileParams.csvWriter,
         )
+        if fileHandlerErr != nil </span><span class="cov8" title="1">{
+                utils.JsonResponseError(w, http.StatusBadRequest, fileHandlerErr.Error())
+                return
+        }</span>
 
-        processErr := oh.op.Process(ctx, oh.or, queryParams.listParams, fileHandler)
+        <span class="cov8" title="1">processErr := oh.op.Process(ctx, oh.or, queryParams.listParams, fileHandler)
         if processErr != nil </span><span class="cov8" title="1">{
                 utils.JsonResponseError(w, http.StatusBadRequest, processErr.Error())
                 return
         }</span>
 
         <span class="cov8" title="1">header := make([]byte, 512)
-        fileParams.f.Read(header)
+        _, _ = fileParams.f.Read(header)
         stat, _ := fileParams.f.Stat()
         size := strconv.FormatInt(stat.Size(), 10)
         contentType := http.DetectContentType(header)
-        fileParams.f.Seek(0, 0)
+        _, _ = fileParams.f.Seek(0, 0)
         w.Header().Set("Content-Disposition", "attachment; filename="+fileParams.name)
         w.Header().Set("Content-Type", contentType)
         w.Header().Set("Content-Length", size)
@@ -372,10 +393,12 @@ import (
         "sync"
 )
 
+// IOperationsProcessor defines operations for processing WalletOperation
 type IOperationsProcessor interface {
         Process(ctx context.Context, or IWalletOperationRepo, listParams *ListParams, marshaller IFileMarshaller) error
 }
 
+// OperationsProcessor represents IOperationsProcessor interface
 type OperationsProcessor struct{}
 
 func (op OperationsProcessor) Process(ctx context.Context, or IWalletOperationRepo, listParams *ListParams, marshaller IFileMarshaller) error <span class="cov8" title="1">{
@@ -418,6 +441,7 @@ func (op OperationsProcessor) Process(ctx context.Context, or IWalletOperationRe
         }
 }
 
+// ReadPipe represents reading part of pipeline
 type ReadPipe struct {
         or     IWalletOperationRepo
         errors chan error
@@ -426,6 +450,7 @@ type ReadPipe struct {
         ctx    context.Context
 }
 
+// Call reads rows from database and pass them further throught the pipeline
 func (rp ReadPipe) Call(in, out chan interface{}) <span class="cov8" title="1">{
         defer rp.wg.Done()
         var counter int
@@ -454,12 +479,14 @@ func (rp ReadPipe) Call(in, out chan interface{}) <span class="cov8" title="1">{
         }</span>
 }
 
+// MarshallPipe represents marshalling part of pipeline (to csv or json)
 type MarshallPipe struct {
         wg     *sync.WaitGroup
         fm     IFileMarshaller
         errors chan error
 }
 
+// Call marshall received rows to csv or json
 func (mp MarshallPipe) Call(in, out chan interface{}) <span class="cov8" title="1">{
         defer mp.wg.Done()
 
@@ -480,12 +507,14 @@ func (mp MarshallPipe) Call(in, out chan interface{}) <span class="cov8" title="
         }
 }
 
+// WritePipe represents writing to file part of pipeline
 type WritePipe struct {
         wg     *sync.WaitGroup
         fm     IFileMarshaller
         errors chan error
 }
 
+// Call write receive marshalled items to file
 func (wp WritePipe) Call(in, out chan interface{}) <span class="cov8" title="1">{
         defer wp.wg.Done()
 
@@ -515,17 +544,21 @@ import (
         "strconv"
 )
 
+// IQueryParamsReader represents actions for query parameters reading
 type IQueryParamsReader interface {
         Parse(query url.Values) (*QueryParams, error)
 }
 
+// QueryParams represents parameters for
 type QueryParams struct {
         format     string
         listParams *ListParams
 }
 
+// QueryParams implements IQueryParamsReader interface
 type QueryParamsReader struct{}
 
+// Parse returns given URL query parameters
 func (qpr QueryParamsReader) Parse(query url.Values) (*QueryParams, error) <span class="cov8" title="1">{
         var (
                 format string
@@ -777,29 +810,25 @@ func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) <span cla
         <span class="cov8" title="1">formError := userForm.Submit()
         if formError != nil </span><span class="cov8" title="1">{
                 w.WriteHeader(http.StatusBadRequest)
-                json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
+                _ = json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
                 return
         }</span>
 
         <span class="cov8" title="1">userID, createdUserError := uh.UsersRepo.Create(ctx, userForm.Email)
         if createdUserError != nil </span><span class="cov8" title="1">{
                 w.WriteHeader(http.StatusBadRequest)
-                json.NewEncoder(w).Encode(map[string]string{
-                        "message": createdUserError.Error(),
-                })
+                utils.JsonResponseError(w, http.StatusBadRequest, createdUserError.Error())
                 return
         }</span>
 
         <span class="cov8" title="1">user, getUserError := uh.UsersRepo.GetByID(ctx, int(userID))
         if getUserError != nil </span><span class="cov8" title="1">{
                 w.WriteHeader(http.StatusBadRequest)
-                json.NewEncoder(w).Encode(map[string]string{
-                        "message": getUserError.Error(),
-                })
+                utils.JsonResponseError(w, http.StatusBadRequest, getUserError.Error())
                 return
         }</span>
         <span class="cov8" title="1">w.WriteHeader(http.StatusCreated)
-        json.NewEncoder(w).Encode(UserSerializer{
+        _ = json.NewEncoder(w).Encode(UserSerializer{
                 ID:       user.ID,
                 Email:    user.Email,
                 Balance:  user.Wallet.Balance,
@@ -851,7 +880,7 @@ func (uh *UsersHandler) Enroll(w http.ResponseWriter, r *http.Request) <span cla
         <span class="cov8" title="1">formError := enrollForm.Submit()
         if formError != nil </span><span class="cov8" title="1">{
                 w.WriteHeader(http.StatusBadRequest)
-                json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
+                _ = json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
                 return
         }</span>
 
@@ -874,7 +903,7 @@ func (uh *UsersHandler) Enroll(w http.ResponseWriter, r *http.Request) <span cla
         }</span>
 
         <span class="cov8" title="1">w.WriteHeader(http.StatusOK)
-        json.NewEncoder(w).Encode(UserSerializer{
+        _ = json.NewEncoder(w).Encode(UserSerializer{
                 ID:       user.ID,
                 Email:    user.Email,
                 Balance:  user.Wallet.Balance,
@@ -996,15 +1025,15 @@ func (ds UsersService) Create(ctx context.Context, email string) (int64, error) 
         if transactionErr != nil </span><span class="cov8" title="1">{
                 return 0, fmt.Errorf("Error of transaction initialization: %s", transactionErr)
         }</span>
-        <span class="cov8" title="1">transaction.ExecContext(ctx, "set transaction isolation level serializable")
+        <span class="cov8" title="1">_, _ = transaction.ExecContext(ctx, "set transaction isolation level serializable")
 
         var userID int
         // Creates new user
         statement, insertErr := transaction.QueryContext(ctx, "insert into users(\"email\") values($1) returning id", email)
 
         if insertErr != nil </span><span class="cov8" title="1">{
-                transaction.Rollback()
-                conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
+                _ = transaction.Rollback()
+                _, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
                 return 0, fmt.Errorf("Error user creation: %s", insertErr)
         }</span>
         <span class="cov8" title="1">defer statement.Close()
@@ -1012,8 +1041,8 @@ func (ds UsersService) Create(ctx context.Context, email string) (int64, error) 
         for statement.Next() </span><span class="cov8" title="1">{
                 userIDErr := statement.Scan(&amp;userID)
                 if userIDErr != nil </span><span class="cov8" title="1">{
-                        transaction.Rollback()
-                        conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
+                        _ = transaction.Rollback()
+                        _, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
                         return 0, fmt.Errorf("Error user retrieving id: %s", userIDErr)
                 }</span>
         }
@@ -1021,15 +1050,15 @@ func (ds UsersService) Create(ctx context.Context, email string) (int64, error) 
         // Creates wallet for user
         <span class="cov8" title="1">_, insertWalletErr := ds.walletsRepo.Create(ctx, transaction, int64(userID))
         if insertWalletErr != nil </span><span class="cov8" title="1">{
-                transaction.Rollback()
-                conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
+                _ = transaction.Rollback()
+                _, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
                 return 0, fmt.Errorf("Error of wallet transaction commit: %s", insertWalletErr)
         }</span>
 
         <span class="cov8" title="1">transactionCommitErr := transaction.Commit()
         if transactionCommitErr != nil </span><span class="cov8" title="1">{
-                transaction.Rollback()
-                conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
+                _ = transaction.Rollback()
+                _, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
                 return 0, fmt.Errorf("Error of transaction commit: %s", transactionCommitErr)
         }</span>
 
@@ -1121,7 +1150,7 @@ func (wh *WalletsHandler) Transfer(w http.ResponseWriter, r *http.Request) <span
         <span class="cov8" title="1">formError := walletForm.Submit()
         if formError != nil </span><span class="cov8" title="1">{
                 w.WriteHeader(http.StatusBadRequest)
-                json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
+                _ = json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
                 return
         }</span>
 
@@ -1131,7 +1160,7 @@ func (wh *WalletsHandler) Transfer(w http.ResponseWriter, r *http.Request) <span
                 return
         }</span>
         <span class="cov8" title="1">w.WriteHeader(http.StatusOK)
-        json.NewEncoder(w).Encode(walletSerializer{
+        _ = json.NewEncoder(w).Encode(walletSerializer{
                 WalletFrom: walletFrom,
         })</span>
 }
@@ -1232,13 +1261,13 @@ func (ws WalletService) Enroll(ctx context.Context, walletID int, amount decimal
         if txErr != nil </span><span class="cov8" title="1">{
                 return 0, fmt.Errorf("error of transaction initialization: %s", txErr)
         }</span>
-        <span class="cov8" title="1">tx.ExecContext(ctx, "set transaction isolation level serializable")
+        <span class="cov8" title="1">_, _ = tx.ExecContext(ctx, "set transaction isolation level serializable")
 
         // Update wallet 'balance' column
         _, updateErr := tx.ExecContext(ctx, "update wallets set balance=balance+$1 where id=$2 returning balance", amount, walletID)
         if updateErr != nil </span><span class="cov8" title="1">{
-                tx.Rollback()
-                conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, EnrollWallet)
+                _ = tx.Rollback()
+                _, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, EnrollWallet)
                 return 0, fmt.Errorf("error wallet enrollment: %s", updateErr)
         }</span>
 
@@ -1249,8 +1278,8 @@ func (ws WalletService) Enroll(ctx context.Context, walletID int, amount decimal
 
         <span class="cov8" title="1">txCommitErr := tx.Commit()
         if txCommitErr != nil </span><span class="cov8" title="1">{
-                tx.Rollback()
-                conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, EnrollWallet)
+                _ = tx.Rollback()
+                _, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, EnrollWallet)
                 return 0, fmt.Errorf("error of transaction commit: %s", txCommitErr)
         }</span>
 
@@ -1317,21 +1346,21 @@ func (ws WalletService) Transfer(ctx context.Context, walletFrom, walletTo int, 
         if txErr != nil </span><span class="cov8" title="1">{
                 return 0, fmt.Errorf("error of transaction initialization: %s", txErr)
         }</span>
-        <span class="cov8" title="1">tx.ExecContext(ctx, "set transaction isolation level serializable")
+        <span class="cov8" title="1">_, _ = tx.ExecContext(ctx, "set transaction isolation level serializable")
 
         // Update source wallet 'balance' column
         _, updateSourceErr := tx.ExecContext(ctx, "update wallets set balance=balance-$1 where id=$2", amount, walletFrom)
         if updateSourceErr != nil </span><span class="cov8" title="1">{
-                tx.Rollback()
-                conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
+                _ = tx.Rollback()
+                _, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
                 return 0, fmt.Errorf("error source wallet debit: %s", updateSourceErr)
         }</span>
 
         // Update target wallet 'balance' column
         <span class="cov8" title="1">_, updateTargetErr := tx.ExecContext(ctx, "update wallets set balance=balance+$1 where id=$2", amount, walletTo)
         if updateTargetErr != nil </span><span class="cov8" title="1">{
-                tx.Rollback()
-                conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
+                _ = tx.Rollback()
+                _, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
                 return 0, fmt.Errorf("error target wallet transfer: %s", updateTargetErr)
         }</span>
 
@@ -1347,8 +1376,8 @@ func (ws WalletService) Transfer(ctx context.Context, walletFrom, walletTo int, 
         // Commit transaction
         <span class="cov8" title="1">txCommitErr := tx.Commit()
         if txCommitErr != nil </span><span class="cov8" title="1">{
-                tx.Rollback()
-                conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
+                _ = tx.Rollback()
+                _, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
                 return 0, fmt.Errorf("error of transaction commit: %s", txCommitErr)
         }</span>
 

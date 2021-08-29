@@ -14,6 +14,7 @@ type IFileMarshaller interface {
 
 type CSVWriter interface {
 	Write(record []string) error
+	Flush()
 }
 
 type JSONHandler struct {

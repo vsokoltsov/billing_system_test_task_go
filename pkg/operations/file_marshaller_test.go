@@ -78,6 +78,8 @@ func (ecf ErrorCSVFile) Write(record []string) error {
 	return fmt.Errorf("Error of file writing")
 }
 
+func (ecf ErrorCSVFile) Flush() {}
+
 func TestJSONHandlerFileMarshallFailedWriteFile(t *testing.T) {
 
 	mu := &sync.Mutex{}

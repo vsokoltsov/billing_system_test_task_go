@@ -64,7 +64,8 @@ func (oh *OperationsHandler) List(w http.ResponseWriter, r *http.Request) {
 		fileParams.csvWriter,
 	)
 	if fileHandlerErr != nil {
-		utils.JsonResponseError(w, http.StatusBadRequest, fileCreateErr.Error())
+		utils.JsonResponseError(w, http.StatusBadRequest, fileHandlerErr.Error())
+		return
 	}
 
 	processErr := oh.op.Process(ctx, oh.or, queryParams.listParams, fileHandler)

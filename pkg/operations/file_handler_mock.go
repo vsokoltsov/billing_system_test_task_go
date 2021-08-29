@@ -5,7 +5,6 @@
 package operations
 
 import (
-	csv "encoding/csv"
 	gomock "github.com/golang/mock/gomock"
 	os "os"
 	reflect "reflect"
@@ -50,7 +49,7 @@ func (mr *MockIFileHandlingMockRecorder) Create(format interface{}) *gomock.Call
 }
 
 // CreateMarshaller mocks base method
-func (m *MockIFileHandling) CreateMarshaller(file *os.File, format string, csvWriter *csv.Writer) (IFileMarshaller, error) {
+func (m *MockIFileHandling) CreateMarshaller(file *os.File, format string, csvWriter CSVWriter) (IFileMarshaller, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateMarshaller", file, format, csvWriter)
 	ret0, _ := ret[0].(IFileMarshaller)

@@ -103,6 +103,33 @@ var testCases = []opHandlerTestCase{
 		errMsg: "file create error",
 	},
 	opHandlerTestCase{
+		name:           "Failed file receiving (file marshaller error)",
+		method:         "GET",
+		url:            "/api/operations/?format=csv",
+		body:           map[string]interface{}{},
+		expectedStatus: 400,
+		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockIWalletOperationRepo, pr *MockIQueryParamsReader, fh *MockIFileHandling, op *MockIOperationsProcessor) {
+			queryParams := make(url.Values)
+			queryParams.Set("format", "csv")
+			f, _ := os.CreateTemp("", "_example_file")
+			params := &QueryParams{
+				format:     "csv",
+				listParams: nil,
+			}
+			fileParams := &FileParams{
+				f:         f,
+				path:      "/a/b/c/" + f.Name(),
+				name:      f.Name(),
+				csvWriter: csv.NewWriter(f),
+			}
+
+			pr.EXPECT().Parse(queryParams).Return(params, nil)
+			fh.EXPECT().Create("csv").Return(fileParams, nil)
+			fh.EXPECT().CreateMarshaller(fileParams.f, "csv", fileParams.csvWriter).Return(nil, fmt.Errorf("file marshaller error"))
+		},
+		errMsg: "file marshaller error",
+	},
+	opHandlerTestCase{
 		name:           "Failed file receiving (process error)",
 		method:         "GET",
 		url:            "/api/operations/?format=csv",

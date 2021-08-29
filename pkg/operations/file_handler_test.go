@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -64,6 +65,22 @@ func TestFileHandlerSuccessCreateMarshallerCSV(t *testing.T) {
 	marshaller, _ := fh.CreateMarshaller(f, "csv", csvWriter)
 	if reflect.TypeOf(marshaller) != reflect.TypeOf(&CSVHandler{}) {
 		t.Errorf("Types mismatch. Expected: %s. Got: %s", reflect.TypeOf(CSVHandler{}), reflect.TypeOf(marshaller))
+	}
+}
+
+func TestFileHandlerFailedCreateMarshallerCSV(t *testing.T) {
+	fh := FileHandler{
+		fileStorage: FileStorage{},
+	}
+	f, _ := os.CreateTemp("", "_example_file")
+	csvWriter := ErrorCSVFile{}
+	_, marshallErr := fh.CreateMarshaller(f, "csv", csvWriter)
+	if marshallErr == nil {
+		t.Errorf("Expected error, got nil")
+	}
+
+	if !strings.Contains(marshallErr.Error(), "Error of file writing") {
+		t.Errorf("Expected error message is not present")
 	}
 }
 

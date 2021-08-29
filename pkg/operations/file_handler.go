@@ -13,7 +13,7 @@ import (
 // IFileHandling represents interface for file handler
 type IFileHandling interface {
 	Create(format string) (*FileParams, error)
-	CreateMarshaller(file *os.File, format string, csvWriter *csv.Writer) (IFileMarshaller, error)
+	CreateMarshaller(file *os.File, format string, csvWriter CSVWriter) (IFileMarshaller, error)
 }
 
 // IFileStorage represents interface for file storage
@@ -46,7 +46,7 @@ type FileParams struct {
 	f         *os.File
 	path      string
 	name      string
-	csvWriter *csv.Writer
+	csvWriter CSVWriter
 }
 
 // Create file with attributes
@@ -54,7 +54,7 @@ func (fh FileHandler) Create(format string) (*FileParams, error) {
 	var (
 		path      string
 		name      string
-		csvWriter *csv.Writer
+		csvWriter CSVWriter
 	)
 
 	name = "report." + format
@@ -79,7 +79,7 @@ func (fh FileHandler) Create(format string) (*FileParams, error) {
 }
 
 // CreateMarshaller returns file marshaller for particular format
-func (fh FileHandler) CreateMarshaller(file *os.File, format string, csvWriter *csv.Writer) (IFileMarshaller, error) {
+func (fh FileHandler) CreateMarshaller(file *os.File, format string, csvWriter CSVWriter) (IFileMarshaller, error) {
 	var (
 		mu          = &sync.Mutex{}
 		fileHandler IFileMarshaller
