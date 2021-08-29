@@ -111,15 +111,15 @@ func (ds UsersService) Create(ctx context.Context, email string) (int64, error) 
 	if transactionErr != nil {
 		return 0, fmt.Errorf("Error of transaction initialization: %s", transactionErr)
 	}
-	transaction.ExecContext(ctx, "set transaction isolation level serializable")
+	_, _ = transaction.ExecContext(ctx, "set transaction isolation level serializable")
 
 	var userID int
 	// Creates new user
 	statement, insertErr := transaction.QueryContext(ctx, "insert into users(\"email\") values($1) returning id", email)
 
 	if insertErr != nil {
-		transaction.Rollback()
-		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
+		_ = transaction.Rollback()
+		_, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
 		return 0, fmt.Errorf("Error user creation: %s", insertErr)
 	}
 	defer statement.Close()
@@ -127,8 +127,8 @@ func (ds UsersService) Create(ctx context.Context, email string) (int64, error) 
 	for statement.Next() {
 		userIDErr := statement.Scan(&userID)
 		if userIDErr != nil {
-			transaction.Rollback()
-			conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
+			_ = transaction.Rollback()
+			_, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
 			return 0, fmt.Errorf("Error user retrieving id: %s", userIDErr)
 		}
 	}
@@ -136,15 +136,15 @@ func (ds UsersService) Create(ctx context.Context, email string) (int64, error) 
 	// Creates wallet for user
 	_, insertWalletErr := ds.walletsRepo.Create(ctx, transaction, int64(userID))
 	if insertWalletErr != nil {
-		transaction.Rollback()
-		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
+		_ = transaction.Rollback()
+		_, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
 		return 0, fmt.Errorf("Error of wallet transaction commit: %s", insertWalletErr)
 	}
 
 	transactionCommitErr := transaction.Commit()
 	if transactionCommitErr != nil {
-		transaction.Rollback()
-		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
+		_ = transaction.Rollback()
+		_, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
 		return 0, fmt.Errorf("Error of transaction commit: %s", transactionCommitErr)
 	}
 

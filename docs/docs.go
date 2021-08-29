@@ -29,6 +29,41 @@ var doc = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/operations/": {
+            "get": {
+                "description": "Get wallet operations logs",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "operations"
+                ],
+                "summary": "Wallet operations",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Report format",
+                        "name": "format",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ]
+            }
+        },
         "/api/users/": {
             "post": {
                 "description": "Create new user and wallet",

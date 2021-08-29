@@ -93,13 +93,13 @@ func (ws WalletService) Enroll(ctx context.Context, walletID int, amount decimal
 	if txErr != nil {
 		return 0, fmt.Errorf("error of transaction initialization: %s", txErr)
 	}
-	tx.ExecContext(ctx, "set transaction isolation level serializable")
+	_, _ = tx.ExecContext(ctx, "set transaction isolation level serializable")
 
 	// Update wallet 'balance' column
 	_, updateErr := tx.ExecContext(ctx, "update wallets set balance=balance+$1 where id=$2 returning balance", amount, walletID)
 	if updateErr != nil {
-		tx.Rollback()
-		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, EnrollWallet)
+		_ = tx.Rollback()
+		_, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, EnrollWallet)
 		return 0, fmt.Errorf("error wallet enrollment: %s", updateErr)
 	}
 
@@ -110,8 +110,8 @@ func (ws WalletService) Enroll(ctx context.Context, walletID int, amount decimal
 
 	txCommitErr := tx.Commit()
 	if txCommitErr != nil {
-		tx.Rollback()
-		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, EnrollWallet)
+		_ = tx.Rollback()
+		_, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, EnrollWallet)
 		return 0, fmt.Errorf("error of transaction commit: %s", txCommitErr)
 	}
 
@@ -178,21 +178,21 @@ func (ws WalletService) Transfer(ctx context.Context, walletFrom, walletTo int, 
 	if txErr != nil {
 		return 0, fmt.Errorf("error of transaction initialization: %s", txErr)
 	}
-	tx.ExecContext(ctx, "set transaction isolation level serializable")
+	_, _ = tx.ExecContext(ctx, "set transaction isolation level serializable")
 
 	// Update source wallet 'balance' column
 	_, updateSourceErr := tx.ExecContext(ctx, "update wallets set balance=balance-$1 where id=$2", amount, walletFrom)
 	if updateSourceErr != nil {
-		tx.Rollback()
-		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
+		_ = tx.Rollback()
+		_, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
 		return 0, fmt.Errorf("error source wallet debit: %s", updateSourceErr)
 	}
 
 	// Update target wallet 'balance' column
 	_, updateTargetErr := tx.ExecContext(ctx, "update wallets set balance=balance+$1 where id=$2", amount, walletTo)
 	if updateTargetErr != nil {
-		tx.Rollback()
-		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
+		_ = tx.Rollback()
+		_, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
 		return 0, fmt.Errorf("error target wallet transfer: %s", updateTargetErr)
 	}
 
@@ -208,8 +208,8 @@ func (ws WalletService) Transfer(ctx context.Context, walletFrom, walletTo int, 
 	// Commit transaction
 	txCommitErr := tx.Commit()
 	if txCommitErr != nil {
-		tx.Rollback()
-		conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
+		_ = tx.Rollback()
+		_, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
 		return 0, fmt.Errorf("error of transaction commit: %s", txCommitErr)
 	}
 

@@ -61,7 +61,7 @@ func TestFileHandlerSuccessCreateMarshallerCSV(t *testing.T) {
 	}
 	f, _ := os.CreateTemp("", "_example_file")
 	csvWriter := csv.NewWriter(f)
-	marshaller := fh.CreateMarshaller(f, "csv", csvWriter)
+	marshaller, _ := fh.CreateMarshaller(f, "csv", csvWriter)
 	if reflect.TypeOf(marshaller) != reflect.TypeOf(&CSVHandler{}) {
 		t.Errorf("Types mismatch. Expected: %s. Got: %s", reflect.TypeOf(CSVHandler{}), reflect.TypeOf(marshaller))
 	}
@@ -73,7 +73,7 @@ func TestFileHandlerSuccessCreateMarshallerJSON(t *testing.T) {
 	}
 	f, _ := os.CreateTemp("", "_example_file")
 	csvWriter := csv.NewWriter(f)
-	marshaller := fh.CreateMarshaller(f, "json", csvWriter)
+	marshaller, _ := fh.CreateMarshaller(f, "json", csvWriter)
 	if reflect.TypeOf(marshaller) != reflect.TypeOf(&JSONHandler{}) {
 		t.Errorf("Types mismatch. Expected: %s. Got: %s", reflect.TypeOf(&JSONHandler{}), reflect.TypeOf(marshaller))
 	}

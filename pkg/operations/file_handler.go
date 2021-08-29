@@ -13,7 +13,7 @@ import (
 // IFileHandling represents interface for file handler
 type IFileHandling interface {
 	Create(format string) (*FileParams, error)
-	CreateMarshaller(file *os.File, format string, csvWriter *csv.Writer) IFileMarshaller
+	CreateMarshaller(file *os.File, format string, csvWriter *csv.Writer) (IFileMarshaller, error)
 }
 
 // IFileStorage represents interface for file storage
@@ -79,7 +79,7 @@ func (fh FileHandler) Create(format string) (*FileParams, error) {
 }
 
 // CreateMarshaller returns file marshaller for particular format
-func (fh FileHandler) CreateMarshaller(file *os.File, format string, csvWriter *csv.Writer) IFileMarshaller {
+func (fh FileHandler) CreateMarshaller(file *os.File, format string, csvWriter *csv.Writer) (IFileMarshaller, error) {
 	var (
 		mu          = &sync.Mutex{}
 		fileHandler IFileMarshaller
@@ -89,7 +89,10 @@ func (fh FileHandler) CreateMarshaller(file *os.File, format string, csvWriter *
 		headers := []string{
 			"id", "operation", "wallet_from", "wallet_to", "amount", "created_at",
 		}
-		csvWriter.Write(headers)
+		writeErr := csvWriter.Write(headers)
+		if writeErr != nil {
+			return nil, fmt.Errorf("error fo csv writing: %s", writeErr)
+		}
 		fileHandler = &CSVHandler{
 			csvWriter: csvWriter,
 			mu:        mu,
@@ -101,5 +104,5 @@ func (fh FileHandler) CreateMarshaller(file *os.File, format string, csvWriter *
 			marshall: json.Marshal,
 		}
 	}
-	return fileHandler
+	return fileHandler, nil
 }

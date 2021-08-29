@@ -50,11 +50,12 @@ func (mr *MockIFileHandlingMockRecorder) Create(format interface{}) *gomock.Call
 }
 
 // CreateMarshaller mocks base method
-func (m *MockIFileHandling) CreateMarshaller(file *os.File, format string, csvWriter *csv.Writer) IFileMarshaller {
+func (m *MockIFileHandling) CreateMarshaller(file *os.File, format string, csvWriter *csv.Writer) (IFileMarshaller, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateMarshaller", file, format, csvWriter)
 	ret0, _ := ret[0].(IFileMarshaller)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // CreateMarshaller indicates an expected call of CreateMarshaller

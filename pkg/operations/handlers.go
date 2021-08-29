@@ -58,11 +58,14 @@ func (oh *OperationsHandler) List(w http.ResponseWriter, r *http.Request) {
 		os.Remove(path)
 	}(fileParams.path, fileParams.f)
 
-	fileHandler := oh.fh.CreateMarshaller(
+	fileHandler, fileHandlerErr := oh.fh.CreateMarshaller(
 		fileParams.f,
 		queryParams.format,
 		fileParams.csvWriter,
 	)
+	if fileHandlerErr != nil {
+		utils.JsonResponseError(w, http.StatusBadRequest, fileCreateErr.Error())
+	}
 
 	processErr := oh.op.Process(ctx, oh.or, queryParams.listParams, fileHandler)
 	if processErr != nil {
@@ -71,11 +74,11 @@ func (oh *OperationsHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	header := make([]byte, 512)
-	fileParams.f.Read(header)
+	_, _ = fileParams.f.Read(header)
 	stat, _ := fileParams.f.Stat()
 	size := strconv.FormatInt(stat.Size(), 10)
 	contentType := http.DetectContentType(header)
-	fileParams.f.Seek(0, 0)
+	_, _ = fileParams.f.Seek(0, 0)
 	w.Header().Set("Content-Disposition", "attachment; filename="+fileParams.name)
 	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Content-Length", size)

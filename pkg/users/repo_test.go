@@ -341,8 +341,6 @@ var UserRepoTestCases = []userRepoTestCase{
 			query := `
 				select u.id, u.email, w.id, w.user_id, w.balance, w.currency
 			`
-			rows := sqlmock.NewRows([]string{"id", "email", "wallets.id", "user_id", "balance", "currency"})
-			rows = rows.AddRow(nil, "test@example.com", 1, 1, decimal.NewFromInt(100), "USD")
 
 			mock.
 				ExpectQuery(query).

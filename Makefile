@@ -19,3 +19,13 @@ swagger:
 build:
 	@echo "Build application server"
 	@exec go build -o ./tmp/app/server cmd/billing/main.go
+
+.PHONY: up
+up:
+	@echo "Up docker-compose project"
+	@exec docker compose up
+
+.PHONY: test
+test:
+	@echo "Run tests (without coverage)"
+	@exec go test -v ./pkg/...

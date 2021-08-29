@@ -25,11 +25,8 @@ type sqlQueryMock struct {
 	query       string
 	args        []driver.Value
 	columns     []string
-	values      []map[string]interface{}
 	err         error
 	requestType string
-	mockResult  driver.Result
-	mockQuery   func(mock sqlmock.Sqlmock, query string, args []driver.Value, result driver.Result, rows *sqlmock.Rows, err error)
 }
 
 var WalletsRepoTestCase = []walletRepoTestCase{

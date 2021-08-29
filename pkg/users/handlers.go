@@ -44,29 +44,25 @@ func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 	formError := userForm.Submit()
 	if formError != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
+		_ = json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
 		return
 	}
 
 	userID, createdUserError := uh.UsersRepo.Create(ctx, userForm.Email)
 	if createdUserError != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{
-			"message": createdUserError.Error(),
-		})
+		utils.JsonResponseError(w, http.StatusBadRequest, createdUserError.Error())
 		return
 	}
 
 	user, getUserError := uh.UsersRepo.GetByID(ctx, int(userID))
 	if getUserError != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{
-			"message": getUserError.Error(),
-		})
+		utils.JsonResponseError(w, http.StatusBadRequest, getUserError.Error())
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(UserSerializer{
+	_ = json.NewEncoder(w).Encode(UserSerializer{
 		ID:       user.ID,
 		Email:    user.Email,
 		Balance:  user.Wallet.Balance,
@@ -118,7 +114,7 @@ func (uh *UsersHandler) Enroll(w http.ResponseWriter, r *http.Request) {
 	formError := enrollForm.Submit()
 	if formError != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
+		_ = json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
 		return
 	}
 
@@ -141,7 +137,7 @@ func (uh *UsersHandler) Enroll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(UserSerializer{
+	_ = json.NewEncoder(w).Encode(UserSerializer{
 		ID:       user.ID,
 		Email:    user.Email,
 		Balance:  user.Wallet.Balance,

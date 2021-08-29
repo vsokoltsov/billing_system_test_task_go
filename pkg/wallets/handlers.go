@@ -39,7 +39,7 @@ func (wh *WalletsHandler) Transfer(w http.ResponseWriter, r *http.Request) {
 	formError := walletForm.Submit()
 	if formError != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
+		_ = json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
 		return
 	}
 
@@ -49,7 +49,7 @@ func (wh *WalletsHandler) Transfer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(walletSerializer{
+	_ = json.NewEncoder(w).Encode(walletSerializer{
 		WalletFrom: walletFrom,
 	})
 }

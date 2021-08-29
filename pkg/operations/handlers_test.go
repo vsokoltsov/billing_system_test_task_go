@@ -65,7 +65,7 @@ var testCases = []opHandlerTestCase{
 
 			pr.EXPECT().Parse(queryParams).Return(params, nil)
 			fh.EXPECT().Create("csv").Return(fileParams, nil)
-			fh.EXPECT().CreateMarshaller(fileParams.f, params.format, fileParams.csvWriter).Return(marshaller)
+			fh.EXPECT().CreateMarshaller(fileParams.f, params.format, fileParams.csvWriter).Return(marshaller, nil)
 			op.EXPECT().Process(ctx, opRepo, params.listParams, marshaller).Return(nil)
 		},
 	},
@@ -78,30 +78,8 @@ var testCases = []opHandlerTestCase{
 		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockIWalletOperationRepo, pr *MockIQueryParamsReader, fh *MockIFileHandling, op *MockIOperationsProcessor) {
 			queryParams := make(url.Values)
 			queryParams.Set("format", "csv")
-			// f, _ := os.CreateTemp("", "_example_file")
-			// params := &QueryParams{
-			// 	format:     "csv",
-			// 	listParams: nil,
-			// }
-			// fileParams := &FileParams{
-			// 	f:         f,
-			// 	path:      "/a/b/c/" + f.Name(),
-			// 	name:      f.Name(),
-			// 	csvWriter: csv.NewWriter(f),
-			// }
-			// marshaller := &CSVHandler{
-			// 	csvWriter: fileParams.csvWriter,
-			// 	mu:        &sync.Mutex{},
-			// }
-			// query := "select u.id, u.email, w.id, w.user_id, w.balance, w.currency  from users as u"
-			// rows := sqlmock.NewRows([]string{"id", "email", "wallets.id", "user_id", "balance", "currency"})
-			// rows = rows.AddRow(1, "test@example.com", 1, 1, decimal.NewFromInt(100), "USD")
-			// mock.ExpectQuery(query).WithArgs([]driver.Value{1}...).WillReturnRows(rows)
 
 			pr.EXPECT().Parse(queryParams).Return(nil, fmt.Errorf("query params error"))
-			// fh.EXPECT().Create("csv").Return(fileParams, nil)
-			// fh.EXPECT().CreateMarshaller(fileParams.f, params.format, fileParams.csvWriter).Return(marshaller)
-			// op.EXPECT().Process(ctx, opRepo, params.listParams, marshaller).Return(nil)
 		},
 		errMsg: "query params error",
 	},
@@ -114,30 +92,13 @@ var testCases = []opHandlerTestCase{
 		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockIWalletOperationRepo, pr *MockIQueryParamsReader, fh *MockIFileHandling, op *MockIOperationsProcessor) {
 			queryParams := make(url.Values)
 			queryParams.Set("format", "csv")
-			// f, _ := os.CreateTemp("", "_example_file")
 			params := &QueryParams{
 				format:     "csv",
 				listParams: nil,
 			}
-			// fileParams := &FileParams{
-			// 	f:         f,
-			// 	path:      "/a/b/c/" + f.Name(),
-			// 	name:      f.Name(),
-			// 	csvWriter: csv.NewWriter(f),
-			// }
-			// marshaller := &CSVHandler{
-			// 	csvWriter: fileParams.csvWriter,
-			// 	mu:        &sync.Mutex{},
-			// }
-			// query := "select u.id, u.email, w.id, w.user_id, w.balance, w.currency  from users as u"
-			// rows := sqlmock.NewRows([]string{"id", "email", "wallets.id", "user_id", "balance", "currency"})
-			// rows = rows.AddRow(1, "test@example.com", 1, 1, decimal.NewFromInt(100), "USD")
-			// mock.ExpectQuery(query).WithArgs([]driver.Value{1}...).WillReturnRows(rows)
 
 			pr.EXPECT().Parse(queryParams).Return(params, nil)
 			fh.EXPECT().Create("csv").Return(nil, fmt.Errorf("file create error"))
-			// fh.EXPECT().CreateMarshaller(fileParams.f, params.format, fileParams.csvWriter).Return(marshaller)
-			// op.EXPECT().Process(ctx, opRepo, params.listParams, marshaller).Return(nil)
 		},
 		errMsg: "file create error",
 	},
@@ -172,7 +133,7 @@ var testCases = []opHandlerTestCase{
 
 			pr.EXPECT().Parse(queryParams).Return(params, nil)
 			fh.EXPECT().Create("csv").Return(fileParams, nil)
-			fh.EXPECT().CreateMarshaller(fileParams.f, params.format, fileParams.csvWriter).Return(marshaller)
+			fh.EXPECT().CreateMarshaller(fileParams.f, params.format, fileParams.csvWriter).Return(marshaller, nil)
 			op.EXPECT().Process(ctx, opRepo, params.listParams, marshaller).Return(fmt.Errorf("process error"))
 		},
 		errMsg: "process error",
@@ -225,7 +186,10 @@ func TestOperationsHandler(t *testing.T) {
 			if tc.errMsg != "" {
 				errors := make(map[string]string)
 				respBody, _ := ioutil.ReadAll(resp.Body)
-				json.Unmarshal(respBody, &errors)
+				umErr := json.Unmarshal(respBody, &errors)
+				if umErr != nil {
+					t.Errorf("Unexpected unmarshalling error: %s", umErr)
+				}
 				if !strings.Contains(errors["message"], tc.errMsg) {
 					t.Errorf("Expect error message '%s'; Got '%s'", tc.errMsg, errors["message"])
 				}

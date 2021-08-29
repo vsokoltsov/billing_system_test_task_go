@@ -74,7 +74,11 @@ func (a *App) Run() {
 	ctx, cancel := context.WithTimeout(context.Background(), a.wait)
 	defer cancel()
 
-	a.server.Shutdown(ctx)
+	shutdownErr := a.server.Shutdown(ctx)
+	if shutdownErr != nil {
+		log.Fatalf("Error of server shutdown: %s", shutdownErr)
+		os.Exit(0)
+	}
 
 	log.Println("Shutting down the service...")
 	os.Exit(0)

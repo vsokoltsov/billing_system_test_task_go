@@ -68,6 +68,29 @@ info:
   title: Billing System API
   version: "1.0"
 paths:
+  /api/operations/:
+    get:
+      consumes:
+      - application/json
+      description: Get wallet operations logs
+      parameters:
+      - description: Report format
+        in: query
+        name: format
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Number of items per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/octet-stream
+      summary: Wallet operations
+      tags:
+      - operations
   /api/users/:
     post:
       consumes:

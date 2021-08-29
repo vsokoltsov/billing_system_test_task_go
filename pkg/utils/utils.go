@@ -18,7 +18,7 @@ type ErrorMsg struct {
 
 func JsonResponseError(w http.ResponseWriter, status int, message string) {
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]string{
+	_ = json.NewEncoder(w).Encode(map[string]string{
 		"message": message,
 	})
 }
