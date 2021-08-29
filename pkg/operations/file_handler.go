@@ -10,31 +10,38 @@ import (
 	"sync"
 )
 
+// IFileHandling represents interface for file handler
 type IFileHandling interface {
 	Create(format string) (*FileParams, error)
 	CreateMarshaller(file *os.File, format string, csvWriter *csv.Writer) IFileMarshaller
 }
 
+// IFileStorage represents interface for file storage
 type IFileStorage interface {
 	Create(path string, flag int, perm os.FileMode) (*os.File, error)
 }
 
+// FileHandler implements IFileHandling interface
 type FileHandler struct {
 	fileStorage IFileStorage
 }
 
+// FileStorage implements IFileStorage interface
 type FileStorage struct{}
 
+// NewFileHandler returns new instance of FileHandler
 func NewFileHandler(storage IFileStorage) FileHandler {
 	return FileHandler{
 		fileStorage: storage,
 	}
 }
 
+// Create creates new file
 func (fs FileStorage) Create(path string, flag int, perm os.FileMode) (*os.File, error) {
 	return os.OpenFile(path, flag, perm)
 }
 
+// FileParams represents information about created file
 type FileParams struct {
 	f         *os.File
 	path      string
@@ -42,6 +49,7 @@ type FileParams struct {
 	csvWriter *csv.Writer
 }
 
+// Create file with attributes
 func (fh FileHandler) Create(format string) (*FileParams, error) {
 	var (
 		path      string
@@ -70,6 +78,7 @@ func (fh FileHandler) Create(format string) (*FileParams, error) {
 	}, nil
 }
 
+// CreateMarshaller returns file marshaller for particular format
 func (fh FileHandler) CreateMarshaller(file *os.File, format string, csvWriter *csv.Writer) IFileMarshaller {
 	var (
 		mu          = &sync.Mutex{}

@@ -6,17 +6,21 @@ import (
 	"strconv"
 )
 
+// IQueryParamsReader represents actions for query parameters reading
 type IQueryParamsReader interface {
 	Parse(query url.Values) (*QueryParams, error)
 }
 
+// QueryParams represents parameters for
 type QueryParams struct {
 	format     string
 	listParams *ListParams
 }
 
+// QueryParams implements IQueryParamsReader interface
 type QueryParamsReader struct{}
 
+// Parse returns given URL query parameters
 func (qpr QueryParamsReader) Parse(query url.Values) (*QueryParams, error) {
 	var (
 		format string

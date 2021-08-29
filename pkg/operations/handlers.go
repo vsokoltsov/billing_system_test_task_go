@@ -15,6 +15,7 @@ type OperationsHandler struct {
 	fh IFileHandling
 }
 
+// NewOperationsHandler returns controller instance
 func NewOperationsHandler(or IWalletOperationRepo, pr IQueryParamsReader, fh IFileHandling, op IOperationsProcessor) OperationsHandler {
 	return OperationsHandler{
 		or: or,
@@ -30,6 +31,9 @@ func NewOperationsHandler(or IWalletOperationRepo, pr IQueryParamsReader, fh IFi
 // @Tags operations
 // @Accept  json
 // @Produce application/octet-stream
+// @Param format query string false "Report format"
+// @Param page query int false "Page number"
+// @Param per_page query int false "Number of items per page"
 // @Router /api/operations/ [get]
 // @Header 200 {string} Content-Type "application/octet-stream"
 // @Header 200 {string} Expires "0"

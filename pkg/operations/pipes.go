@@ -7,10 +7,12 @@ import (
 	"sync"
 )
 
+// IOperationsProcessor defines operations for processing WalletOperation
 type IOperationsProcessor interface {
 	Process(ctx context.Context, or IWalletOperationRepo, listParams *ListParams, marshaller IFileMarshaller) error
 }
 
+// OperationsProcessor represents IOperationsProcessor interface
 type OperationsProcessor struct{}
 
 func (op OperationsProcessor) Process(ctx context.Context, or IWalletOperationRepo, listParams *ListParams, marshaller IFileMarshaller) error {
@@ -53,6 +55,7 @@ func (op OperationsProcessor) Process(ctx context.Context, or IWalletOperationRe
 	}
 }
 
+// ReadPipe represents reading part of pipeline
 type ReadPipe struct {
 	or     IWalletOperationRepo
 	errors chan error
@@ -61,6 +64,7 @@ type ReadPipe struct {
 	ctx    context.Context
 }
 
+// Call reads rows from database and pass them further throught the pipeline
 func (rp ReadPipe) Call(in, out chan interface{}) {
 	defer rp.wg.Done()
 	var counter int
@@ -89,12 +93,14 @@ func (rp ReadPipe) Call(in, out chan interface{}) {
 	}
 }
 
+// MarshallPipe represents marshalling part of pipeline (to csv or json)
 type MarshallPipe struct {
 	wg     *sync.WaitGroup
 	fm     IFileMarshaller
 	errors chan error
 }
 
+// Call marshall received rows to csv or json
 func (mp MarshallPipe) Call(in, out chan interface{}) {
 	defer mp.wg.Done()
 
@@ -115,12 +121,14 @@ func (mp MarshallPipe) Call(in, out chan interface{}) {
 	}
 }
 
+// WritePipe represents writing to file part of pipeline
 type WritePipe struct {
 	wg     *sync.WaitGroup
 	fm     IFileMarshaller
 	errors chan error
 }
 
+// Call write receive marshalled items to file
 func (wp WritePipe) Call(in, out chan interface{}) {
 	defer wp.wg.Done()
 
