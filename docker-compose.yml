@@ -13,6 +13,8 @@ services:
     volumes:
       - ./:/app
     env_file: .env
+    depends_on: 
+      - postgres
     # networks:
     #   - dev
 
@@ -39,8 +41,30 @@ services:
     # networks:
     #   - dev
 
+  prom:
+    container_name: prometheus
+    image: prom/prometheus:v2.21.0
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prom/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+      # - ./prom/rules.yml:/etc/prometheus/rules.yml
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    ports:
+      - 3000:3000
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/config.ini:/etc/grafana/config.ini
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+
 volumes:
-  go_volume:
+  go_volume: {}
+  prometheus_data:  {}
 
 networks:
   dev:
