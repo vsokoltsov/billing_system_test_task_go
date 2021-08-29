@@ -27,6 +27,11 @@ func SetUpRoutes(pathDelimiter string, sqlDb *sql.DB) *mux.Router {
 	api := r.PathPrefix("/api").Subrouter()
 
 	walletOperationRepo := operations.NewWalletOperationRepo(sqlDb)
+	fileStorage := operations.FileStorage{}
+	paramsReader := operations.QueryParamsReader{}
+	fileHandler := operations.NewFileHandler(fileStorage)
+	processor := operations.OperationsProcessor{}
+
 	walletsRepo := wallets.NewWalletService(sqlDb, walletOperationRepo)
 	usersRepo := users.NewUsersService(sqlDb, walletsRepo)
 	users := users.UsersHandler{
@@ -36,9 +41,7 @@ func SetUpRoutes(pathDelimiter string, sqlDb *sql.DB) *mux.Router {
 	wallets := wallets.WalletsHandler{
 		WalletRepo: walletsRepo,
 	}
-	operations := operations.OperationsHandler{
-		OperationsRepo: walletOperationRepo,
-	}
+	operations := operations.NewOperationsHandler(walletOperationRepo, paramsReader, fileHandler, processor)
 
 	api.HandleFunc("/users/", users.Create).Methods("POST").Name("CREATE_USER")
 	api.HandleFunc("/users/{id}/enroll/", users.Enroll).Methods("POST").Name("ENROLL_USER_WALLET")
