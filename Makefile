@@ -29,3 +29,10 @@ up:
 test:
 	@echo "Run tests (without coverage)"
 	@exec go test -v ./pkg/...
+
+.PHONY: lint
+lint:
+	@echo "Check via gofmt..."
+	@exec gofmt -w ./
+	@echo "Check via golangci-lint..."
+	@exec golangci-lint run
