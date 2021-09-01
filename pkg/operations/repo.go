@@ -27,6 +27,7 @@ type WalletOperationService struct {
 type ListParams struct {
 	page    int
 	perPage int
+	date    string
 }
 
 func NewWalletOperationRepo(db *sql.DB) IWalletOperationRepo {
@@ -68,7 +69,9 @@ func (wor WalletOperationService) Create(ctx context.Context, tx *sql.Tx, operat
 }
 
 func (wor WalletOperationService) List(ctx context.Context, params *ListParams) (*sql.Rows, error) {
+	query := "select id, operation, wallet_from, wallet_to, amount, created_at from wallet_operations"
 	if params != nil {
+		args := []interface{}{}
 		page := params.page
 		if page == 1 {
 			page = 0
@@ -76,15 +79,38 @@ func (wor WalletOperationService) List(ctx context.Context, params *ListParams) 
 			page -= 1
 		}
 
+		if params.date != "" {
+			query += " where created_at = to_date($1, 'YYYY-MM-DD') "
+			args = append(args, params.date)
+		}
+
+		if params.perPage != 0 {
+			var (
+				pageIdx    int
+				perPageIdx int
+				argsLen    = len(args)
+			)
+
+			if argsLen == 0 {
+				pageIdx = 1
+				perPageIdx = 2
+			} else {
+				pageIdx = argsLen + 1
+				perPageIdx = pageIdx + 1
+			}
+			query += fmt.Sprintf(" offset $%d limit $%d", pageIdx, perPageIdx)
+			args = append(args, page*params.perPage)
+			args = append(args, params.perPage)
+		}
+		fmt.Println(query)
 		return wor.db.QueryContext(
 			ctx,
-			"select id, operation, wallet_from, wallet_to, amount, created_at from wallet_operations offset $1 limit $2",
-			page*params.perPage,
-			params.perPage,
+			query,
+			args...,
 		)
 	}
 	return wor.db.QueryContext(
 		ctx,
-		"select id, operation, wallet_from, wallet_to, amount, created_at from wallet_operations",
+		query,
 	)
 }

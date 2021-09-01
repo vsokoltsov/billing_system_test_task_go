@@ -11,6 +11,7 @@ func TestSuccessQueryParamsParser(t *testing.T) {
 	params.Set("format", "json")
 	params.Set("page", "1")
 	params.Set("per_page", "10")
+	params.Set("date", "2020-01-01")
 	qpr := QueryParamsReader{}
 	queryParams, err := qpr.Parse(params)
 	if err != nil {
@@ -26,6 +27,10 @@ func TestSuccessQueryParamsParser(t *testing.T) {
 
 	if queryParams.listParams.perPage != 10 {
 		t.Errorf("Per page mismatch")
+	}
+
+	if queryParams.listParams.date != "2020-01-01" {
+		t.Errorf("Date mismatch")
 	}
 }
 

@@ -24,11 +24,12 @@ type QueryParamsReader struct{}
 func (qpr QueryParamsReader) Parse(query url.Values) (*QueryParams, error) {
 	var (
 		format string
-		params *ListParams
+		params = &ListParams{}
 	)
 	format = query.Get("format")
 	pageStr := query.Get("page")
 	perPageStr := query.Get("per_page")
+	date := query.Get("date")
 
 	if format == "" {
 		format = "json"
@@ -45,10 +46,11 @@ func (qpr QueryParamsReader) Parse(query url.Values) (*QueryParams, error) {
 			return nil, fmt.Errorf("error of 'per_page' attribute converting: %s", pageConvError)
 		}
 
-		params = &ListParams{
-			page:    page,
-			perPage: perPage,
-		}
+		params.page = page
+		params.perPage = perPage
+	}
+	if date != "" {
+		params.date = date
 	}
 
 	return &QueryParams{

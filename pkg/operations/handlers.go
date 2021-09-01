@@ -34,6 +34,7 @@ func NewOperationsHandler(or IWalletOperationRepo, pr IQueryParamsReader, fh IFi
 // @Param format query string false "Report format"
 // @Param page query int false "Page number"
 // @Param per_page query int false "Number of items per page"
+// @Param date query int false "Number of items per page"
 // @Router /api/operations/ [get]
 // @Header 200 {string} Content-Type "application/octet-stream"
 // @Header 200 {string} Expires "0"

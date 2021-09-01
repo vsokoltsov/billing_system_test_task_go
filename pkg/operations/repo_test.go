@@ -135,6 +135,40 @@ var operationRepoTestCases = []operationRepoTestCase{
 
 		},
 	},
+	operationRepoTestCase{
+		name:     "Success receiving list of items date filtering",
+		funcName: "List",
+		args:     []driver.Value{&ListParams{date: "2020-01-01"}},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			// Begin transaction
+			rows := sqlmock.NewRows([]string{"id"})
+			rows = rows.AddRow(1)
+
+			// Exec insert wallets
+			mock.
+				ExpectQuery("where created_at = to_date").
+				WithArgs([]driver.Value{"2020-01-01"}...).
+				WillReturnRows(rows)
+
+		},
+	},
+	operationRepoTestCase{
+		name:     "Success receiving list of items with all parameters",
+		funcName: "List",
+		args:     []driver.Value{&ListParams{page: 1, perPage: 10, date: "2020-01-01"}},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			// Begin transaction
+			rows := sqlmock.NewRows([]string{"id"})
+			rows = rows.AddRow(1)
+
+			// Exec insert wallets
+			mock.
+				ExpectQuery("where created_at = to_date").
+				WithArgs([]driver.Value{"2020-01-01", 0, 10}...).
+				WillReturnRows(rows)
+
+		},
+	},
 }
 
 func TestWalletRepo(t *testing.T) {

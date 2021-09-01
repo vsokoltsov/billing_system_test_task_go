@@ -326,6 +326,7 @@ func NewOperationsHandler(or IWalletOperationRepo, pr IQueryParamsReader, fh IFi
 // @Param format query string false "Report format"
 // @Param page query int false "Page number"
 // @Param per_page query int false "Number of items per page"
+// @Param date query int false "Number of items per page"
 // @Router /api/operations/ [get]
 // @Header 200 {string} Content-Type "application/octet-stream"
 // @Header 200 {string} Expires "0"
@@ -562,11 +563,12 @@ type QueryParamsReader struct{}
 func (qpr QueryParamsReader) Parse(query url.Values) (*QueryParams, error) <span class="cov8" title="1">{
         var (
                 format string
-                params *ListParams
+                params = &amp;ListParams{}
         )
         format = query.Get("format")
         pageStr := query.Get("page")
         perPageStr := query.Get("per_page")
+        date := query.Get("date")
 
         if format == "" </span><span class="cov8" title="1">{
                 format = "json"
@@ -583,11 +585,12 @@ func (qpr QueryParamsReader) Parse(query url.Values) (*QueryParams, error) <span
                         return nil, fmt.Errorf("error of 'per_page' attribute converting: %s", pageConvError)
                 }</span>
 
-                <span class="cov8" title="1">params = &amp;ListParams{
-                        page:    page,
-                        perPage: perPage,
-                }</span>
+                <span class="cov8" title="1">params.page = page
+                params.perPage = perPage</span>
         }
+        <span class="cov8" title="1">if date != "" </span><span class="cov8" title="1">{
+                params.date = date
+        }</span>
 
         <span class="cov8" title="1">return &amp;QueryParams{
                 format:     format,
@@ -625,6 +628,7 @@ type WalletOperationService struct {
 type ListParams struct {
         page    int
         perPage int
+        date    string
 }
 
 func NewWalletOperationRepo(db *sql.DB) IWalletOperationRepo <span class="cov8" title="1">{
@@ -666,7 +670,9 @@ func (wor WalletOperationService) Create(ctx context.Context, tx *sql.Tx, operat
 }
 
 func (wor WalletOperationService) List(ctx context.Context, params *ListParams) (*sql.Rows, error) <span class="cov8" title="1">{
+        query := "select id, operation, wallet_from, wallet_to, amount, created_at from wallet_operations"
         if params != nil </span><span class="cov8" title="1">{
+                args := []interface{}{}
                 page := params.page
                 if page == 1 </span><span class="cov8" title="1">{
                         page = 0
@@ -674,16 +680,39 @@ func (wor WalletOperationService) List(ctx context.Context, params *ListParams) 
                         page -= 1
                 }</span>
 
-                <span class="cov8" title="1">return wor.db.QueryContext(
+                <span class="cov8" title="1">if params.date != "" </span><span class="cov8" title="1">{
+                        query += " where created_at = to_date($1, 'YYYY-MM-DD') "
+                        args = append(args, params.date)
+                }</span>
+
+                <span class="cov8" title="1">if params.perPage != 0 </span><span class="cov8" title="1">{
+                        var (
+                                pageIdx    int
+                                perPageIdx int
+                                argsLen    = len(args)
+                        )
+
+                        if argsLen == 0 </span><span class="cov8" title="1">{
+                                pageIdx = 1
+                                perPageIdx = 2
+                        }</span> else<span class="cov8" title="1"> {
+                                pageIdx = argsLen + 1
+                                perPageIdx = pageIdx + 1
+                        }</span>
+                        <span class="cov8" title="1">query += fmt.Sprintf(" offset $%d limit $%d", pageIdx, perPageIdx)
+                        args = append(args, page*params.perPage)
+                        args = append(args, params.perPage)</span>
+                }
+                <span class="cov8" title="1">fmt.Println(query)
+                return wor.db.QueryContext(
                         ctx,
-                        "select id, operation, wallet_from, wallet_to, amount, created_at from wallet_operations offset $1 limit $2",
-                        page*params.perPage,
-                        params.perPage,
+                        query,
+                        args...,
                 )</span>
         }
         <span class="cov8" title="1">return wor.db.QueryContext(
                 ctx,
-                "select id, operation, wallet_from, wallet_to, amount, created_at from wallet_operations",
+                query,
         )</span>
 }
 </pre>
@@ -772,6 +801,7 @@ import (
         "context"
         "encoding/json"
         "fmt"
+        "log"
         "net/http"
         "strconv"
 
@@ -809,6 +839,7 @@ func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) <span cla
         // Validate body parameters
         <span class="cov8" title="1">formError := userForm.Submit()
         if formError != nil </span><span class="cov8" title="1">{
+                log.Println(fmt.Sprintf("[ERROR] Create user: %s", formError))
                 w.WriteHeader(http.StatusBadRequest)
                 _ = json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
                 return
@@ -816,14 +847,12 @@ func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) <span cla
 
         <span class="cov8" title="1">userID, createdUserError := uh.UsersRepo.Create(ctx, userForm.Email)
         if createdUserError != nil </span><span class="cov8" title="1">{
-                w.WriteHeader(http.StatusBadRequest)
                 utils.JsonResponseError(w, http.StatusBadRequest, createdUserError.Error())
                 return
         }</span>
 
         <span class="cov8" title="1">user, getUserError := uh.UsersRepo.GetByID(ctx, int(userID))
         if getUserError != nil </span><span class="cov8" title="1">{
-                w.WriteHeader(http.StatusBadRequest)
                 utils.JsonResponseError(w, http.StatusBadRequest, getUserError.Error())
                 return
         }</span>
@@ -879,6 +908,7 @@ func (uh *UsersHandler) Enroll(w http.ResponseWriter, r *http.Request) <span cla
         // Validate body parameters
         <span class="cov8" title="1">formError := enrollForm.Submit()
         if formError != nil </span><span class="cov8" title="1">{
+                log.Println(fmt.Sprintf("[ERROR] Enroll user wallet: %s", formError))
                 w.WriteHeader(http.StatusBadRequest)
                 _ = json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
                 return
@@ -1116,6 +1146,7 @@ import (
         "context"
         "encoding/json"
         "fmt"
+        "log"
         "net/http"
 )
 
@@ -1149,6 +1180,7 @@ func (wh *WalletsHandler) Transfer(w http.ResponseWriter, r *http.Request) <span
         // Validate body parameters
         <span class="cov8" title="1">formError := walletForm.Submit()
         if formError != nil </span><span class="cov8" title="1">{
+                log.Println(fmt.Sprintf("[ERROR] Transfer error - %s", *formError))
                 w.WriteHeader(http.StatusBadRequest)
                 _ = json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
                 return
