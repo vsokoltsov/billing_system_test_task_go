@@ -9,13 +9,13 @@ import (
 
 // IOperationsProcessor defines operations for processing WalletOperation
 type IOperationsProcessor interface {
-	Process(ctx context.Context, or IWalletOperationRepo, listParams *ListParams, marshaller IFileMarshaller) error
+	Process(ctx context.Context, or OperationsManager, listParams *ListParams, marshaller IFileMarshaller) error
 }
 
 // OperationsProcessor represents IOperationsProcessor interface
 type OperationsProcessor struct{}
 
-func (op OperationsProcessor) Process(ctx context.Context, or IWalletOperationRepo, listParams *ListParams, marshaller IFileMarshaller) error {
+func (op OperationsProcessor) Process(ctx context.Context, or OperationsManager, listParams *ListParams, marshaller IFileMarshaller) error {
 	var (
 		wg     = &sync.WaitGroup{}
 		errors = make(chan error, 1)
@@ -57,7 +57,7 @@ func (op OperationsProcessor) Process(ctx context.Context, or IWalletOperationRe
 
 // ReadPipe represents reading part of pipeline
 type ReadPipe struct {
-	or     IWalletOperationRepo
+	or     OperationsManager
 	errors chan error
 	wg     *sync.WaitGroup
 	params *ListParams

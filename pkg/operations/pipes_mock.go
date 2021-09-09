@@ -34,7 +34,7 @@ func (m *MockIOperationsProcessor) EXPECT() *MockIOperationsProcessorMockRecorde
 }
 
 // Process mocks base method
-func (m *MockIOperationsProcessor) Process(ctx context.Context, or IWalletOperationRepo, listParams *ListParams, marshaller IFileMarshaller) error {
+func (m *MockIOperationsProcessor) Process(ctx context.Context, or OperationsManager, listParams *ListParams, marshaller IFileMarshaller) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Process", ctx, or, listParams, marshaller)
 	ret0, _ := ret[0].(error)

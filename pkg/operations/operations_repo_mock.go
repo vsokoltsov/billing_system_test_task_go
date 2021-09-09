@@ -12,31 +12,31 @@ import (
 	reflect "reflect"
 )
 
-// MockIWalletOperationRepo is a mock of IWalletOperationRepo interface
-type MockIWalletOperationRepo struct {
+// MockOperationsManager is a mock of OperationsManager interface
+type MockOperationsManager struct {
 	ctrl     *gomock.Controller
-	recorder *MockIWalletOperationRepoMockRecorder
+	recorder *MockOperationsManagerMockRecorder
 }
 
-// MockIWalletOperationRepoMockRecorder is the mock recorder for MockIWalletOperationRepo
-type MockIWalletOperationRepoMockRecorder struct {
-	mock *MockIWalletOperationRepo
+// MockOperationsManagerMockRecorder is the mock recorder for MockOperationsManager
+type MockOperationsManagerMockRecorder struct {
+	mock *MockOperationsManager
 }
 
-// NewMockIWalletOperationRepo creates a new mock instance
-func NewMockIWalletOperationRepo(ctrl *gomock.Controller) *MockIWalletOperationRepo {
-	mock := &MockIWalletOperationRepo{ctrl: ctrl}
-	mock.recorder = &MockIWalletOperationRepoMockRecorder{mock}
+// NewMockOperationsManager creates a new mock instance
+func NewMockOperationsManager(ctrl *gomock.Controller) *MockOperationsManager {
+	mock := &MockOperationsManager{ctrl: ctrl}
+	mock.recorder = &MockOperationsManagerMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockIWalletOperationRepo) EXPECT() *MockIWalletOperationRepoMockRecorder {
+func (m *MockOperationsManager) EXPECT() *MockOperationsManagerMockRecorder {
 	return m.recorder
 }
 
 // Create mocks base method
-func (m *MockIWalletOperationRepo) Create(ctx context.Context, tx *sql.Tx, operation string, walletFrom, walletTo int, amount decimal.Decimal) (int, error) {
+func (m *MockOperationsManager) Create(ctx context.Context, tx *sql.Tx, operation string, walletFrom, walletTo int, amount decimal.Decimal) (int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", ctx, tx, operation, walletFrom, walletTo, amount)
 	ret0, _ := ret[0].(int)
@@ -45,13 +45,13 @@ func (m *MockIWalletOperationRepo) Create(ctx context.Context, tx *sql.Tx, opera
 }
 
 // Create indicates an expected call of Create
-func (mr *MockIWalletOperationRepoMockRecorder) Create(ctx, tx, operation, walletFrom, walletTo, amount interface{}) *gomock.Call {
+func (mr *MockOperationsManagerMockRecorder) Create(ctx, tx, operation, walletFrom, walletTo, amount interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockIWalletOperationRepo)(nil).Create), ctx, tx, operation, walletFrom, walletTo, amount)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockOperationsManager)(nil).Create), ctx, tx, operation, walletFrom, walletTo, amount)
 }
 
 // List mocks base method
-func (m *MockIWalletOperationRepo) List(ctx context.Context, params *ListParams) (*sql.Rows, error) {
+func (m *MockOperationsManager) List(ctx context.Context, params *ListParams) (*sql.Rows, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "List", ctx, params)
 	ret0, _ := ret[0].(*sql.Rows)
@@ -60,7 +60,7 @@ func (m *MockIWalletOperationRepo) List(ctx context.Context, params *ListParams)
 }
 
 // List indicates an expected call of List
-func (mr *MockIWalletOperationRepoMockRecorder) List(ctx, params interface{}) *gomock.Call {
+func (mr *MockOperationsManagerMockRecorder) List(ctx, params interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockIWalletOperationRepo)(nil).List), ctx, params)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockOperationsManager)(nil).List), ctx, params)
 }

@@ -301,14 +301,14 @@ import (
 )
 
 type OperationsHandler struct {
-        or IWalletOperationRepo
+        or OperationsManager
         op IOperationsProcessor
         pr IQueryParamsReader
         fh IFileHandling
 }
 
 // NewOperationsHandler returns controller instance
-func NewOperationsHandler(or IWalletOperationRepo, pr IQueryParamsReader, fh IFileHandling, op IOperationsProcessor) OperationsHandler <span class="cov8" title="1">{
+func NewOperationsHandler(or OperationsManager, pr IQueryParamsReader, fh IFileHandling, op IOperationsProcessor) OperationsHandler <span class="cov8" title="1">{
         return OperationsHandler{
                 or: or,
                 pr: pr,
@@ -396,13 +396,13 @@ import (
 
 // IOperationsProcessor defines operations for processing WalletOperation
 type IOperationsProcessor interface {
-        Process(ctx context.Context, or IWalletOperationRepo, listParams *ListParams, marshaller IFileMarshaller) error
+        Process(ctx context.Context, or OperationsManager, listParams *ListParams, marshaller IFileMarshaller) error
 }
 
 // OperationsProcessor represents IOperationsProcessor interface
 type OperationsProcessor struct{}
 
-func (op OperationsProcessor) Process(ctx context.Context, or IWalletOperationRepo, listParams *ListParams, marshaller IFileMarshaller) error <span class="cov8" title="1">{
+func (op OperationsProcessor) Process(ctx context.Context, or OperationsManager, listParams *ListParams, marshaller IFileMarshaller) error <span class="cov8" title="1">{
         var (
                 wg     = &amp;sync.WaitGroup{}
                 errors = make(chan error, 1)
@@ -444,7 +444,7 @@ func (op OperationsProcessor) Process(ctx context.Context, or IWalletOperationRe
 
 // ReadPipe represents reading part of pipeline
 type ReadPipe struct {
-        or     IWalletOperationRepo
+        or     OperationsManager
         errors chan error
         wg     *sync.WaitGroup
         params *ListParams
@@ -616,7 +616,7 @@ const (
         Withdrawal = "withdrawal"
 )
 
-type IWalletOperationRepo interface {
+type OperationsManager interface {
         Create(ctx context.Context, tx *sql.Tx, operation string, walletFrom, walletTo int, amount decimal.Decimal) (int, error)
         List(ctx context.Context, params *ListParams) (*sql.Rows, error)
 }
@@ -631,7 +631,7 @@ type ListParams struct {
         date    string
 }
 
-func NewWalletOperationRepo(db *sql.DB) IWalletOperationRepo <span class="cov8" title="1">{
+func NewWalletOperationRepo(db *sql.DB) OperationsManager <span class="cov8" title="1">{
         return WalletOperationService{
                 db: db,
         }
@@ -1229,11 +1229,11 @@ type IWalletRepo interface {
 // WalletService shows structure for service of wallets
 type WalletService struct {
         db                  *sql.DB
-        walletOperationRepo operations.IWalletOperationRepo
+        walletOperationRepo operations.OperationsManager
 }
 
 // NewWalletService returns instance of WalletService
-func NewWalletService(db *sql.DB, walletOperationRepo operations.IWalletOperationRepo) IWalletRepo <span class="cov8" title="1">{
+func NewWalletService(db *sql.DB, walletOperationRepo operations.OperationsManager) IWalletRepo <span class="cov8" title="1">{
         return WalletService{
                 db:                  db,
                 walletOperationRepo: walletOperationRepo,

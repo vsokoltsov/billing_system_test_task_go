@@ -29,11 +29,11 @@ type IWalletRepo interface {
 // WalletService shows structure for service of wallets
 type WalletService struct {
 	db                  *sql.DB
-	walletOperationRepo operations.IWalletOperationRepo
+	walletOperationRepo operations.OperationsManager
 }
 
 // NewWalletService returns instance of WalletService
-func NewWalletService(db *sql.DB, walletOperationRepo operations.IWalletOperationRepo) IWalletRepo {
+func NewWalletService(db *sql.DB, walletOperationRepo operations.OperationsManager) IWalletRepo {
 	return WalletService{
 		db:                  db,
 		walletOperationRepo: walletOperationRepo,

@@ -28,7 +28,7 @@ type opHandlerTestCase struct {
 	url            string
 	body           map[string]interface{}
 	expectedStatus int
-	mockData       func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockIWalletOperationRepo, pr *MockIQueryParamsReader, fh *MockIFileHandling, op *MockIOperationsProcessor)
+	mockData       func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockOperationsManager, pr *MockIQueryParamsReader, fh *MockIFileHandling, op *MockIOperationsProcessor)
 	formError      bool
 	errMsg         string
 }
@@ -40,7 +40,7 @@ var testCases = []opHandlerTestCase{
 		url:            "/api/operations/?format=csv",
 		body:           map[string]interface{}{},
 		expectedStatus: 200,
-		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockIWalletOperationRepo, pr *MockIQueryParamsReader, fh *MockIFileHandling, op *MockIOperationsProcessor) {
+		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockOperationsManager, pr *MockIQueryParamsReader, fh *MockIFileHandling, op *MockIOperationsProcessor) {
 			queryParams := make(url.Values)
 			queryParams.Set("format", "csv")
 			f, _ := os.CreateTemp("", "_example_file")
@@ -75,7 +75,7 @@ var testCases = []opHandlerTestCase{
 		url:            "/api/operations/?format=csv",
 		body:           map[string]interface{}{},
 		expectedStatus: 400,
-		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockIWalletOperationRepo, pr *MockIQueryParamsReader, fh *MockIFileHandling, op *MockIOperationsProcessor) {
+		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockOperationsManager, pr *MockIQueryParamsReader, fh *MockIFileHandling, op *MockIOperationsProcessor) {
 			queryParams := make(url.Values)
 			queryParams.Set("format", "csv")
 
@@ -89,7 +89,7 @@ var testCases = []opHandlerTestCase{
 		url:            "/api/operations/?format=csv",
 		body:           map[string]interface{}{},
 		expectedStatus: 400,
-		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockIWalletOperationRepo, pr *MockIQueryParamsReader, fh *MockIFileHandling, op *MockIOperationsProcessor) {
+		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockOperationsManager, pr *MockIQueryParamsReader, fh *MockIFileHandling, op *MockIOperationsProcessor) {
 			queryParams := make(url.Values)
 			queryParams.Set("format", "csv")
 			params := &QueryParams{
@@ -108,7 +108,7 @@ var testCases = []opHandlerTestCase{
 		url:            "/api/operations/?format=csv",
 		body:           map[string]interface{}{},
 		expectedStatus: 400,
-		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockIWalletOperationRepo, pr *MockIQueryParamsReader, fh *MockIFileHandling, op *MockIOperationsProcessor) {
+		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockOperationsManager, pr *MockIQueryParamsReader, fh *MockIFileHandling, op *MockIOperationsProcessor) {
 			queryParams := make(url.Values)
 			queryParams.Set("format", "csv")
 			f, _ := os.CreateTemp("", "_example_file")
@@ -135,7 +135,7 @@ var testCases = []opHandlerTestCase{
 		url:            "/api/operations/?format=csv",
 		body:           map[string]interface{}{},
 		expectedStatus: 400,
-		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockIWalletOperationRepo, pr *MockIQueryParamsReader, fh *MockIFileHandling, op *MockIOperationsProcessor) {
+		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockOperationsManager, pr *MockIQueryParamsReader, fh *MockIFileHandling, op *MockIOperationsProcessor) {
 			queryParams := make(url.Values)
 			queryParams.Set("format", "csv")
 			f, _ := os.CreateTemp("", "_example_file")
@@ -181,7 +181,7 @@ func TestOperationsHandler(t *testing.T) {
 			}
 			defer sqlDB.Close()
 
-			mockOpRepo := NewMockIWalletOperationRepo(ctrl)
+			mockOpRepo := NewMockOperationsManager(ctrl)
 			mockParamsReader := NewMockIQueryParamsReader(ctrl)
 			mockFileHandler := NewMockIFileHandling(ctrl)
 			mockProcessor := NewMockIOperationsProcessor(ctrl)

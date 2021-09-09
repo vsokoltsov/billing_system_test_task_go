@@ -15,7 +15,7 @@ const (
 	Withdrawal = "withdrawal"
 )
 
-type IWalletOperationRepo interface {
+type OperationsManager interface {
 	Create(ctx context.Context, tx *sql.Tx, operation string, walletFrom, walletTo int, amount decimal.Decimal) (int, error)
 	List(ctx context.Context, params *ListParams) (*sql.Rows, error)
 }
@@ -30,7 +30,7 @@ type ListParams struct {
 	date    string
 }
 
-func NewWalletOperationRepo(db *sql.DB) IWalletOperationRepo {
+func NewWalletOperationRepo(db *sql.DB) OperationsManager {
 	return WalletOperationService{
 		db: db,
 	}
