@@ -2,3 +2,6 @@
 *.out.tmp
 tmp
 .vscode
+mem.out
+cpu.out
+*.test
