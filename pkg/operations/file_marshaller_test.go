@@ -165,3 +165,88 @@ func TestCSVHandlerFileMarshallSuccessWroteFile(t *testing.T) {
 		t.Errorf("Expected nil, got error: %s", writeErr)
 	}
 }
+
+func BenchmarkMarshallOperationJSON(b *testing.B) {
+	wo := &WalletOperation{
+		ID:         1,
+		Operation:  "deposit",
+		WalletFrom: sql.NullInt32{Int32: 1},
+		WalletTo:   1,
+		Amount:     decimal.NewFromInt(100),
+		CreatedAt:  time.Now(),
+	}
+	f, _ := os.CreateTemp("", "_example_file")
+	handler := JSONHandler{
+		file:     f,
+		mu:       &sync.Mutex{},
+		marshall: json.Marshal,
+	}
+
+	for i := 0; i < b.N; i++ {
+		handler.MarshallOperation(wo)
+	}
+}
+
+func BenchmarkMarshallOperationCSV(b *testing.B) {
+	mu := &sync.Mutex{}
+	operation := &WalletOperation{
+		ID:         1,
+		Operation:  "deposit",
+		WalletFrom: sql.NullInt32{Int32: 1},
+		WalletTo:   1,
+		Amount:     decimal.NewFromInt(100),
+		CreatedAt:  time.Now(),
+	}
+	csvWriter := csv.NewWriter(os.Stdout)
+	handler := CSVHandler{
+		mu:        mu,
+		csvWriter: csvWriter,
+	}
+
+	for i := 0; i < b.N; i++ {
+		handler.MarshallOperation(operation)
+	}
+}
+
+func BenchmarkWriteToFileJSON(b *testing.B) {
+	wo := &WalletOperation{
+		ID:         1,
+		Operation:  "deposit",
+		WalletFrom: sql.NullInt32{Int32: 1},
+		WalletTo:   1,
+		Amount:     decimal.NewFromInt(100),
+		CreatedAt:  time.Now(),
+	}
+	f, _ := os.CreateTemp("", "_example_file")
+	handler := JSONHandler{
+		file:     f,
+		mu:       &sync.Mutex{},
+		marshall: json.Marshal,
+	}
+	mr, _ := handler.MarshallOperation(wo)
+	for i := 0; i < b.N; i++ {
+		handler.WriteToFile(mr)
+	}
+}
+
+func BenchmarkWriteToFileCSV(b *testing.B) {
+	mu := &sync.Mutex{}
+	wo := &WalletOperation{
+		ID:         1,
+		Operation:  "deposit",
+		WalletFrom: sql.NullInt32{Int32: 1},
+		WalletTo:   1,
+		Amount:     decimal.NewFromInt(100),
+		CreatedAt:  time.Now(),
+	}
+	f, _ := os.CreateTemp("", "_example_file")
+	csvWriter := csv.NewWriter(f)
+	handler := CSVHandler{
+		mu:        mu,
+		csvWriter: csvWriter,
+	}
+	mr, _ := handler.MarshallOperation(wo)
+	for i := 0; i < b.N; i++ {
+		handler.WriteToFile(mr)
+	}
+}
