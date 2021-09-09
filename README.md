@@ -5,8 +5,7 @@
 ## How to run
 
 1. Populate `.env` file with necessary variables (you can find them in `.env.sample`)
-2. Run `make up`, which runs application in development environment
-3. Go to application container (`docker compose exec app bash`) and run migrations ([migrate](https://github.com/golang-migrate/migrate) is used for that)
+2. Run `docker compose up`, which runs application in development environment
 
 ## Test
 

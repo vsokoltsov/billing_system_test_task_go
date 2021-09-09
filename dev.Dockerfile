@@ -12,5 +12,3 @@ RUN curl -fLo install.sh https://raw.githubusercontent.com/cosmtrek/air/master/i
     && cp ./bin/air /bin/air \
     # Install go-migrate
     && go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-
-CMD air

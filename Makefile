@@ -20,10 +20,22 @@ build:
 	@echo "Build application server"
 	@exec go build -o ./tmp/app/server cmd/billing/main.go
 
-.PHONY: up
-up:
-	@echo "Up docker-compose project"
-	@exec docker compose up
+.PHONY: run-server
+run-server:
+	make migrations-up
+	@echo "Run server application"
+	@exec air
+
+.PHONY: migrations-up
+migrations-up:
+	@echo "Run migrations up"
+	@exec migrate -path ./migrations -database ${DB_CON} up
+
+.PHONY: migrations-down
+migrations-down:
+	@echo "Run migrations down"
+	@exec migrate -path ./migrations -database ${DB_CON} down -all
+
 
 .PHONY: test
 test:
