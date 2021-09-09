@@ -553,9 +553,6 @@ func BenchmarkCreate(b *testing.B) {
 	walletRows := sqlmock.NewRows([]string{"id"})
 	walletRows = walletRows.AddRow(1)
 
-	woRows := sqlmock.NewRows([]string{"id"})
-	woRows = woRows.AddRow(1)
-
 	walletOperation := operations.NewWalletOperationRepo(sqlDB)
 	walletsRepo := wallets.NewWalletService(sqlDB, walletOperation)
 	repo := NewUsersService(sqlDB, walletsRepo)
