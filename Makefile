@@ -55,6 +55,6 @@ benchmark:
 	@exec go test -v ./pkg/$(package)/... -bench . -benchmem -cpuprofile=cpu.out -memprofile=mem.out -memprofilerate=1
 
 .PHONY: benchmark-ui
-benchmark:
+benchmark-ui:
 	make benchmark package=$(package)
 	@exec go tool pprof -http=:8091 $(package).test $(param).out
