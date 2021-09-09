@@ -85,3 +85,16 @@ func TestSuccessQueryParamsParserWrongPerPageFormat(t *testing.T) {
 		t.Errorf("Wrong message in error")
 	}
 }
+
+func BenchmarkParse(b *testing.B) {
+	params := make(url.Values)
+	params.Set("format", "json")
+	params.Set("page", "1")
+	params.Set("per_page", "10")
+	params.Set("date", "2020-01-01")
+	qpr := QueryParamsReader{}
+
+	for i := 0; i < b.N; i++ {
+		qpr.Parse(params)
+	}
+}
