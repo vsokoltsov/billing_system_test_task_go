@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/golang/mock/gomock"
 	"github.com/shopspring/decimal"
 )
 
@@ -483,5 +484,114 @@ func TestNewUserService(t *testing.T) {
 	_, correctType := repo.(UsersService)
 	if !correctType {
 		t.Errorf("Wrong type of UserService")
+	}
+}
+
+func BenchmarkGetById(b *testing.B) {
+	ctrl := gomock.NewController(b)
+	defer ctrl.Finish()
+
+	walletMock := wallets.NewMockWalletsManager(ctrl)
+	sqlDB, mock, err := sqlmock.New()
+	if err != nil {
+		b.Fatalf("cant create mock: %s", err)
+	}
+	defer sqlDB.Close()
+	ctx := context.Background()
+
+	query := "select u.id, u.email, w.id, w.user_id, w.balance, w.currency  from users as u"
+	rows := sqlmock.NewRows([]string{"id", "email", "wallets.id", "user_id", "balance", "currency"})
+	rows = rows.AddRow(1, "test@example.com", 1, 1, decimal.NewFromInt(100), "USD")
+	mock.
+		ExpectQuery(query).
+		WithArgs([]driver.Value{1}...).
+		WillReturnRows(rows)
+
+	repo := NewUsersService(sqlDB, walletMock)
+
+	for i := 0; i < b.N; i++ {
+		repo.GetByID(ctx, 1)
+	}
+}
+
+func BenchmarkGetByWalletID(b *testing.B) {
+	ctrl := gomock.NewController(b)
+	defer ctrl.Finish()
+
+	walletMock := wallets.NewMockWalletsManager(ctrl)
+	sqlDB, mock, err := sqlmock.New()
+	if err != nil {
+		b.Fatalf("cant create mock: %s", err)
+	}
+	defer sqlDB.Close()
+	ctx := context.Background()
+
+	rows := sqlmock.NewRows([]string{"id", "email", "wallets.id", "user_id", "balance", "currency"})
+	rows = rows.AddRow(1, "test@example.com", 1, 1, decimal.NewFromInt(100), "USD")
+	mock.
+		ExpectQuery("select u.id, u.email, w.id, w.user_id, w.balance, w.currency from users as u").
+		WithArgs([]driver.Value{1}...).
+		WillReturnRows(rows)
+
+	repo := NewUsersService(sqlDB, walletMock)
+	for i := 0; i < b.N; i++ {
+		repo.GetByID(ctx, 1)
+	}
+}
+
+func BenchmarkCreate(b *testing.B) {
+	sqlDB, mock, err := sqlmock.New()
+	if err != nil {
+		b.Fatalf("cant create mock: %s", err)
+	}
+	defer sqlDB.Close()
+	ctx := context.Background()
+
+	userRows := sqlmock.NewRows([]string{"id"})
+	userRows = userRows.AddRow(1)
+
+	walletRows := sqlmock.NewRows([]string{"id"})
+	walletRows = walletRows.AddRow(1)
+
+	woRows := sqlmock.NewRows([]string{"id"})
+	woRows = woRows.AddRow(1)
+
+	walletOperation := operations.NewWalletOperationRepo(sqlDB)
+	walletsRepo := wallets.NewWalletService(sqlDB, walletOperation)
+	repo := NewUsersService(sqlDB, walletsRepo)
+
+	amount := decimal.NewFromInt(0)
+
+	mock.
+		ExpectExec("select pg_advisory_lock").
+		WithArgs(CreateUser).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	mock.ExpectBegin()
+
+	mock.
+		ExpectQuery("insert into users").
+		WithArgs([]driver.Value{"example@mail.com"}...).
+		WillReturnRows(userRows)
+
+	mock.
+		ExpectQuery("insert into wallets").
+		WithArgs([]driver.Value{int64(1)}...).
+		WillReturnRows(walletRows)
+
+	mock.
+		ExpectQuery("insert into wallet_operations").
+		WithArgs([]driver.Value{operations.Create, nil, 1, amount}...).
+		WillReturnRows(walletRows)
+
+	mock.ExpectCommit()
+
+	mock.
+		ExpectExec("select pg_advisory_unlock").
+		WithArgs(CreateUser).
+		WillReturnResult(sqlmock.NewResult(2, 2))
+
+	for i := 0; i < b.N; i++ {
+		repo.Create(ctx, "example@mail.com")
 	}
 }
