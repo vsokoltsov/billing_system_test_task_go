@@ -21,3 +21,11 @@
 ## Documentation
 
 * Information about endpoints stored in Swagger documentation, which is available on `/swagger/index.html` endpoint
+
+## Benchmarking
+
+* For generating benchmark files run `make benchmark package=<package>`, where 
+    * `<package>` - name of the package for which benchmarks should be generated
+* For displaying benchmarks in web ui run `make benchmark-ui package=<package> param=<param>`, where 
+  * `<package>` - name of the package for which benchmarks should be generated
+  * `<param>` - name of the parameter, that was generated on `make benchmark` step (`cpu` or `mem`)
