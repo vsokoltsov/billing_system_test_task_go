@@ -23,7 +23,7 @@ type userHandlerTestCase struct {
 	url            string
 	body           map[string]interface{}
 	expectedStatus int
-	mockData       func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo)
+	mockData       func(ctrl *gomock.Controller, ctx context.Context, userService *MockUsersManager, walletRepo *wallets.MockIWalletRepo)
 	formError      bool
 }
 
@@ -35,7 +35,7 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"email": "example@mail.com",
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockUsersManager, walletRepo *wallets.MockIWalletRepo) {
 			userService.EXPECT().
 				Create(ctx, gomock.Any()).
 				Return(int64(1), nil)
@@ -63,7 +63,7 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"email": "example@mail.com",
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockUsersManager, walletRepo *wallets.MockIWalletRepo) {
 		},
 		expectedStatus: 400,
 		formError:      true,
@@ -75,7 +75,7 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"email": "test",
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockUsersManager, walletRepo *wallets.MockIWalletRepo) {
 		},
 		expectedStatus: 400,
 	},
@@ -86,7 +86,7 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"email": "example@mail.com",
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockUsersManager, walletRepo *wallets.MockIWalletRepo) {
 			userService.EXPECT().
 				Create(ctx, gomock.Any()).
 				Return(int64(0), fmt.Errorf("User creation error"))
@@ -100,7 +100,7 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"email": "example@mail.com",
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockUsersManager, walletRepo *wallets.MockIWalletRepo) {
 			userService.EXPECT().
 				Create(ctx, gomock.Any()).
 				Return(int64(1), nil)
@@ -118,7 +118,7 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"amount": "100",
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockUsersManager, walletRepo *wallets.MockIWalletRepo) {
 			amount := decimal.NewFromInt(100)
 			user := User{
 				ID:    1,
@@ -147,7 +147,7 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"amount": "100",
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockUsersManager, walletRepo *wallets.MockIWalletRepo) {
 		},
 		expectedStatus: 500,
 	},
@@ -158,7 +158,7 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"amount": "100",
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockUsersManager, walletRepo *wallets.MockIWalletRepo) {
 		},
 		expectedStatus: 400,
 	},
@@ -169,7 +169,7 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"amount": "100",
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockUsersManager, walletRepo *wallets.MockIWalletRepo) {
 		},
 		expectedStatus: 400,
 		formError:      true,
@@ -181,7 +181,7 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"amount": 0,
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockUsersManager, walletRepo *wallets.MockIWalletRepo) {
 		},
 		expectedStatus: 400,
 	},
@@ -192,7 +192,7 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"amount": "100",
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockUsersManager, walletRepo *wallets.MockIWalletRepo) {
 			userService.EXPECT().GetByID(ctx, 1).Return(nil, fmt.Errorf("user not found"))
 		},
 		expectedStatus: 404,
@@ -204,7 +204,7 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"amount": "100",
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockUsersManager, walletRepo *wallets.MockIWalletRepo) {
 			amount := decimal.NewFromInt(100)
 			user := User{
 				ID:    1,
@@ -229,7 +229,7 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"amount": "100",
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockIUserRepo, walletRepo *wallets.MockIWalletRepo) {
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockUsersManager, walletRepo *wallets.MockIWalletRepo) {
 			amount := decimal.NewFromInt(100)
 			user := User{
 				ID:    1,
@@ -267,7 +267,7 @@ func TestUsersHandlers(t *testing.T) {
 			}
 			defer sqlDB.Close()
 
-			mockUsersRepo := NewMockIUserRepo(ctrl)
+			mockUsersRepo := NewMockUsersManager(ctrl)
 			mockWalletsRepo := wallets.NewMockIWalletRepo(ctrl)
 
 			enrollRoute := "/users/{id}/enroll/"

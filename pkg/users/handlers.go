@@ -14,7 +14,7 @@ import (
 )
 
 type UsersHandler struct {
-	UsersRepo   IUserRepo
+	UsersRepo   UsersManager
 	WalletsRepo wallets.IWalletRepo
 }
 

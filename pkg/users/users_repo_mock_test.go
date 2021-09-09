@@ -10,31 +10,31 @@ import (
 	reflect "reflect"
 )
 
-// MockIUserRepo is a mock of IUserRepo interface
-type MockIUserRepo struct {
+// MockUsersManager is a mock of UsersManager interface
+type MockUsersManager struct {
 	ctrl     *gomock.Controller
-	recorder *MockIUserRepoMockRecorder
+	recorder *MockUsersManagerMockRecorder
 }
 
-// MockIUserRepoMockRecorder is the mock recorder for MockIUserRepo
-type MockIUserRepoMockRecorder struct {
-	mock *MockIUserRepo
+// MockUsersManagerMockRecorder is the mock recorder for MockUsersManager
+type MockUsersManagerMockRecorder struct {
+	mock *MockUsersManager
 }
 
-// NewMockIUserRepo creates a new mock instance
-func NewMockIUserRepo(ctrl *gomock.Controller) *MockIUserRepo {
-	mock := &MockIUserRepo{ctrl: ctrl}
-	mock.recorder = &MockIUserRepoMockRecorder{mock}
+// NewMockUsersManager creates a new mock instance
+func NewMockUsersManager(ctrl *gomock.Controller) *MockUsersManager {
+	mock := &MockUsersManager{ctrl: ctrl}
+	mock.recorder = &MockUsersManagerMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockIUserRepo) EXPECT() *MockIUserRepoMockRecorder {
+func (m *MockUsersManager) EXPECT() *MockUsersManagerMockRecorder {
 	return m.recorder
 }
 
 // GetByID mocks base method
-func (m *MockIUserRepo) GetByID(ctx context.Context, userID int) (*User, error) {
+func (m *MockUsersManager) GetByID(ctx context.Context, userID int) (*User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByID", ctx, userID)
 	ret0, _ := ret[0].(*User)
@@ -43,13 +43,13 @@ func (m *MockIUserRepo) GetByID(ctx context.Context, userID int) (*User, error) 
 }
 
 // GetByID indicates an expected call of GetByID
-func (mr *MockIUserRepoMockRecorder) GetByID(ctx, userID interface{}) *gomock.Call {
+func (mr *MockUsersManagerMockRecorder) GetByID(ctx, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockIUserRepo)(nil).GetByID), ctx, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockUsersManager)(nil).GetByID), ctx, userID)
 }
 
 // GetByWalletID mocks base method
-func (m *MockIUserRepo) GetByWalletID(ctx context.Context, walletID int) (*User, error) {
+func (m *MockUsersManager) GetByWalletID(ctx context.Context, walletID int) (*User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByWalletID", ctx, walletID)
 	ret0, _ := ret[0].(*User)
@@ -58,13 +58,13 @@ func (m *MockIUserRepo) GetByWalletID(ctx context.Context, walletID int) (*User,
 }
 
 // GetByWalletID indicates an expected call of GetByWalletID
-func (mr *MockIUserRepoMockRecorder) GetByWalletID(ctx, walletID interface{}) *gomock.Call {
+func (mr *MockUsersManagerMockRecorder) GetByWalletID(ctx, walletID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByWalletID", reflect.TypeOf((*MockIUserRepo)(nil).GetByWalletID), ctx, walletID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByWalletID", reflect.TypeOf((*MockUsersManager)(nil).GetByWalletID), ctx, walletID)
 }
 
 // Create mocks base method
-func (m *MockIUserRepo) Create(ctx context.Context, email string) (int64, error) {
+func (m *MockUsersManager) Create(ctx context.Context, email string) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", ctx, email)
 	ret0, _ := ret[0].(int64)
@@ -73,7 +73,7 @@ func (m *MockIUserRepo) Create(ctx context.Context, email string) (int64, error)
 }
 
 // Create indicates an expected call of Create
-func (mr *MockIUserRepoMockRecorder) Create(ctx, email interface{}) *gomock.Call {
+func (mr *MockUsersManagerMockRecorder) Create(ctx, email interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockIUserRepo)(nil).Create), ctx, email)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUsersManager)(nil).Create), ctx, email)
 }

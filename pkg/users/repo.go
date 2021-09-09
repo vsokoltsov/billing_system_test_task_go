@@ -11,8 +11,8 @@ const (
 	CreateUser = iota + 1
 )
 
-// IUserRepo represents communication with users
-type IUserRepo interface {
+// UsersManager represents communication with users
+type UsersManager interface {
 	GetByID(ctx context.Context, userID int) (*User, error)
 	GetByWalletID(ctx context.Context, walletID int) (*User, error)
 	Create(ctx context.Context, email string) (int64, error)
@@ -25,7 +25,7 @@ type UsersService struct {
 }
 
 // NewUsersService returns instance of UserService
-func NewUsersService(db *sql.DB, wallets wallets.IWalletRepo) IUserRepo {
+func NewUsersService(db *sql.DB, wallets wallets.IWalletRepo) UsersManager {
 	return UsersService{
 		db:          db,
 		walletsRepo: wallets,
