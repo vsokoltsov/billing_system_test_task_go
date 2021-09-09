@@ -720,3 +720,199 @@ func TestNewWalletService(t *testing.T) {
 		t.Errorf("Wrong type of WalletOperations")
 	}
 }
+
+func BenchmarkCreate(b *testing.B) {
+	sqlDB, mock, err := sqlmock.New()
+	if err != nil {
+		b.Fatalf("cant create mock: %s", err)
+	}
+	defer sqlDB.Close()
+	ctx := context.Background()
+
+	mock.ExpectBegin()
+	conn, _ := sqlDB.Conn(ctx)
+	tx, txErr := conn.BeginTx(ctx, nil)
+	if txErr != nil {
+		fmt.Printf("error of transaction initialization: %s", txErr)
+	}
+
+	walletRows := sqlmock.NewRows([]string{"id"})
+	walletRows = walletRows.AddRow(1)
+
+	woRows := sqlmock.NewRows([]string{"id"})
+	woRows = woRows.AddRow(1)
+
+	walletOperation := operations.NewWalletOperationRepo(sqlDB)
+	repo := NewWalletService(sqlDB, walletOperation)
+
+	mock.
+		ExpectQuery("insert into wallets").
+		WithArgs([]driver.Value{int64(1)}...).
+		WillReturnRows(walletRows)
+
+	mock.
+		ExpectQuery("insert into wallet_operations").
+		WithArgs([]driver.Value{operations.Create, nil, 1, decimal.NewFromInt(0)}...).
+		WillReturnRows(woRows)
+
+	for i := 0; i < b.N; i++ {
+		repo.Create(ctx, tx, int64(1))
+	}
+}
+
+func BenchmarkEnroll(b *testing.B) {
+	sqlDB, mock, err := sqlmock.New()
+	if err != nil {
+		b.Fatalf("cant create mock: %s", err)
+	}
+	defer sqlDB.Close()
+	ctx := context.Background()
+
+	walletOperation := operations.NewWalletOperationRepo(sqlDB)
+	repo := NewWalletService(sqlDB, walletOperation)
+
+	operationRows := sqlmock.NewRows([]string{"id"}).AddRow(1)
+
+	mock.
+		ExpectExec("select pg_advisory_lock").
+		WithArgs(EnrollWallet).
+		WillReturnResult(sqlmock.NewResult(2, 2))
+
+	mock.ExpectBegin()
+
+	mock.
+		ExpectExec("update wallets").
+		WithArgs([]driver.Value{decimal.NewFromInt(100), 2}...).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	mock.
+		ExpectQuery("insert into wallet_operations").
+		WithArgs([]driver.Value{operations.Deposit, nil, 2, decimal.NewFromInt(100)}...).
+		WillReturnRows(operationRows)
+
+	mock.ExpectCommit()
+
+	mock.
+		ExpectExec("select pg_advisory_unlock").
+		WithArgs(EnrollWallet).
+		WillReturnResult(sqlmock.NewResult(2, 2))
+
+	for i := 0; i < b.N; i++ {
+		repo.Enroll(ctx, 1, decimal.NewFromInt(100))
+	}
+}
+
+func BenchmarkGetByUserID(b *testing.B) {
+	sqlDB, mock, err := sqlmock.New()
+	if err != nil {
+		b.Fatalf("cant create mock: %s", err)
+	}
+	defer sqlDB.Close()
+	ctx := context.Background()
+
+	rows := sqlmock.NewRows([]string{"id", "user_id", "balance", "currency"})
+	rows = rows.AddRow(1, 1, 100, "USD")
+
+	walletOperation := operations.NewWalletOperationRepo(sqlDB)
+	repo := NewWalletService(sqlDB, walletOperation)
+
+	mock.
+		ExpectQuery("select id, user_id, balance, currency from wallets").
+		WithArgs([]driver.Value{1}...).
+		WillReturnRows(rows)
+
+	for i := 0; i < b.N; i++ {
+		repo.GetByUserId(ctx, 1)
+	}
+}
+
+func BenchmarkGetByID(b *testing.B) {
+	sqlDB, mock, err := sqlmock.New()
+	if err != nil {
+		b.Fatalf("cant create mock: %s", err)
+	}
+	defer sqlDB.Close()
+	ctx := context.Background()
+
+	rows := sqlmock.NewRows([]string{"id", "user_id", "balance", "currency"})
+	rows = rows.AddRow(1, 1, 100, "USD")
+
+	walletOperation := operations.NewWalletOperationRepo(sqlDB)
+	repo := NewWalletService(sqlDB, walletOperation)
+
+	mock.
+		ExpectQuery("select id, user_id, balance, currency from wallets").
+		WithArgs([]driver.Value{1}...).
+		WillReturnRows(rows)
+
+	for i := 0; i < b.N; i++ {
+		repo.GetByID(ctx, 1)
+	}
+}
+
+func BenchmarkTransfer(b *testing.B) {
+	sqlDB, mock, err := sqlmock.New()
+	if err != nil {
+		b.Fatalf("cant create mock: %s", err)
+	}
+	defer sqlDB.Close()
+	ctx := context.Background()
+
+	walletOperation := operations.NewWalletOperationRepo(sqlDB)
+	repo := NewWalletService(sqlDB, walletOperation)
+
+	sourceOperationRows := sqlmock.NewRows([]string{"id"}).AddRow(1)
+	destinationOperationRows := sqlmock.NewRows([]string{"id"}).AddRow(2)
+
+	// Select source wallet
+	rows := sqlmock.NewRows([]string{"id", "user_id", "balance", "currency"})
+	rows = rows.AddRow(1, 1, 100, "USD")
+	mock.
+		ExpectQuery("select id, user_id, balance, currency from wallets").
+		WithArgs([]driver.Value{1}...).
+		WillReturnRows(rows)
+
+	// Lock operation
+	mock.
+		ExpectExec("select pg_advisory_lock").
+		WithArgs(TransferFunds).
+		WillReturnResult(sqlmock.NewResult(2, 2))
+
+	// Start transfer funds transaction
+	mock.ExpectBegin()
+
+	// Exec update wallet balance query
+	mock.
+		ExpectExec("update wallets").
+		WithArgs([]driver.Value{decimal.NewFromInt(10), 1}...).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	// Exec update wallet balance query
+	mock.
+		ExpectExec("update wallets").
+		WithArgs([]driver.Value{decimal.NewFromInt(10), 2}...).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	mock.
+		ExpectQuery("insert into wallet_operations").
+		WithArgs([]driver.Value{operations.Deposit, 1, 2, decimal.NewFromInt(10)}...).
+		WillReturnRows(sourceOperationRows)
+
+	mock.
+		ExpectQuery("insert into wallet_operations").
+		WithArgs([]driver.Value{operations.Withdrawal, 2, 1, decimal.NewFromInt(10)}...).
+		WillReturnRows(destinationOperationRows)
+
+	// Commit transfer funds transaction
+	mock.ExpectCommit()
+
+	// Unlock operation
+	mock.
+		ExpectExec("select pg_advisory_unlock").
+		WithArgs(TransferFunds).
+		WillReturnResult(sqlmock.NewResult(2, 2))
+
+	for i := 0; i < b.N; i++ {
+		repo.Transfer(ctx, 1, 2, decimal.NewFromInt(10))
+	}
+}
