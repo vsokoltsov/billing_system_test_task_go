@@ -253,3 +253,53 @@ func TestNewWalletService(t *testing.T) {
 		t.Errorf("Wrong type of WalletOperationService")
 	}
 }
+
+func BenchmarkCreate(b *testing.B) {
+	sqlDB, mock, err := sqlmock.New()
+	if err != nil {
+		b.Fatalf("cant create mock: %s", err)
+	}
+	defer sqlDB.Close()
+	ctx := context.Background()
+
+	mock.ExpectBegin()
+	conn, _ := sqlDB.Conn(ctx)
+	tx, txErr := conn.BeginTx(ctx, nil)
+	if txErr != nil {
+		fmt.Printf("error of transaction initialization: %s", txErr)
+	}
+
+	rows := sqlmock.NewRows([]string{"id"})
+	rows = rows.AddRow(1)
+
+	mock.
+		ExpectQuery("insert into wallet_operations").
+		WithArgs([]driver.Value{Create, 1, 2, decimal.NewFromInt(0)}...).
+		WillReturnRows(rows)
+
+	repo := NewWalletOperationRepo(sqlDB)
+	for i := 0; i < b.N; i++ {
+		repo.Create(ctx, tx, Create, 1, 2, decimal.NewFromInt(0))
+	}
+}
+
+func BenchmarkList(b *testing.B) {
+	sqlDB, mock, err := sqlmock.New()
+	if err != nil {
+		b.Fatalf("cant create mock: %s", err)
+	}
+	defer sqlDB.Close()
+	ctx := context.Background()
+	rows := sqlmock.NewRows([]string{"id"})
+	rows = rows.AddRow(1)
+
+	mock.
+		ExpectQuery("select id, operation, wallet_from, wallet_to, amount, created_at from wallet_operations").
+		WillReturnRows(rows)
+
+	repo := NewWalletOperationRepo(sqlDB)
+
+	for i := 0; i < b.N; i++ {
+		repo.List(ctx, nil)
+	}
+}
