@@ -16,11 +16,12 @@ import (
 )
 
 type userRepoTestCase struct {
-	name      string
-	args      []driver.Value
-	funcName  string
-	mockQuery func(mock sqlmock.Sqlmock)
-	err       error
+	name                string
+	args                []driver.Value
+	funcName            string
+	mockQuery           func(mock sqlmock.Sqlmock)
+	err                 error
+	expectedResultMatch func(actual interface{}) bool
 }
 
 var UserRepoTestCases = []userRepoTestCase{
@@ -56,6 +57,11 @@ var UserRepoTestCases = []userRepoTestCase{
 				WithArgs([]driver.Value{int64(1)}...).
 				WillReturnRows(walletRows)
 
+			mock.
+				ExpectQuery("insert into wallet_operations").
+				WithArgs([]driver.Value{operations.Create, nil, 1, decimal.NewFromInt(0)}...).
+				WillReturnRows(walletRows)
+
 			// Commit users create transaction
 			mock.ExpectCommit()
 
@@ -64,6 +70,9 @@ var UserRepoTestCases = []userRepoTestCase{
 				ExpectExec("select pg_advisory_unlock").
 				WithArgs(CreateUser).
 				WillReturnResult(sqlmock.NewResult(2, 2))
+		},
+		expectedResultMatch: func(actual interface{}) bool {
+			return actual.(int64) == int64(1)
 		},
 	},
 	userRepoTestCase{
@@ -283,6 +292,12 @@ var UserRepoTestCases = []userRepoTestCase{
 				WithArgs([]driver.Value{int64(1)}...).
 				WillReturnRows(walletRows)
 
+			// Exec insert wallets query
+			mock.
+				ExpectQuery("insert into wallet_operations").
+				WithArgs([]driver.Value{int64(1)}...).
+				WillReturnRows(walletRows)
+
 			// Commit users create transaction
 			mock.ExpectCommit()
 
@@ -333,6 +348,23 @@ var UserRepoTestCases = []userRepoTestCase{
 				WithArgs([]driver.Value{1}...).
 				WillReturnRows(rows)
 		},
+		expectedResultMatch: func(actual interface{}) bool {
+			expectedUser := &User{
+				ID:    1,
+				Email: "test@example.com",
+				Wallet: &wallets.Wallet{
+					ID:       1,
+					UserID:   1,
+					Balance:  decimal.NewFromInt(100),
+					Currency: "USD",
+				},
+			}
+			actualUser := actual.(*User)
+			return (expectedUser.ID == actualUser.ID &&
+				expectedUser.Email == actualUser.Email &&
+				expectedUser.Wallet.ID == actualUser.Wallet.ID &&
+				expectedUser.Wallet.Balance.IntPart() == actualUser.Wallet.Balance.IntPart())
+		},
 	},
 	userRepoTestCase{
 		name:     "Failed user retrieving with id",
@@ -379,6 +411,23 @@ var UserRepoTestCases = []userRepoTestCase{
 				ExpectQuery("select u.id, u.email, w.id, w.user_id, w.balance, w.currency from users as u").
 				WithArgs([]driver.Value{1}...).
 				WillReturnRows(rows)
+		},
+		expectedResultMatch: func(actual interface{}) bool {
+			expectedUser := &User{
+				ID:    1,
+				Email: "test@example.com",
+				Wallet: &wallets.Wallet{
+					ID:       1,
+					UserID:   1,
+					Balance:  decimal.NewFromInt(100),
+					Currency: "USD",
+				},
+			}
+			actualUser := actual.(*User)
+			return (expectedUser.ID == actualUser.ID &&
+				expectedUser.Email == actualUser.Email &&
+				expectedUser.Wallet.ID == actualUser.Wallet.ID &&
+				expectedUser.Wallet.Balance.IntPart() == actualUser.Wallet.Balance.IntPart())
 		},
 	},
 	userRepoTestCase{
@@ -456,6 +505,7 @@ func TestUsersRepo(t *testing.T) {
 			var (
 				reflectErr error
 			)
+			resultValue := result[0].Interface()
 			rerr := result[1].Interface()
 			if rerr != nil {
 				reflectErr = rerr.(error)
@@ -472,6 +522,12 @@ func TestUsersRepo(t *testing.T) {
 					return
 				}
 			}
+
+			// if resultValue != nil {
+			if tc.err == nil && !tc.expectedResultMatch(resultValue) {
+				t.Errorf("result data is not matched. Got %s", resultValue)
+			}
+			// }
 		})
 	}
 }
