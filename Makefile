@@ -48,3 +48,13 @@ lint:
 	@exec gofmt -w ./
 	@echo "Check via golangci-lint..."
 	@exec golangci-lint run
+
+.PHONY: benchmark
+benchmark:
+	@echo "Run benchmark for '$(package)' package"
+	@exec go test -v ./pkg/$(package)/... -bench . -benchmem -cpuprofile=cpu.out -memprofile=mem.out -memprofilerate=1
+
+.PHONY: benchmark-ui
+benchmark:
+	make benchmark package=$(package)
+	@exec go tool pprof -http=:8091 $(package).test $(param).out
