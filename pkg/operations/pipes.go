@@ -7,15 +7,15 @@ import (
 	"sync"
 )
 
-// IOperationsProcessor defines operations for processing WalletOperation
-type IOperationsProcessor interface {
-	Process(ctx context.Context, or OperationsManager, listParams *ListParams, marshaller IFileMarshaller) error
+// IOperationsProcessesManager defines operations for processing WalletOperation
+type IOperationsProcessesManager interface {
+	Process(ctx context.Context, or OperationsManager, listParams *ListParams, marshaller FileMarshallingManager) error
 }
 
-// OperationsProcessor represents IOperationsProcessor interface
-type OperationsProcessor struct{}
+// OperationsProcessesManager represents IOperationsProcessesManager interface
+type OperationsProcessesManager struct{}
 
-func (op OperationsProcessor) Process(ctx context.Context, or OperationsManager, listParams *ListParams, marshaller IFileMarshaller) error {
+func (op OperationsProcessesManager) Process(ctx context.Context, or OperationsManager, listParams *ListParams, marshaller FileMarshallingManager) error {
 	var (
 		wg     = &sync.WaitGroup{}
 		errors = make(chan error, 1)
@@ -96,7 +96,7 @@ func (rp ReadPipe) Call(in, out chan interface{}) {
 // MarshallPipe represents marshalling part of pipeline (to csv or json)
 type MarshallPipe struct {
 	wg     *sync.WaitGroup
-	fm     IFileMarshaller
+	fm     FileMarshallingManager
 	errors chan error
 }
 
@@ -124,7 +124,7 @@ func (mp MarshallPipe) Call(in, out chan interface{}) {
 // WritePipe represents writing to file part of pipeline
 type WritePipe struct {
 	wg     *sync.WaitGroup
-	fm     IFileMarshaller
+	fm     FileMarshallingManager
 	errors chan error
 }
 

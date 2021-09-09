@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-type IFileMarshaller interface {
+type FileMarshallingManager interface {
 	MarshallOperation(operation *WalletOperation) (*MarshalledResult, error)
 	WriteToFile(mr *MarshalledResult) error
 }

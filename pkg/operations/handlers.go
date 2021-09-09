@@ -10,13 +10,13 @@ import (
 
 type OperationsHandler struct {
 	or OperationsManager
-	op IOperationsProcessor
-	pr IQueryParamsReader
-	fh IFileHandling
+	op IOperationsProcessesManager
+	pr QueryReaderManager
+	fh FileHandlingManager
 }
 
 // NewOperationsHandler returns controller instance
-func NewOperationsHandler(or OperationsManager, pr IQueryParamsReader, fh IFileHandling, op IOperationsProcessor) OperationsHandler {
+func NewOperationsHandler(or OperationsManager, pr QueryReaderManager, fh FileHandlingManager, op IOperationsProcessesManager) OperationsHandler {
 	return OperationsHandler{
 		or: or,
 		pr: pr,

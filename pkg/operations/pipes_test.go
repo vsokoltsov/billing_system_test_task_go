@@ -191,7 +191,7 @@ func TestFailedReadPipeEmptyQuery(t *testing.T) {
 // Test success marshall pipe json marshalling
 func TestSuccessMarshallPipe(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	mockFileMarshaller := NewMockIFileMarshaller(ctrl)
+	mockFileMarshaller := NewMockFileMarshallingManager(ctrl)
 	errCh := make(chan error, 1)
 	wg := &sync.WaitGroup{}
 	in := make(chan interface{}, 1)
@@ -232,7 +232,7 @@ func TestSuccessMarshallPipe(t *testing.T) {
 // Test failed marshall pipe json marshalling (error marshalling)
 func TestFailedMarshallPipeErrorMarshalling(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	mockFileMarshaller := NewMockIFileMarshaller(ctrl)
+	mockFileMarshaller := NewMockFileMarshallingManager(ctrl)
 	errCh := make(chan error, 1)
 	wg := &sync.WaitGroup{}
 	in := make(chan interface{}, 1)
@@ -273,7 +273,7 @@ func TestFailedMarshallPipeErrorMarshalling(t *testing.T) {
 // Test failed marshall pipe json marshalling (previous step cancelled)
 func TestFailedMarshallPipePrevPipeCancelled(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	mockFileMarshaller := NewMockIFileMarshaller(ctrl)
+	mockFileMarshaller := NewMockFileMarshallingManager(ctrl)
 	errCh := make(chan error)
 	wg := &sync.WaitGroup{}
 	in := make(chan interface{}, 1)
@@ -301,7 +301,7 @@ func TestFailedMarshallPipePrevPipeCancelled(t *testing.T) {
 // Test success write pipe file writing
 func TestSuccessWritePipe(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	mockFileMarshaller := NewMockIFileMarshaller(ctrl)
+	mockFileMarshaller := NewMockFileMarshallingManager(ctrl)
 	errCh := make(chan error)
 	wg := &sync.WaitGroup{}
 	in := make(chan interface{}, 1)
@@ -346,7 +346,7 @@ func TestSuccessWritePipe(t *testing.T) {
 // Test failed write pipe file writing (write file error)
 func TestFailedWritePipe(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	mockFileMarshaller := NewMockIFileMarshaller(ctrl)
+	mockFileMarshaller := NewMockFileMarshallingManager(ctrl)
 	errCh := make(chan error, 1)
 	wg := &sync.WaitGroup{}
 	in := make(chan interface{}, 1)
@@ -386,7 +386,7 @@ func TestFailedWritePipe(t *testing.T) {
 
 func TestSuccessPipelineRun(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	mockFileMarshaller := NewMockIFileMarshaller(ctrl)
+	mockFileMarshaller := NewMockFileMarshallingManager(ctrl)
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
@@ -414,7 +414,7 @@ func TestSuccessPipelineRun(t *testing.T) {
 	mockFileMarshaller.EXPECT().MarshallOperation(&op).Return(&mr, nil)
 	mockFileMarshaller.EXPECT().WriteToFile(&mr).Return(nil)
 
-	oProcessor := OperationsProcessor{}
+	oProcessor := OperationsProcessesManager{}
 	processErr := oProcessor.Process(ctx, or, nil, mockFileMarshaller)
 	if processErr != nil {
 		t.Errorf("Unexpected error: %s", processErr)
@@ -423,7 +423,7 @@ func TestSuccessPipelineRun(t *testing.T) {
 
 func TestFailedPipelineRun(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	mockFileMarshaller := NewMockIFileMarshaller(ctrl)
+	mockFileMarshaller := NewMockFileMarshallingManager(ctrl)
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
@@ -446,7 +446,7 @@ func TestFailedPipelineRun(t *testing.T) {
 	mock.ExpectQuery("select").WillReturnRows(rows)
 	mockFileMarshaller.EXPECT().MarshallOperation(&op).Return(nil, fmt.Errorf("marshall error"))
 
-	oProcessor := OperationsProcessor{}
+	oProcessor := OperationsProcessesManager{}
 	processErr := oProcessor.Process(ctx, or, nil, mockFileMarshaller)
 	if processErr == nil {
 		t.Errorf("Expected error, got nil")

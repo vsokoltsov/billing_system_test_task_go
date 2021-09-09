@@ -9,31 +9,31 @@ import (
 	reflect "reflect"
 )
 
-// MockIFileMarshaller is a mock of IFileMarshaller interface
-type MockIFileMarshaller struct {
+// MockFileMarshallingManager is a mock of FileMarshallingManager interface
+type MockFileMarshallingManager struct {
 	ctrl     *gomock.Controller
-	recorder *MockIFileMarshallerMockRecorder
+	recorder *MockFileMarshallingManagerMockRecorder
 }
 
-// MockIFileMarshallerMockRecorder is the mock recorder for MockIFileMarshaller
-type MockIFileMarshallerMockRecorder struct {
-	mock *MockIFileMarshaller
+// MockFileMarshallingManagerMockRecorder is the mock recorder for MockFileMarshallingManager
+type MockFileMarshallingManagerMockRecorder struct {
+	mock *MockFileMarshallingManager
 }
 
-// NewMockIFileMarshaller creates a new mock instance
-func NewMockIFileMarshaller(ctrl *gomock.Controller) *MockIFileMarshaller {
-	mock := &MockIFileMarshaller{ctrl: ctrl}
-	mock.recorder = &MockIFileMarshallerMockRecorder{mock}
+// NewMockFileMarshallingManager creates a new mock instance
+func NewMockFileMarshallingManager(ctrl *gomock.Controller) *MockFileMarshallingManager {
+	mock := &MockFileMarshallingManager{ctrl: ctrl}
+	mock.recorder = &MockFileMarshallingManagerMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockIFileMarshaller) EXPECT() *MockIFileMarshallerMockRecorder {
+func (m *MockFileMarshallingManager) EXPECT() *MockFileMarshallingManagerMockRecorder {
 	return m.recorder
 }
 
 // MarshallOperation mocks base method
-func (m *MockIFileMarshaller) MarshallOperation(operation *WalletOperation) (*MarshalledResult, error) {
+func (m *MockFileMarshallingManager) MarshallOperation(operation *WalletOperation) (*MarshalledResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "MarshallOperation", operation)
 	ret0, _ := ret[0].(*MarshalledResult)
@@ -42,13 +42,13 @@ func (m *MockIFileMarshaller) MarshallOperation(operation *WalletOperation) (*Ma
 }
 
 // MarshallOperation indicates an expected call of MarshallOperation
-func (mr *MockIFileMarshallerMockRecorder) MarshallOperation(operation interface{}) *gomock.Call {
+func (mr *MockFileMarshallingManagerMockRecorder) MarshallOperation(operation interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarshallOperation", reflect.TypeOf((*MockIFileMarshaller)(nil).MarshallOperation), operation)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarshallOperation", reflect.TypeOf((*MockFileMarshallingManager)(nil).MarshallOperation), operation)
 }
 
 // WriteToFile mocks base method
-func (m *MockIFileMarshaller) WriteToFile(mr *MarshalledResult) error {
+func (m *MockFileMarshallingManager) WriteToFile(mr *MarshalledResult) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "WriteToFile", mr)
 	ret0, _ := ret[0].(error)
@@ -56,9 +56,9 @@ func (m *MockIFileMarshaller) WriteToFile(mr *MarshalledResult) error {
 }
 
 // WriteToFile indicates an expected call of WriteToFile
-func (mr_2 *MockIFileMarshallerMockRecorder) WriteToFile(mr interface{}) *gomock.Call {
+func (mr_2 *MockFileMarshallingManagerMockRecorder) WriteToFile(mr interface{}) *gomock.Call {
 	mr_2.mock.ctrl.T.Helper()
-	return mr_2.mock.ctrl.RecordCallWithMethodType(mr_2.mock, "WriteToFile", reflect.TypeOf((*MockIFileMarshaller)(nil).WriteToFile), mr)
+	return mr_2.mock.ctrl.RecordCallWithMethodType(mr_2.mock, "WriteToFile", reflect.TypeOf((*MockFileMarshallingManager)(nil).WriteToFile), mr)
 }
 
 // MockCSVWriter is a mock of CSVWriter interface

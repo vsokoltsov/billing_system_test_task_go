@@ -10,31 +10,31 @@ import (
 	reflect "reflect"
 )
 
-// MockIOperationsProcessor is a mock of IOperationsProcessor interface
-type MockIOperationsProcessor struct {
+// MockIOperationsProcessesManager is a mock of IOperationsProcessesManager interface
+type MockIOperationsProcessesManager struct {
 	ctrl     *gomock.Controller
-	recorder *MockIOperationsProcessorMockRecorder
+	recorder *MockIOperationsProcessesManagerMockRecorder
 }
 
-// MockIOperationsProcessorMockRecorder is the mock recorder for MockIOperationsProcessor
-type MockIOperationsProcessorMockRecorder struct {
-	mock *MockIOperationsProcessor
+// MockIOperationsProcessesManagerMockRecorder is the mock recorder for MockIOperationsProcessesManager
+type MockIOperationsProcessesManagerMockRecorder struct {
+	mock *MockIOperationsProcessesManager
 }
 
-// NewMockIOperationsProcessor creates a new mock instance
-func NewMockIOperationsProcessor(ctrl *gomock.Controller) *MockIOperationsProcessor {
-	mock := &MockIOperationsProcessor{ctrl: ctrl}
-	mock.recorder = &MockIOperationsProcessorMockRecorder{mock}
+// NewMockIOperationsProcessesManager creates a new mock instance
+func NewMockIOperationsProcessesManager(ctrl *gomock.Controller) *MockIOperationsProcessesManager {
+	mock := &MockIOperationsProcessesManager{ctrl: ctrl}
+	mock.recorder = &MockIOperationsProcessesManagerMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockIOperationsProcessor) EXPECT() *MockIOperationsProcessorMockRecorder {
+func (m *MockIOperationsProcessesManager) EXPECT() *MockIOperationsProcessesManagerMockRecorder {
 	return m.recorder
 }
 
 // Process mocks base method
-func (m *MockIOperationsProcessor) Process(ctx context.Context, or OperationsManager, listParams *ListParams, marshaller IFileMarshaller) error {
+func (m *MockIOperationsProcessesManager) Process(ctx context.Context, or OperationsManager, listParams *ListParams, marshaller FileMarshallingManager) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Process", ctx, or, listParams, marshaller)
 	ret0, _ := ret[0].(error)
@@ -42,7 +42,7 @@ func (m *MockIOperationsProcessor) Process(ctx context.Context, or OperationsMan
 }
 
 // Process indicates an expected call of Process
-func (mr *MockIOperationsProcessorMockRecorder) Process(ctx, or, listParams, marshaller interface{}) *gomock.Call {
+func (mr *MockIOperationsProcessesManagerMockRecorder) Process(ctx, or, listParams, marshaller interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Process", reflect.TypeOf((*MockIOperationsProcessor)(nil).Process), ctx, or, listParams, marshaller)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Process", reflect.TypeOf((*MockIOperationsProcessesManager)(nil).Process), ctx, or, listParams, marshaller)
 }

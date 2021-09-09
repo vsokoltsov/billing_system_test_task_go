@@ -31,7 +31,7 @@ func SetUpRoutes(pathDelimiter string, sqlDb *sql.DB) *mux.Router {
 	fileStorage := operations.FileStorage{}
 	paramsReader := operations.QueryParamsReader{}
 	fileHandler := operations.NewFileHandler(fileStorage)
-	processor := operations.OperationsProcessor{}
+	processor := operations.OperationsProcessesManager{}
 
 	walletsRepo := wallets.NewWalletService(sqlDb, walletOperationRepo)
 	usersRepo := users.NewUsersService(sqlDb, walletsRepo)

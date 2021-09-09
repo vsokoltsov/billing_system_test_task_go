@@ -105,27 +105,27 @@ import (
         "sync"
 )
 
-// IFileHandling represents interface for file handler
-type IFileHandling interface {
+// FileHandlingManager represents interface for file handler
+type FileHandlingManager interface {
         Create(format string) (*FileParams, error)
-        CreateMarshaller(file *os.File, format string, csvWriter CSVWriter) (IFileMarshaller, error)
+        CreateMarshaller(file *os.File, format string, csvWriter CSVWriter) (FileMarshallingManager, error)
 }
 
-// IFileStorage represents interface for file storage
-type IFileStorage interface {
+// FileStorageManager represents interface for file storage
+type FileStorageManager interface {
         Create(path string, flag int, perm os.FileMode) (*os.File, error)
 }
 
-// FileHandler implements IFileHandling interface
+// FileHandler implements FileHandlingManager interface
 type FileHandler struct {
-        fileStorage IFileStorage
+        fileStorage FileStorageManager
 }
 
-// FileStorage implements IFileStorage interface
+// FileStorage implements FileStorageManager interface
 type FileStorage struct{}
 
 // NewFileHandler returns new instance of FileHandler
-func NewFileHandler(storage IFileStorage) FileHandler <span class="cov8" title="1">{
+func NewFileHandler(storage FileStorageManager) FileHandler <span class="cov8" title="1">{
         return FileHandler{
                 fileStorage: storage,
         }
@@ -174,10 +174,10 @@ func (fh FileHandler) Create(format string) (*FileParams, error) <span class="co
 }
 
 // CreateMarshaller returns file marshaller for particular format
-func (fh FileHandler) CreateMarshaller(file *os.File, format string, csvWriter CSVWriter) (IFileMarshaller, error) <span class="cov8" title="1">{
+func (fh FileHandler) CreateMarshaller(file *os.File, format string, csvWriter CSVWriter) (FileMarshallingManager, error) <span class="cov8" title="1">{
         var (
                 mu          = &amp;sync.Mutex{}
-                fileHandler IFileMarshaller
+                fileHandler FileMarshallingManager
         )
 
         if format == "csv" </span><span class="cov8" title="1">{
@@ -212,7 +212,7 @@ import (
         "sync"
 )
 
-type IFileMarshaller interface {
+type FileMarshallingManager interface {
         MarshallOperation(operation *WalletOperation) (*MarshalledResult, error)
         WriteToFile(mr *MarshalledResult) error
 }
@@ -302,13 +302,13 @@ import (
 
 type OperationsHandler struct {
         or OperationsManager
-        op IOperationsProcessor
-        pr IQueryParamsReader
-        fh IFileHandling
+        op IOperationsProcessesManager
+        pr QueryReaderManager
+        fh FileHandlingManager
 }
 
 // NewOperationsHandler returns controller instance
-func NewOperationsHandler(or OperationsManager, pr IQueryParamsReader, fh IFileHandling, op IOperationsProcessor) OperationsHandler <span class="cov8" title="1">{
+func NewOperationsHandler(or OperationsManager, pr QueryReaderManager, fh FileHandlingManager, op IOperationsProcessesManager) OperationsHandler <span class="cov8" title="1">{
         return OperationsHandler{
                 or: or,
                 pr: pr,
@@ -394,15 +394,15 @@ import (
         "sync"
 )
 
-// IOperationsProcessor defines operations for processing WalletOperation
-type IOperationsProcessor interface {
-        Process(ctx context.Context, or OperationsManager, listParams *ListParams, marshaller IFileMarshaller) error
+// IOperationsProcessesManager defines operations for processing WalletOperation
+type IOperationsProcessesManager interface {
+        Process(ctx context.Context, or OperationsManager, listParams *ListParams, marshaller FileMarshallingManager) error
 }
 
-// OperationsProcessor represents IOperationsProcessor interface
-type OperationsProcessor struct{}
+// OperationsProcessesManager represents IOperationsProcessesManager interface
+type OperationsProcessesManager struct{}
 
-func (op OperationsProcessor) Process(ctx context.Context, or OperationsManager, listParams *ListParams, marshaller IFileMarshaller) error <span class="cov8" title="1">{
+func (op OperationsProcessesManager) Process(ctx context.Context, or OperationsManager, listParams *ListParams, marshaller FileMarshallingManager) error <span class="cov8" title="1">{
         var (
                 wg     = &amp;sync.WaitGroup{}
                 errors = make(chan error, 1)
@@ -483,7 +483,7 @@ func (rp ReadPipe) Call(in, out chan interface{}) <span class="cov8" title="1">{
 // MarshallPipe represents marshalling part of pipeline (to csv or json)
 type MarshallPipe struct {
         wg     *sync.WaitGroup
-        fm     IFileMarshaller
+        fm     FileMarshallingManager
         errors chan error
 }
 
@@ -511,7 +511,7 @@ func (mp MarshallPipe) Call(in, out chan interface{}) <span class="cov8" title="
 // WritePipe represents writing to file part of pipeline
 type WritePipe struct {
         wg     *sync.WaitGroup
-        fm     IFileMarshaller
+        fm     FileMarshallingManager
         errors chan error
 }
 
@@ -545,8 +545,8 @@ import (
         "strconv"
 )
 
-// IQueryParamsReader represents actions for query parameters reading
-type IQueryParamsReader interface {
+// QueryReaderManager represents actions for query parameters reading
+type QueryReaderManager interface {
         Parse(query url.Values) (*QueryParams, error)
 }
 
@@ -556,7 +556,7 @@ type QueryParams struct {
         listParams *ListParams
 }
 
-// QueryParams implements IQueryParamsReader interface
+// QueryParams implements QueryReaderManager interface
 type QueryParamsReader struct{}
 
 // Parse returns given URL query parameters

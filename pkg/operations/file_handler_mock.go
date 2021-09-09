@@ -10,31 +10,31 @@ import (
 	reflect "reflect"
 )
 
-// MockIFileHandling is a mock of IFileHandling interface
-type MockIFileHandling struct {
+// MockFileHandlingManager is a mock of FileHandlingManager interface
+type MockFileHandlingManager struct {
 	ctrl     *gomock.Controller
-	recorder *MockIFileHandlingMockRecorder
+	recorder *MockFileHandlingManagerMockRecorder
 }
 
-// MockIFileHandlingMockRecorder is the mock recorder for MockIFileHandling
-type MockIFileHandlingMockRecorder struct {
-	mock *MockIFileHandling
+// MockFileHandlingManagerMockRecorder is the mock recorder for MockFileHandlingManager
+type MockFileHandlingManagerMockRecorder struct {
+	mock *MockFileHandlingManager
 }
 
-// NewMockIFileHandling creates a new mock instance
-func NewMockIFileHandling(ctrl *gomock.Controller) *MockIFileHandling {
-	mock := &MockIFileHandling{ctrl: ctrl}
-	mock.recorder = &MockIFileHandlingMockRecorder{mock}
+// NewMockFileHandlingManager creates a new mock instance
+func NewMockFileHandlingManager(ctrl *gomock.Controller) *MockFileHandlingManager {
+	mock := &MockFileHandlingManager{ctrl: ctrl}
+	mock.recorder = &MockFileHandlingManagerMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockIFileHandling) EXPECT() *MockIFileHandlingMockRecorder {
+func (m *MockFileHandlingManager) EXPECT() *MockFileHandlingManagerMockRecorder {
 	return m.recorder
 }
 
 // Create mocks base method
-func (m *MockIFileHandling) Create(format string) (*FileParams, error) {
+func (m *MockFileHandlingManager) Create(format string) (*FileParams, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", format)
 	ret0, _ := ret[0].(*FileParams)
@@ -43,51 +43,51 @@ func (m *MockIFileHandling) Create(format string) (*FileParams, error) {
 }
 
 // Create indicates an expected call of Create
-func (mr *MockIFileHandlingMockRecorder) Create(format interface{}) *gomock.Call {
+func (mr *MockFileHandlingManagerMockRecorder) Create(format interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockIFileHandling)(nil).Create), format)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockFileHandlingManager)(nil).Create), format)
 }
 
 // CreateMarshaller mocks base method
-func (m *MockIFileHandling) CreateMarshaller(file *os.File, format string, csvWriter CSVWriter) (IFileMarshaller, error) {
+func (m *MockFileHandlingManager) CreateMarshaller(file *os.File, format string, csvWriter CSVWriter) (FileMarshallingManager, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateMarshaller", file, format, csvWriter)
-	ret0, _ := ret[0].(IFileMarshaller)
+	ret0, _ := ret[0].(FileMarshallingManager)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateMarshaller indicates an expected call of CreateMarshaller
-func (mr *MockIFileHandlingMockRecorder) CreateMarshaller(file, format, csvWriter interface{}) *gomock.Call {
+func (mr *MockFileHandlingManagerMockRecorder) CreateMarshaller(file, format, csvWriter interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMarshaller", reflect.TypeOf((*MockIFileHandling)(nil).CreateMarshaller), file, format, csvWriter)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMarshaller", reflect.TypeOf((*MockFileHandlingManager)(nil).CreateMarshaller), file, format, csvWriter)
 }
 
-// MockIFileStorage is a mock of IFileStorage interface
-type MockIFileStorage struct {
+// MockFileStorageManager is a mock of FileStorageManager interface
+type MockFileStorageManager struct {
 	ctrl     *gomock.Controller
-	recorder *MockIFileStorageMockRecorder
+	recorder *MockFileStorageManagerMockRecorder
 }
 
-// MockIFileStorageMockRecorder is the mock recorder for MockIFileStorage
-type MockIFileStorageMockRecorder struct {
-	mock *MockIFileStorage
+// MockFileStorageManagerMockRecorder is the mock recorder for MockFileStorageManager
+type MockFileStorageManagerMockRecorder struct {
+	mock *MockFileStorageManager
 }
 
-// NewMockIFileStorage creates a new mock instance
-func NewMockIFileStorage(ctrl *gomock.Controller) *MockIFileStorage {
-	mock := &MockIFileStorage{ctrl: ctrl}
-	mock.recorder = &MockIFileStorageMockRecorder{mock}
+// NewMockFileStorageManager creates a new mock instance
+func NewMockFileStorageManager(ctrl *gomock.Controller) *MockFileStorageManager {
+	mock := &MockFileStorageManager{ctrl: ctrl}
+	mock.recorder = &MockFileStorageManagerMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockIFileStorage) EXPECT() *MockIFileStorageMockRecorder {
+func (m *MockFileStorageManager) EXPECT() *MockFileStorageManagerMockRecorder {
 	return m.recorder
 }
 
 // Create mocks base method
-func (m *MockIFileStorage) Create(path string, flag int, perm os.FileMode) (*os.File, error) {
+func (m *MockFileStorageManager) Create(path string, flag int, perm os.FileMode) (*os.File, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", path, flag, perm)
 	ret0, _ := ret[0].(*os.File)
@@ -96,7 +96,7 @@ func (m *MockIFileStorage) Create(path string, flag int, perm os.FileMode) (*os.
 }
 
 // Create indicates an expected call of Create
-func (mr *MockIFileStorageMockRecorder) Create(path, flag, perm interface{}) *gomock.Call {
+func (mr *MockFileStorageManagerMockRecorder) Create(path, flag, perm interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockIFileStorage)(nil).Create), path, flag, perm)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockFileStorageManager)(nil).Create), path, flag, perm)
 }

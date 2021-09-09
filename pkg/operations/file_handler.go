@@ -10,27 +10,27 @@ import (
 	"sync"
 )
 
-// IFileHandling represents interface for file handler
-type IFileHandling interface {
+// FileHandlingManager represents interface for file handler
+type FileHandlingManager interface {
 	Create(format string) (*FileParams, error)
-	CreateMarshaller(file *os.File, format string, csvWriter CSVWriter) (IFileMarshaller, error)
+	CreateMarshaller(file *os.File, format string, csvWriter CSVWriter) (FileMarshallingManager, error)
 }
 
-// IFileStorage represents interface for file storage
-type IFileStorage interface {
+// FileStorageManager represents interface for file storage
+type FileStorageManager interface {
 	Create(path string, flag int, perm os.FileMode) (*os.File, error)
 }
 
-// FileHandler implements IFileHandling interface
+// FileHandler implements FileHandlingManager interface
 type FileHandler struct {
-	fileStorage IFileStorage
+	fileStorage FileStorageManager
 }
 
-// FileStorage implements IFileStorage interface
+// FileStorage implements FileStorageManager interface
 type FileStorage struct{}
 
 // NewFileHandler returns new instance of FileHandler
-func NewFileHandler(storage IFileStorage) FileHandler {
+func NewFileHandler(storage FileStorageManager) FileHandler {
 	return FileHandler{
 		fileStorage: storage,
 	}
@@ -79,10 +79,10 @@ func (fh FileHandler) Create(format string) (*FileParams, error) {
 }
 
 // CreateMarshaller returns file marshaller for particular format
-func (fh FileHandler) CreateMarshaller(file *os.File, format string, csvWriter CSVWriter) (IFileMarshaller, error) {
+func (fh FileHandler) CreateMarshaller(file *os.File, format string, csvWriter CSVWriter) (FileMarshallingManager, error) {
 	var (
 		mu          = &sync.Mutex{}
-		fileHandler IFileMarshaller
+		fileHandler FileMarshallingManager
 	)
 
 	if format == "csv" {

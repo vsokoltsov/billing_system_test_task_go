@@ -6,8 +6,8 @@ import (
 	"strconv"
 )
 
-// IQueryParamsReader represents actions for query parameters reading
-type IQueryParamsReader interface {
+// QueryReaderManager represents actions for query parameters reading
+type QueryReaderManager interface {
 	Parse(query url.Values) (*QueryParams, error)
 }
 
@@ -17,7 +17,7 @@ type QueryParams struct {
 	listParams *ListParams
 }
 
-// QueryParams implements IQueryParamsReader interface
+// QueryParams implements QueryReaderManager interface
 type QueryParamsReader struct{}
 
 // Parse returns given URL query parameters
