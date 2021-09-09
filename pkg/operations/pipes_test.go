@@ -179,7 +179,6 @@ func TestFailedReadPipeEmptyQuery(t *testing.T) {
 
 	wg.Add(1)
 	go readPipe.Call(in, out)
-	// close(in)
 	wg.Wait()
 
 	nilRes := <-out
@@ -454,5 +453,150 @@ func TestFailedPipelineRun(t *testing.T) {
 
 	if !strings.Contains(processErr.Error(), "marshall error") {
 		t.Errorf("Wrong error message string")
+	}
+}
+
+func BenchmarkPipeline(b *testing.B) {
+	ctrl := gomock.NewController(b)
+	mockFileMarshaller := NewMockFileMarshallingManager(ctrl)
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		b.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	or := NewWalletOperationRepo(db)
+	ctx := context.Background()
+	op := WalletOperation{
+		ID:         1,
+		Operation:  "deposit",
+		WalletFrom: sql.NullInt32{Int32: 1, Valid: true},
+		WalletTo:   2,
+		Amount:     decimal.NewFromInt(100),
+		CreatedAt:  time.Now(),
+	}
+	mr := MarshalledResult{
+		id:   op.ID,
+		data: op,
+	}
+
+	rows := sqlmock.NewRows([]string{"id", "operation", "wallet_from", "wallet_to", "amount", "created_at"})
+	rows = rows.AddRow(op.ID, op.Operation, op.WalletFrom.Int32, op.WalletTo, op.Amount, op.CreatedAt)
+	mock.ExpectQuery("select").WillReturnRows(rows)
+	mockFileMarshaller.EXPECT().MarshallOperation(&op).Return(&mr, nil)
+	mockFileMarshaller.EXPECT().WriteToFile(&mr).Return(nil)
+
+	oProcessor := OperationsProcessesManager{}
+
+	for i := 0; i < b.N; i++ {
+		oProcessor.Process(ctx, or, nil, mockFileMarshaller)
+	}
+}
+
+func BenchmarkReadPipe(b *testing.B) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		b.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	errCh := make(chan error)
+	or := NewWalletOperationRepo(db)
+	wg := &sync.WaitGroup{}
+	ctx := context.Background()
+	in := make(chan interface{}, 1)
+	out := make(chan interface{}, 1)
+	op := WalletOperation{
+		ID:         1,
+		Operation:  "deposit",
+		WalletFrom: sql.NullInt32{Int32: 1},
+		WalletTo:   2,
+		Amount:     decimal.NewFromInt(100),
+		CreatedAt:  time.Now(),
+	}
+
+	rows := sqlmock.NewRows([]string{"id", "operation", "wallet_from", "wallet_to", "amount", "created_at"})
+	rows = rows.AddRow(op.ID, op.Operation, op.WalletFrom, op.WalletTo, op.Amount, op.CreatedAt)
+	mock.ExpectQuery("select").WillReturnRows(rows)
+
+	readPipe := ReadPipe{
+		or:     or,
+		wg:     wg,
+		params: nil,
+		ctx:    ctx,
+		errors: errCh,
+	}
+
+	for i := 0; i < b.N; i++ {
+		wg.Add(1)
+		go readPipe.Call(in, out)
+	}
+}
+
+func BenchmarkMarshallPipe(b *testing.B) {
+	ctrl := gomock.NewController(b)
+	mockFileMarshaller := NewMockFileMarshallingManager(ctrl)
+	errCh := make(chan error, 1)
+	wg := &sync.WaitGroup{}
+	in := make(chan interface{}, 1)
+	out := make(chan interface{}, 1)
+	op := WalletOperation{
+		ID:         1,
+		Operation:  "deposit",
+		WalletFrom: sql.NullInt32{Int32: 1},
+		WalletTo:   2,
+		Amount:     decimal.NewFromInt(100),
+		CreatedAt:  time.Now(),
+	}
+
+	marshallPipe := MarshallPipe{
+		wg:     wg,
+		errors: errCh,
+		fm:     mockFileMarshaller,
+	}
+
+	mockFileMarshaller.EXPECT().MarshallOperation(&op).Return(&MarshalledResult{
+		id:   op.ID,
+		data: op,
+	}, nil).AnyTimes()
+
+	for i := 0; i < b.N; i++ {
+		in <- &op
+		wg.Add(1)
+		go marshallPipe.Call(in, out)
+	}
+}
+
+func BenchmarkWritePipe(b *testing.B) {
+	ctrl := gomock.NewController(b)
+	mockFileMarshaller := NewMockFileMarshallingManager(ctrl)
+	errCh := make(chan error, 1)
+	wg := &sync.WaitGroup{}
+	in := make(chan interface{}, 1)
+	out := make(chan interface{}, 1)
+	op := WalletOperation{
+		ID:         1,
+		Operation:  "deposit",
+		WalletFrom: sql.NullInt32{Int32: 1},
+		WalletTo:   2,
+		Amount:     decimal.NewFromInt(100),
+		CreatedAt:  time.Now(),
+	}
+
+	marshallPipe := MarshallPipe{
+		wg:     wg,
+		errors: errCh,
+		fm:     mockFileMarshaller,
+	}
+
+	mockFileMarshaller.EXPECT().MarshallOperation(&op).Return(&MarshalledResult{
+		id:   op.ID,
+		data: op,
+	}, nil).AnyTimes()
+
+	for i := 0; i < b.N; i++ {
+		in <- &op
+		wg.Add(1)
+		go marshallPipe.Call(in, out)
 	}
 }
