@@ -22,7 +22,7 @@ type walletHandlerTestCase struct {
 	url            string
 	body           map[string]interface{}
 	expectedStatus int
-	mockData       func(ctrl *gomock.Controller, ctx context.Context, walletRepo *MockIWalletRepo)
+	mockData       func(ctrl *gomock.Controller, ctx context.Context, walletRepo *MockWalletsManager)
 	formError      bool
 }
 
@@ -36,7 +36,7 @@ var testCases = []walletHandlerTestCase{
 			"wallet_to":   2,
 			"amount":      decimal.NewFromInt(25),
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, walletRepo *MockIWalletRepo) {
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, walletRepo *MockWalletsManager) {
 			walletRepo.EXPECT().Transfer(ctx, 1, 2, decimal.NewFromInt(25)).Return(1, nil)
 		},
 		expectedStatus: 200,
@@ -50,7 +50,7 @@ var testCases = []walletHandlerTestCase{
 			"wallet_to":   2,
 			"amount":      decimal.NewFromInt(25),
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, walletRepo *MockIWalletRepo) {
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, walletRepo *MockWalletsManager) {
 		},
 		expectedStatus: 400,
 		formError:      true,
@@ -62,7 +62,7 @@ var testCases = []walletHandlerTestCase{
 		body: map[string]interface{}{
 			"wallet_from": 1,
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, walletRepo *MockIWalletRepo) {
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, walletRepo *MockWalletsManager) {
 		},
 		expectedStatus: 400,
 	},
@@ -75,7 +75,7 @@ var testCases = []walletHandlerTestCase{
 			"wallet_to":   2,
 			"amount":      decimal.NewFromInt(25),
 		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, walletRepo *MockIWalletRepo) {
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, walletRepo *MockWalletsManager) {
 			walletRepo.EXPECT().Transfer(ctx, 1, 2, decimal.NewFromInt(25)).Return(0, fmt.Errorf("Error of funds transfering"))
 		},
 		expectedStatus: 400,
@@ -96,7 +96,7 @@ func TestWalletHandlers(t *testing.T) {
 			}
 			defer sqlDB.Close()
 
-			mockWalletsRepo := NewMockIWalletRepo(ctrl)
+			mockWalletsRepo := NewMockWalletsManager(ctrl)
 
 			r := mux.NewRouter()
 

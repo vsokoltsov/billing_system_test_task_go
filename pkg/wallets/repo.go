@@ -17,8 +17,8 @@ const (
 	TransferFunds
 )
 
-// IWalletRepo represents communication with wallets
-type IWalletRepo interface {
+// WalletsManager represents communication with wallets
+type WalletsManager interface {
 	Create(ctx context.Context, tx *sql.Tx, userID int64) (int64, error)
 	Enroll(ctx context.Context, walletID int, amount decimal.Decimal) (int, error)
 	GetByUserId(ctx context.Context, userID int) (*Wallet, error)
@@ -33,7 +33,7 @@ type WalletService struct {
 }
 
 // NewWalletService returns instance of WalletService
-func NewWalletService(db *sql.DB, walletOperationRepo operations.OperationsManager) IWalletRepo {
+func NewWalletService(db *sql.DB, walletOperationRepo operations.OperationsManager) WalletsManager {
 	return WalletService{
 		db:                  db,
 		walletOperationRepo: walletOperationRepo,

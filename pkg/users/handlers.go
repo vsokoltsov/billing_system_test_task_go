@@ -15,7 +15,7 @@ import (
 
 type UsersHandler struct {
 	UsersRepo   UsersManager
-	WalletsRepo wallets.IWalletRepo
+	WalletsRepo wallets.WalletsManager
 }
 
 // Create godoc

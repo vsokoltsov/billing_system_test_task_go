@@ -21,11 +21,11 @@ type UsersManager interface {
 // UsersService implements SQLRepository
 type UsersService struct {
 	db          *sql.DB
-	walletsRepo wallets.IWalletRepo
+	walletsRepo wallets.WalletsManager
 }
 
 // NewUsersService returns instance of UserService
-func NewUsersService(db *sql.DB, wallets wallets.IWalletRepo) UsersManager {
+func NewUsersService(db *sql.DB, wallets wallets.WalletsManager) UsersManager {
 	return UsersService{
 		db:          db,
 		walletsRepo: wallets,

@@ -12,31 +12,31 @@ import (
 	reflect "reflect"
 )
 
-// MockIWalletRepo is a mock of IWalletRepo interface
-type MockIWalletRepo struct {
+// MockWalletsManager is a mock of WalletsManager interface
+type MockWalletsManager struct {
 	ctrl     *gomock.Controller
-	recorder *MockIWalletRepoMockRecorder
+	recorder *MockWalletsManagerMockRecorder
 }
 
-// MockIWalletRepoMockRecorder is the mock recorder for MockIWalletRepo
-type MockIWalletRepoMockRecorder struct {
-	mock *MockIWalletRepo
+// MockWalletsManagerMockRecorder is the mock recorder for MockWalletsManager
+type MockWalletsManagerMockRecorder struct {
+	mock *MockWalletsManager
 }
 
-// NewMockIWalletRepo creates a new mock instance
-func NewMockIWalletRepo(ctrl *gomock.Controller) *MockIWalletRepo {
-	mock := &MockIWalletRepo{ctrl: ctrl}
-	mock.recorder = &MockIWalletRepoMockRecorder{mock}
+// NewMockWalletsManager creates a new mock instance
+func NewMockWalletsManager(ctrl *gomock.Controller) *MockWalletsManager {
+	mock := &MockWalletsManager{ctrl: ctrl}
+	mock.recorder = &MockWalletsManagerMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockIWalletRepo) EXPECT() *MockIWalletRepoMockRecorder {
+func (m *MockWalletsManager) EXPECT() *MockWalletsManagerMockRecorder {
 	return m.recorder
 }
 
 // Create mocks base method
-func (m *MockIWalletRepo) Create(ctx context.Context, tx *sql.Tx, userID int64) (int64, error) {
+func (m *MockWalletsManager) Create(ctx context.Context, tx *sql.Tx, userID int64) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", ctx, tx, userID)
 	ret0, _ := ret[0].(int64)
@@ -45,13 +45,13 @@ func (m *MockIWalletRepo) Create(ctx context.Context, tx *sql.Tx, userID int64) 
 }
 
 // Create indicates an expected call of Create
-func (mr *MockIWalletRepoMockRecorder) Create(ctx, tx, userID interface{}) *gomock.Call {
+func (mr *MockWalletsManagerMockRecorder) Create(ctx, tx, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockIWalletRepo)(nil).Create), ctx, tx, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockWalletsManager)(nil).Create), ctx, tx, userID)
 }
 
 // Enroll mocks base method
-func (m *MockIWalletRepo) Enroll(ctx context.Context, walletID int, amount decimal.Decimal) (int, error) {
+func (m *MockWalletsManager) Enroll(ctx context.Context, walletID int, amount decimal.Decimal) (int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Enroll", ctx, walletID, amount)
 	ret0, _ := ret[0].(int)
@@ -60,13 +60,13 @@ func (m *MockIWalletRepo) Enroll(ctx context.Context, walletID int, amount decim
 }
 
 // Enroll indicates an expected call of Enroll
-func (mr *MockIWalletRepoMockRecorder) Enroll(ctx, walletID, amount interface{}) *gomock.Call {
+func (mr *MockWalletsManagerMockRecorder) Enroll(ctx, walletID, amount interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Enroll", reflect.TypeOf((*MockIWalletRepo)(nil).Enroll), ctx, walletID, amount)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Enroll", reflect.TypeOf((*MockWalletsManager)(nil).Enroll), ctx, walletID, amount)
 }
 
 // GetByUserId mocks base method
-func (m *MockIWalletRepo) GetByUserId(ctx context.Context, userID int) (*Wallet, error) {
+func (m *MockWalletsManager) GetByUserId(ctx context.Context, userID int) (*Wallet, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByUserId", ctx, userID)
 	ret0, _ := ret[0].(*Wallet)
@@ -75,13 +75,13 @@ func (m *MockIWalletRepo) GetByUserId(ctx context.Context, userID int) (*Wallet,
 }
 
 // GetByUserId indicates an expected call of GetByUserId
-func (mr *MockIWalletRepoMockRecorder) GetByUserId(ctx, userID interface{}) *gomock.Call {
+func (mr *MockWalletsManagerMockRecorder) GetByUserId(ctx, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByUserId", reflect.TypeOf((*MockIWalletRepo)(nil).GetByUserId), ctx, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByUserId", reflect.TypeOf((*MockWalletsManager)(nil).GetByUserId), ctx, userID)
 }
 
 // GetByID mocks base method
-func (m *MockIWalletRepo) GetByID(ctx context.Context, walletID int) (*Wallet, error) {
+func (m *MockWalletsManager) GetByID(ctx context.Context, walletID int) (*Wallet, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByID", ctx, walletID)
 	ret0, _ := ret[0].(*Wallet)
@@ -90,13 +90,13 @@ func (m *MockIWalletRepo) GetByID(ctx context.Context, walletID int) (*Wallet, e
 }
 
 // GetByID indicates an expected call of GetByID
-func (mr *MockIWalletRepoMockRecorder) GetByID(ctx, walletID interface{}) *gomock.Call {
+func (mr *MockWalletsManagerMockRecorder) GetByID(ctx, walletID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockIWalletRepo)(nil).GetByID), ctx, walletID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockWalletsManager)(nil).GetByID), ctx, walletID)
 }
 
 // Transfer mocks base method
-func (m *MockIWalletRepo) Transfer(ctx context.Context, walletFrom, walletTo int, amount decimal.Decimal) (int, error) {
+func (m *MockWalletsManager) Transfer(ctx context.Context, walletFrom, walletTo int, amount decimal.Decimal) (int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Transfer", ctx, walletFrom, walletTo, amount)
 	ret0, _ := ret[0].(int)
@@ -105,7 +105,7 @@ func (m *MockIWalletRepo) Transfer(ctx context.Context, walletFrom, walletTo int
 }
 
 // Transfer indicates an expected call of Transfer
-func (mr *MockIWalletRepoMockRecorder) Transfer(ctx, walletFrom, walletTo, amount interface{}) *gomock.Call {
+func (mr *MockWalletsManagerMockRecorder) Transfer(ctx, walletFrom, walletTo, amount interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Transfer", reflect.TypeOf((*MockIWalletRepo)(nil).Transfer), ctx, walletFrom, walletTo, amount)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Transfer", reflect.TypeOf((*MockWalletsManager)(nil).Transfer), ctx, walletFrom, walletTo, amount)
 }

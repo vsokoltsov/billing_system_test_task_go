@@ -10,7 +10,7 @@ import (
 )
 
 type WalletsHandler struct {
-	WalletRepo IWalletRepo
+	WalletRepo WalletsManager
 }
 
 // Create godoc

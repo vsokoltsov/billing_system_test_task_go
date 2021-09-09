@@ -810,7 +810,7 @@ import (
 
 type UsersHandler struct {
         UsersRepo   UsersManager
-        WalletsRepo wallets.IWalletRepo
+        WalletsRepo wallets.WalletsManager
 }
 
 // Create godoc
@@ -965,11 +965,11 @@ type UsersManager interface {
 // UsersService implements SQLRepository
 type UsersService struct {
         db          *sql.DB
-        walletsRepo wallets.IWalletRepo
+        walletsRepo wallets.WalletsManager
 }
 
 // NewUsersService returns instance of UserService
-func NewUsersService(db *sql.DB, wallets wallets.IWalletRepo) UsersManager <span class="cov8" title="1">{
+func NewUsersService(db *sql.DB, wallets wallets.WalletsManager) UsersManager <span class="cov8" title="1">{
         return UsersService{
                 db:          db,
                 walletsRepo: wallets,
@@ -1151,7 +1151,7 @@ import (
 )
 
 type WalletsHandler struct {
-        WalletRepo IWalletRepo
+        WalletRepo WalletsManager
 }
 
 // Create godoc
@@ -1217,8 +1217,8 @@ const (
         TransferFunds
 )
 
-// IWalletRepo represents communication with wallets
-type IWalletRepo interface {
+// WalletsManager represents communication with wallets
+type WalletsManager interface {
         Create(ctx context.Context, tx *sql.Tx, userID int64) (int64, error)
         Enroll(ctx context.Context, walletID int, amount decimal.Decimal) (int, error)
         GetByUserId(ctx context.Context, userID int) (*Wallet, error)
@@ -1233,7 +1233,7 @@ type WalletService struct {
 }
 
 // NewWalletService returns instance of WalletService
-func NewWalletService(db *sql.DB, walletOperationRepo operations.OperationsManager) IWalletRepo <span class="cov8" title="1">{
+func NewWalletService(db *sql.DB, walletOperationRepo operations.OperationsManager) WalletsManager <span class="cov8" title="1">{
         return WalletService{
                 db:                  db,
                 walletOperationRepo: walletOperationRepo,
