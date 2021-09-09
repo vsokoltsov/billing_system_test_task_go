@@ -7,6 +7,8 @@
 1. Populate `.env` file with necessary variables (you can find them in `.env.sample`)
 2. Run `docker compose up`, which runs application in development environment
 
+* If you need to down all migrations, enter in the app container and run `make migrations-down`
+
 ## Test
 
 * For testing use `make test`
