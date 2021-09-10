@@ -114,8 +114,8 @@ func TestSuccessFileHandlerGetFileMetadata(t *testing.T) {
 	}
 	tmpFile, _ := ioutil.TempFile(os.TempDir(), "test")
 	data := []byte("Test file\n")
-	tmpFile.Write(data)
-	tmpFile.Seek(0, 0)
+	_, _ = tmpFile.Write(data)
+	_, _ = tmpFile.Seek(0, 0)
 
 	res, err := fh.GetFileMetadata(tmpFile)
 	if err != nil {
@@ -134,7 +134,7 @@ func TestFailedFileHandlerGetFileMetadataErrorRead(t *testing.T) {
 	}
 	tmpFile, _ := ioutil.TempFile(os.TempDir(), "test")
 	data := []byte("Test file\n")
-	tmpFile.Write(data)
+	_, _ = tmpFile.Write(data)
 
 	_, err := fh.GetFileMetadata(tmpFile)
 	if err == nil {
