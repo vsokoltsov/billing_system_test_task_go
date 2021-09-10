@@ -30,8 +30,8 @@ type userHandlerTestCase struct {
 	matchResults   func(actual []byte) bool
 }
 
-var testCases = []userHandlerTestCase{
-	userHandlerTestCase{
+var (
+	createUser = userHandlerTestCase{
 		name:   "Success user creation",
 		method: "POST",
 		url:    "/api/users/",
@@ -55,7 +55,7 @@ var testCases = []userHandlerTestCase{
 						},
 					},
 					nil,
-				)
+				).AnyTimes()
 		},
 		expectedStatus: 201,
 		matchResults: func(actual []byte) bool {
@@ -63,7 +63,45 @@ var testCases = []userHandlerTestCase{
 			_ = json.Unmarshal(actual, &serializer)
 			return serializer.ID == 1 && serializer.Email == "example@mail.com" && serializer.Balance.IntPart() == int64(100) && serializer.Currency == "USD"
 		},
-	},
+	}
+	enroll = userHandlerTestCase{
+		name:   "Success wallet enroll",
+		method: "POST",
+		url:    "/api/users/1/enroll/",
+		body: map[string]interface{}{
+			"amount": "100",
+		},
+		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockUsersManager, walletRepo *wallets.MockWalletsManager) {
+			amount := decimal.NewFromInt(100)
+			user := User{
+				ID:    1,
+				Email: "example@mail.com",
+				Wallet: &wallets.Wallet{
+					ID:       1,
+					UserID:   1,
+					Balance:  decimal.NewFromInt(0),
+					Currency: "USD",
+				},
+			}
+			userService.EXPECT().GetByID(ctx, user.ID).Return(&user, nil).AnyTimes()
+
+			walletRepo.EXPECT().Enroll(ctx, user.Wallet.ID, amount).Return(user.Wallet.ID, nil).AnyTimes()
+
+			user.Wallet.Balance = user.Wallet.Balance.Add(amount)
+
+			userService.EXPECT().GetByWalletID(ctx, user.Wallet.ID).Return(&user, nil).AnyTimes()
+		},
+		expectedStatus: 200,
+		matchResults: func(actual []byte) bool {
+			var serializer UserSerializer
+			_ = json.Unmarshal(actual, &serializer)
+			return serializer.ID == 1 && serializer.Email == "example@mail.com" && serializer.Balance.IntPart() == int64(100) && serializer.Currency == "USD"
+		},
+	}
+)
+
+var testCases = []userHandlerTestCase{
+	createUser,
 	userHandlerTestCase{
 		name:   "Failed user creation (form decode error)",
 		method: "POST",
@@ -139,40 +177,7 @@ var testCases = []userHandlerTestCase{
 			return strings.Contains(errors.Message, "error of user retrieving")
 		},
 	},
-	userHandlerTestCase{
-		name:   "Success wallet enroll",
-		method: "POST",
-		url:    "/api/users/1/enroll/",
-		body: map[string]interface{}{
-			"amount": "100",
-		},
-		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockUsersManager, walletRepo *wallets.MockWalletsManager) {
-			amount := decimal.NewFromInt(100)
-			user := User{
-				ID:    1,
-				Email: "example@mail.com",
-				Wallet: &wallets.Wallet{
-					ID:       1,
-					UserID:   1,
-					Balance:  decimal.NewFromInt(0),
-					Currency: "USD",
-				},
-			}
-			userService.EXPECT().GetByID(ctx, user.ID).Return(&user, nil)
-
-			walletRepo.EXPECT().Enroll(ctx, user.Wallet.ID, amount).Return(user.Wallet.ID, nil)
-
-			user.Wallet.Balance = user.Wallet.Balance.Add(amount)
-
-			userService.EXPECT().GetByWalletID(ctx, user.Wallet.ID).Return(&user, nil)
-		},
-		expectedStatus: 200,
-		matchResults: func(actual []byte) bool {
-			var serializer UserSerializer
-			_ = json.Unmarshal(actual, &serializer)
-			return serializer.ID == 1 && serializer.Email == "example@mail.com" && serializer.Balance.IntPart() == int64(100) && serializer.Currency == "USD"
-		},
-	},
+	enroll,
 	userHandlerTestCase{
 		name:   "Failed wallet enroll (vars parameter does not exists)",
 		method: "POST",
@@ -376,6 +381,65 @@ func TestUsersHandlers(t *testing.T) {
 
 			if !tc.matchResults(respBody) {
 				t.Errorf("[%s] Unmatched results. Got %s", testLabel, string(respBody))
+			}
+		})
+	}
+}
+
+var benchmarks = []userHandlerTestCase{
+	createUser,
+	enroll,
+}
+
+func BenchmarkUsers(b *testing.B) {
+	for _, tc := range benchmarks {
+		testLabel := strings.Join([]string{"API", tc.method, tc.url, tc.name}, " ")
+		b.Run(testLabel, func(b *testing.B) {
+			ctx := context.Background()
+			ctrl := gomock.NewController(b)
+			defer ctrl.Finish()
+
+			sqlDB, _, err := sqlmock.New()
+			if err != nil {
+				b.Fatalf("cant create mock: %s", err)
+			}
+			defer sqlDB.Close()
+
+			mockUsersRepo := NewMockUsersManager(ctrl)
+			mockWalletsRepo := wallets.NewMockWalletsManager(ctrl)
+
+			enrollRoute := "/users/{id}/enroll/"
+			if tc.name == "Failed wallet enroll (vars parameter does not exists)" {
+				enrollRoute = "/users/{test}/enroll/"
+			}
+
+			r := mux.NewRouter()
+
+			handler := UsersHandler{
+				UsersRepo:   mockUsersRepo,
+				WalletsRepo: mockWalletsRepo,
+			}
+			api_router := r.PathPrefix("/api").Subrouter()
+			api_router.HandleFunc("/users/", handler.Create).Methods("POST")
+			api_router.HandleFunc(enrollRoute, handler.Enroll).Methods("POST")
+			tc.mockData(ctrl, ctx, mockUsersRepo, mockWalletsRepo)
+
+			testServer := httptest.NewServer(r)
+			defer testServer.Close()
+
+			var body []byte
+			if tc.formError {
+				body = []byte(`{"test": "data"`)
+			} else {
+				body, _ = json.Marshal(tc.body)
+			}
+
+			req, _ := http.NewRequest(tc.method, testServer.URL+tc.url, bytes.NewBuffer(body))
+			w := httptest.NewRecorder()
+			b.ResetTimer()
+
+			for i := 0; i < b.N; i++ {
+				r.ServeHTTP(w, req)
 			}
 		})
 	}
