@@ -14,11 +14,12 @@ import (
 )
 
 type walletRepoTestCase struct {
-	name      string
-	queryMock sqlQueryMock
-	funcName  string
-	mockQuery func(mock sqlmock.Sqlmock)
-	err       error
+	name                string
+	queryMock           sqlQueryMock
+	funcName            string
+	mockQuery           func(mock sqlmock.Sqlmock)
+	err                 error
+	expectedResultMatch func(actual interface{}) bool
 }
 
 type sqlQueryMock struct {
@@ -57,6 +58,9 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 				WillReturnRows(operationRows)
 
 		},
+		expectedResultMatch: func(actual interface{}) bool {
+			return actual.(int64) == int64(1)
+		},
 	},
 	walletRepoTestCase{
 		name:     "Failed wallet creation (insert error)",
@@ -94,9 +98,6 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 				ExpectQuery("insert into wallets").
 				WithArgs([]driver.Value{int64(1)}...).
 				WillReturnRows(rows)
-
-			// Commit transaction with error
-			// mock.ExpectCommit().WillReturnError(fmt.Errorf("Commit error"))
 		},
 		err: fmt.Errorf("Scan error"),
 	},
@@ -120,12 +121,13 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 				WithArgs([]driver.Value{int64(1)}...).
 				WillReturnRows(rows)
 
-			// Commit transaction with error
-
 			mock.
 				ExpectQuery("insert into wallet_operations").
 				WithArgs([]driver.Value{operations.Create, nil, 1, decimal.NewFromInt(0)}...).
 				WillReturnError(fmt.Errorf("Operation error"))
+		},
+		expectedResultMatch: func(actual interface{}) bool {
+			return actual.(int64) == int64(1)
 		},
 	},
 	walletRepoTestCase{
@@ -166,6 +168,9 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 				ExpectExec("select pg_advisory_unlock").
 				WithArgs(EnrollWallet).
 				WillReturnResult(sqlmock.NewResult(2, 2))
+		},
+		expectedResultMatch: func(actual interface{}) bool {
+			return actual.(int) == 2
 		},
 	},
 	walletRepoTestCase{
@@ -315,6 +320,10 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 				WithArgs([]driver.Value{1}...).
 				WillReturnRows(rows)
 		},
+		expectedResultMatch: func(actual interface{}) bool {
+			actualWallet := actual.(*Wallet)
+			return actualWallet.ID == 1 && actualWallet.UserID == 1 && actualWallet.Balance.IntPart() == int64(100) && actualWallet.Currency == "USD"
+		},
 	},
 	walletRepoTestCase{
 		name:     "failed wallet retrieving by user id",
@@ -389,6 +398,10 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 				ExpectExec("select pg_advisory_unlock").
 				WithArgs(TransferFunds).
 				WillReturnResult(sqlmock.NewResult(2, 2))
+		},
+		expectedResultMatch: func(actual interface{}) bool {
+			actualID := actual.(int)
+			return actualID == 1
 		},
 	},
 	walletRepoTestCase{
@@ -691,6 +704,7 @@ func TestWalletRepo(t *testing.T) {
 				).Call(realArgs)
 			}
 			var reflectErr error
+			resultValue := result[0].Interface()
 			rerr := result[1].Interface()
 			if rerr != nil {
 				reflectErr = rerr.(error)
@@ -706,6 +720,10 @@ func TestWalletRepo(t *testing.T) {
 					t.Errorf("expected error, got nil: %s", reflectErr)
 					return
 				}
+			}
+
+			if tc.err == nil && !tc.expectedResultMatch(resultValue) {
+				t.Errorf("result data is not matched. Got %s", resultValue)
 			}
 		})
 	}
