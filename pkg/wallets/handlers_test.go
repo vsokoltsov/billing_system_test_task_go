@@ -45,7 +45,7 @@ var testCases = []walletHandlerTestCase{
 		expectedStatus: 200,
 		matchResults: func(actual []byte) bool {
 			var ws walletSerializer
-			json.Unmarshal(actual, &ws)
+			_ = json.Unmarshal(actual, &ws)
 			return ws.WalletFrom == 1
 		},
 	},
@@ -64,7 +64,7 @@ var testCases = []walletHandlerTestCase{
 		formError:      true,
 		matchResults: func(actual []byte) bool {
 			var errors utils.ErrorMsg
-			json.Unmarshal(actual, &errors)
+			_ = json.Unmarshal(actual, &errors)
 			return strings.Contains(errors.Message, "unexpected EOF")
 		},
 	},
@@ -80,7 +80,7 @@ var testCases = []walletHandlerTestCase{
 		expectedStatus: 400,
 		matchResults: func(actual []byte) bool {
 			var errors utils.FormErrorSerializer
-			json.Unmarshal(actual, &errors)
+			_ = json.Unmarshal(actual, &errors)
 			return errors.Messages["amount"][0] == "less than a zero"
 		},
 	},
@@ -99,7 +99,7 @@ var testCases = []walletHandlerTestCase{
 		expectedStatus: 400,
 		matchResults: func(actual []byte) bool {
 			var errors utils.ErrorMsg
-			json.Unmarshal(actual, &errors)
+			_ = json.Unmarshal(actual, &errors)
 			return strings.Contains(errors.Message, "Error of funds transfering")
 		},
 	},

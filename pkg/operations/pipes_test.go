@@ -489,7 +489,7 @@ func BenchmarkPipeline(b *testing.B) {
 	oProcessor := OperationsProcessesManager{}
 
 	for i := 0; i < b.N; i++ {
-		oProcessor.Process(ctx, or, nil, mockFileMarshaller)
+		_ = oProcessor.Process(ctx, or, nil, mockFileMarshaller)
 	}
 }
 

@@ -95,6 +95,6 @@ func BenchmarkParse(b *testing.B) {
 	qpr := QueryParamsReader{}
 
 	for i := 0; i < b.N; i++ {
-		qpr.Parse(params)
+		_, _ = qpr.Parse(params)
 	}
 }

@@ -336,7 +336,7 @@ func BenchmarkCreate(b *testing.B) {
 
 	repo := NewWalletOperationRepo(sqlDB)
 	for i := 0; i < b.N; i++ {
-		repo.Create(ctx, tx, Create, 1, 2, decimal.NewFromInt(0))
+		_, _ = repo.Create(ctx, tx, Create, 1, 2, decimal.NewFromInt(0))
 	}
 }
 
@@ -357,6 +357,6 @@ func BenchmarkList(b *testing.B) {
 	repo := NewWalletOperationRepo(sqlDB)
 
 	for i := 0; i < b.N; i++ {
-		repo.List(ctx, nil)
+		_, _ = repo.List(ctx, nil)
 	}
 }

@@ -774,7 +774,7 @@ func BenchmarkCreate(b *testing.B) {
 		WillReturnRows(woRows)
 
 	for i := 0; i < b.N; i++ {
-		repo.Create(ctx, tx, int64(1))
+		_, _ = repo.Create(ctx, tx, int64(1))
 	}
 }
 
@@ -816,7 +816,7 @@ func BenchmarkEnroll(b *testing.B) {
 		WillReturnResult(sqlmock.NewResult(2, 2))
 
 	for i := 0; i < b.N; i++ {
-		repo.Enroll(ctx, 1, decimal.NewFromInt(100))
+		_, _ = repo.Enroll(ctx, 1, decimal.NewFromInt(100))
 	}
 }
 
@@ -840,7 +840,7 @@ func BenchmarkGetByUserID(b *testing.B) {
 		WillReturnRows(rows)
 
 	for i := 0; i < b.N; i++ {
-		repo.GetByUserId(ctx, 1)
+		_, _ = repo.GetByUserId(ctx, 1)
 	}
 }
 
@@ -864,7 +864,7 @@ func BenchmarkGetByID(b *testing.B) {
 		WillReturnRows(rows)
 
 	for i := 0; i < b.N; i++ {
-		repo.GetByID(ctx, 1)
+		_, _ = repo.GetByID(ctx, 1)
 	}
 }
 
@@ -931,6 +931,6 @@ func BenchmarkTransfer(b *testing.B) {
 		WillReturnResult(sqlmock.NewResult(2, 2))
 
 	for i := 0; i < b.N; i++ {
-		repo.Transfer(ctx, 1, 2, decimal.NewFromInt(10))
+		_, _ = repo.Transfer(ctx, 1, 2, decimal.NewFromInt(10))
 	}
 }

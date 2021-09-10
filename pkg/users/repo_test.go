@@ -558,7 +558,7 @@ func BenchmarkGetById(b *testing.B) {
 	repo := NewUsersService(sqlDB, walletMock)
 
 	for i := 0; i < b.N; i++ {
-		repo.GetByID(ctx, 1)
+		_, _ = repo.GetByID(ctx, 1)
 	}
 }
 
@@ -583,7 +583,7 @@ func BenchmarkGetByWalletID(b *testing.B) {
 
 	repo := NewUsersService(sqlDB, walletMock)
 	for i := 0; i < b.N; i++ {
-		repo.GetByID(ctx, 1)
+		_, _ = repo.GetByID(ctx, 1)
 	}
 }
 
@@ -640,6 +640,6 @@ func BenchmarkCreate(b *testing.B) {
 		WillReturnResult(sqlmock.NewResult(2, 2))
 
 	for i := 0; i < b.N; i++ {
-		repo.Create(ctx, "example@mail.com")
+		_, _ = repo.Create(ctx, "example@mail.com")
 	}
 }

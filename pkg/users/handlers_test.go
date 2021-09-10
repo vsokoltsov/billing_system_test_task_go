@@ -60,7 +60,7 @@ var testCases = []userHandlerTestCase{
 		expectedStatus: 201,
 		matchResults: func(actual []byte) bool {
 			var serializer UserSerializer
-			json.Unmarshal(actual, &serializer)
+			_ = json.Unmarshal(actual, &serializer)
 			return serializer.ID == 1 && serializer.Email == "example@mail.com" && serializer.Balance.IntPart() == int64(100) && serializer.Currency == "USD"
 		},
 	},
@@ -77,7 +77,7 @@ var testCases = []userHandlerTestCase{
 		formError:      true,
 		matchResults: func(actual []byte) bool {
 			var errors utils.ErrorMsg
-			json.Unmarshal(actual, &errors)
+			_ = json.Unmarshal(actual, &errors)
 			return strings.Contains(errors.Message, "unexpected EOF")
 		},
 	},
@@ -93,7 +93,7 @@ var testCases = []userHandlerTestCase{
 		expectedStatus: 400,
 		matchResults: func(actual []byte) bool {
 			var errors utils.FormErrorSerializer
-			json.Unmarshal(actual, &errors)
+			_ = json.Unmarshal(actual, &errors)
 			return errors.Messages["email"][0] == "Invalid email format"
 		},
 	},
@@ -112,7 +112,7 @@ var testCases = []userHandlerTestCase{
 		expectedStatus: 400,
 		matchResults: func(actual []byte) bool {
 			var errors utils.ErrorMsg
-			json.Unmarshal(actual, &errors)
+			_ = json.Unmarshal(actual, &errors)
 			return strings.Contains(errors.Message, "User creation error")
 		},
 	},
@@ -135,7 +135,7 @@ var testCases = []userHandlerTestCase{
 		expectedStatus: 400,
 		matchResults: func(actual []byte) bool {
 			var errors utils.ErrorMsg
-			json.Unmarshal(actual, &errors)
+			_ = json.Unmarshal(actual, &errors)
 			return strings.Contains(errors.Message, "error of user retrieving")
 		},
 	},
@@ -169,7 +169,7 @@ var testCases = []userHandlerTestCase{
 		expectedStatus: 200,
 		matchResults: func(actual []byte) bool {
 			var serializer UserSerializer
-			json.Unmarshal(actual, &serializer)
+			_ = json.Unmarshal(actual, &serializer)
 			return serializer.ID == 1 && serializer.Email == "example@mail.com" && serializer.Balance.IntPart() == int64(100) && serializer.Currency == "USD"
 		},
 	},
@@ -185,7 +185,7 @@ var testCases = []userHandlerTestCase{
 		expectedStatus: 500,
 		matchResults: func(actual []byte) bool {
 			var errors utils.ErrorMsg
-			json.Unmarshal(actual, &errors)
+			_ = json.Unmarshal(actual, &errors)
 			return strings.Contains(errors.Message, "user's id attribute does not exists")
 		},
 	},
@@ -201,7 +201,7 @@ var testCases = []userHandlerTestCase{
 		expectedStatus: 400,
 		matchResults: func(actual []byte) bool {
 			var errors utils.ErrorMsg
-			json.Unmarshal(actual, &errors)
+			_ = json.Unmarshal(actual, &errors)
 			return strings.Contains(errors.Message, "Error formatting user id to int")
 		},
 	},
@@ -218,7 +218,7 @@ var testCases = []userHandlerTestCase{
 		formError:      true,
 		matchResults: func(actual []byte) bool {
 			var errors utils.ErrorMsg
-			json.Unmarshal(actual, &errors)
+			_ = json.Unmarshal(actual, &errors)
 			return strings.Contains(errors.Message, "Error json form decoding")
 		},
 	},
@@ -234,7 +234,7 @@ var testCases = []userHandlerTestCase{
 		expectedStatus: 400,
 		matchResults: func(actual []byte) bool {
 			var errors utils.FormErrorSerializer
-			json.Unmarshal(actual, &errors)
+			_ = json.Unmarshal(actual, &errors)
 			return errors.Messages["amount"][0] == "less than a zero"
 		},
 	},
@@ -251,7 +251,7 @@ var testCases = []userHandlerTestCase{
 		expectedStatus: 404,
 		matchResults: func(actual []byte) bool {
 			var errors utils.ErrorMsg
-			json.Unmarshal(actual, &errors)
+			_ = json.Unmarshal(actual, &errors)
 			return strings.Contains(errors.Message, "user not found")
 		},
 	},
@@ -281,7 +281,7 @@ var testCases = []userHandlerTestCase{
 		expectedStatus: 400,
 		matchResults: func(actual []byte) bool {
 			var errors utils.ErrorMsg
-			json.Unmarshal(actual, &errors)
+			_ = json.Unmarshal(actual, &errors)
 			return strings.Contains(errors.Message, "enroll has failed")
 		},
 	},
@@ -315,7 +315,7 @@ var testCases = []userHandlerTestCase{
 		expectedStatus: 400,
 		matchResults: func(actual []byte) bool {
 			var errors utils.ErrorMsg
-			json.Unmarshal(actual, &errors)
+			_ = json.Unmarshal(actual, &errors)
 			return strings.Contains(errors.Message, "error of user retrieving")
 		},
 	},

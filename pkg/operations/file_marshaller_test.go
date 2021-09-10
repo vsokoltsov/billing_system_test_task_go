@@ -183,7 +183,7 @@ func BenchmarkMarshallOperationJSON(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		handler.MarshallOperation(wo)
+		_, _ = handler.MarshallOperation(wo)
 	}
 }
 
@@ -204,7 +204,7 @@ func BenchmarkMarshallOperationCSV(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		handler.MarshallOperation(operation)
+		_, _ = handler.MarshallOperation(operation)
 	}
 }
 
@@ -225,7 +225,7 @@ func BenchmarkWriteToFileJSON(b *testing.B) {
 	}
 	mr, _ := handler.MarshallOperation(wo)
 	for i := 0; i < b.N; i++ {
-		handler.WriteToFile(mr)
+		_ = handler.WriteToFile(mr)
 	}
 }
 
@@ -247,6 +247,6 @@ func BenchmarkWriteToFileCSV(b *testing.B) {
 	}
 	mr, _ := handler.MarshallOperation(wo)
 	for i := 0; i < b.N; i++ {
-		handler.WriteToFile(mr)
+		_ = handler.WriteToFile(mr)
 	}
 }
