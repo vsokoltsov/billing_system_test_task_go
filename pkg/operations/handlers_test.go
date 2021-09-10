@@ -67,6 +67,10 @@ var testCases = []opHandlerTestCase{
 			fh.EXPECT().Create("csv").Return(fileParams, nil)
 			fh.EXPECT().CreateMarshaller(fileParams.f, params.format, fileParams.csvWriter).Return(marshaller, nil)
 			op.EXPECT().Process(ctx, opRepo, params.listParams, marshaller).Return(nil)
+			fh.EXPECT().GetFileMetadata(fileParams.f).Return(&Metadata{
+				size:        "10",
+				contentType: "application/json",
+			}, nil)
 		},
 	},
 	opHandlerTestCase{
@@ -165,6 +169,43 @@ var testCases = []opHandlerTestCase{
 		},
 		errMsg: "process error",
 	},
+	opHandlerTestCase{
+		name:           "Failed file receiving (metadata error)",
+		method:         "GET",
+		url:            "/api/operations/?format=csv",
+		body:           map[string]interface{}{},
+		expectedStatus: 400,
+		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockOperationsManager, pr *MockQueryReaderManager, fh *MockFileHandlingManager, op *MockIOperationsProcessesManager) {
+			queryParams := make(url.Values)
+			queryParams.Set("format", "csv")
+			f, _ := os.CreateTemp("", "_example_file")
+			params := &QueryParams{
+				format:     "csv",
+				listParams: nil,
+			}
+			fileParams := &FileParams{
+				f:         f,
+				path:      "/a/b/c/" + f.Name(),
+				name:      f.Name(),
+				csvWriter: csv.NewWriter(f),
+			}
+			marshaller := &CSVHandler{
+				csvWriter: fileParams.csvWriter,
+				mu:        &sync.Mutex{},
+			}
+			query := "select u.id, u.email, w.id, w.user_id, w.balance, w.currency  from users as u"
+			rows := sqlmock.NewRows([]string{"id", "email", "wallets.id", "user_id", "balance", "currency"})
+			rows = rows.AddRow(1, "test@example.com", 1, 1, decimal.NewFromInt(100), "USD")
+			mock.ExpectQuery(query).WithArgs([]driver.Value{1}...).WillReturnRows(rows)
+
+			pr.EXPECT().Parse(queryParams).Return(params, nil)
+			fh.EXPECT().Create("csv").Return(fileParams, nil)
+			fh.EXPECT().CreateMarshaller(fileParams.f, params.format, fileParams.csvWriter).Return(marshaller, nil)
+			op.EXPECT().Process(ctx, opRepo, params.listParams, marshaller).Return(nil)
+			fh.EXPECT().GetFileMetadata(fileParams.f).Return(nil, fmt.Errorf("metadata error"))
+		},
+		errMsg: "metadata error",
+	},
 }
 
 func TestOperationsHandler(t *testing.T) {
@@ -222,5 +263,69 @@ func TestOperationsHandler(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func BenchmarkOperationsList(b *testing.B) {
+	ctx := context.Background()
+	ctrl := gomock.NewController(b)
+	defer ctrl.Finish()
+
+	sqlDB, mock, _ := sqlmock.New()
+	defer sqlDB.Close()
+
+	mockOpRepo := NewMockOperationsManager(ctrl)
+	mockParamsReader := NewMockQueryReaderManager(ctrl)
+	mockFileHandler := NewMockFileHandlingManager(ctrl)
+	mockProcessor := NewMockIOperationsProcessesManager(ctrl)
+
+	r := mux.NewRouter()
+
+	handler := NewOperationsHandler(mockOpRepo, mockParamsReader, mockFileHandler, mockProcessor)
+	api_router := r.PathPrefix("/api").Subrouter()
+	api_router.HandleFunc("/operations/", handler.List).Methods("GET")
+
+	queryParams := make(url.Values)
+	queryParams.Set("format", "csv")
+	f, _ := os.CreateTemp("", "_example_file")
+	params := &QueryParams{
+		format:     "csv",
+		listParams: nil,
+	}
+	fileParams := &FileParams{
+		f:         f,
+		path:      "/a/b/c/" + f.Name(),
+		name:      f.Name(),
+		csvWriter: csv.NewWriter(f),
+	}
+	marshaller := &CSVHandler{
+		csvWriter: fileParams.csvWriter,
+		mu:        &sync.Mutex{},
+	}
+	query := "select u.id, u.email, w.id, w.user_id, w.balance, w.currency  from users as u"
+	rows := sqlmock.NewRows([]string{"id", "email", "wallets.id", "user_id", "balance", "currency"})
+	rows = rows.AddRow(1, "test@example.com", 1, 1, decimal.NewFromInt(100), "USD")
+	mock.ExpectQuery(query).WithArgs([]driver.Value{1}...).WillReturnRows(rows)
+
+	mockParamsReader.EXPECT().Parse(queryParams).Return(params, nil).AnyTimes()
+	mockFileHandler.EXPECT().Create("csv").Return(fileParams, nil).AnyTimes()
+	mockFileHandler.EXPECT().CreateMarshaller(fileParams.f, params.format, fileParams.csvWriter).Return(marshaller, nil).AnyTimes()
+	mockProcessor.EXPECT().Process(ctx, mockOpRepo, params.listParams, marshaller).Return(nil).AnyTimes()
+	mockFileHandler.EXPECT().GetFileMetadata(fileParams.f).Return(&Metadata{
+		size:        "10",
+		contentType: "application/json",
+	}, nil).AnyTimes()
+
+	testServer := httptest.NewServer(r)
+	defer testServer.Close()
+
+	body, _ := json.Marshal(map[string]interface{}{})
+
+	req, _ := http.NewRequest("GET", testServer.URL+"/api/operations/?format=csv", bytes.NewBuffer(body))
+	w := httptest.NewRecorder()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		r.ServeHTTP(w, req)
 	}
 }

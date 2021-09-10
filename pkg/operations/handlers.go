@@ -5,7 +5,6 @@ import (
 	"context"
 	"net/http"
 	"os"
-	"strconv"
 )
 
 type OperationsHandler struct {
@@ -75,15 +74,14 @@ func (oh *OperationsHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	header := make([]byte, 512)
-	_, _ = fileParams.f.Read(header)
-	stat, _ := fileParams.f.Stat()
-	size := strconv.FormatInt(stat.Size(), 10)
-	contentType := http.DetectContentType(header)
-	_, _ = fileParams.f.Seek(0, 0)
+	metadata, metadataErr := oh.fh.GetFileMetadata(fileParams.f)
+	if metadataErr != nil {
+		utils.JsonResponseError(w, http.StatusBadRequest, metadataErr.Error())
+		return
+	}
 	w.Header().Set("Content-Disposition", "attachment; filename="+fileParams.name)
-	w.Header().Set("Content-Type", contentType)
-	w.Header().Set("Content-Length", size)
+	w.Header().Set("Content-Type", metadata.contentType)
+	w.Header().Set("Content-Length", metadata.size)
 	w.WriteHeader(http.StatusOK)
 	if fileParams.csvWriter != nil {
 		fileParams.csvWriter.Flush()
