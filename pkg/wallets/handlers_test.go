@@ -1,10 +1,12 @@
 package wallets
 
 import (
+	"billing_system_test_task/pkg/utils"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -24,6 +26,7 @@ type walletHandlerTestCase struct {
 	expectedStatus int
 	mockData       func(ctrl *gomock.Controller, ctx context.Context, walletRepo *MockWalletsManager)
 	formError      bool
+	matchResults   func(actual []byte) bool
 }
 
 var testCases = []walletHandlerTestCase{
@@ -40,6 +43,11 @@ var testCases = []walletHandlerTestCase{
 			walletRepo.EXPECT().Transfer(ctx, 1, 2, decimal.NewFromInt(25)).Return(1, nil)
 		},
 		expectedStatus: 200,
+		matchResults: func(actual []byte) bool {
+			var ws walletSerializer
+			json.Unmarshal(actual, &ws)
+			return ws.WalletFrom == 1
+		},
 	},
 	walletHandlerTestCase{
 		name:   "Failed funds transfering (form decoding error)",
@@ -54,6 +62,11 @@ var testCases = []walletHandlerTestCase{
 		},
 		expectedStatus: 400,
 		formError:      true,
+		matchResults: func(actual []byte) bool {
+			var errors utils.ErrorMsg
+			json.Unmarshal(actual, &errors)
+			return strings.Contains(errors.Message, "unexpected EOF")
+		},
 	},
 	walletHandlerTestCase{
 		name:   "Failed funds transfering (form validation error)",
@@ -65,6 +78,11 @@ var testCases = []walletHandlerTestCase{
 		mockData: func(ctrl *gomock.Controller, ctx context.Context, walletRepo *MockWalletsManager) {
 		},
 		expectedStatus: 400,
+		matchResults: func(actual []byte) bool {
+			var errors utils.FormErrorSerializer
+			json.Unmarshal(actual, &errors)
+			return errors.Messages["amount"][0] == "less than a zero"
+		},
 	},
 	walletHandlerTestCase{
 		name:   "Failed funds transfering (funds transfer error)",
@@ -79,6 +97,11 @@ var testCases = []walletHandlerTestCase{
 			walletRepo.EXPECT().Transfer(ctx, 1, 2, decimal.NewFromInt(25)).Return(0, fmt.Errorf("Error of funds transfering"))
 		},
 		expectedStatus: 400,
+		matchResults: func(actual []byte) bool {
+			var errors utils.ErrorMsg
+			json.Unmarshal(actual, &errors)
+			return strings.Contains(errors.Message, "Error of funds transfering")
+		},
 	},
 }
 
@@ -121,8 +144,14 @@ func TestWalletHandlers(t *testing.T) {
 			w := httptest.NewRecorder()
 			r.ServeHTTP(w, req)
 			resp := w.Result()
+			respBody, _ := ioutil.ReadAll(resp.Body)
+
 			if resp.StatusCode != tc.expectedStatus {
 				t.Errorf("[%s] Expected response code %d. Got %d", testLabel, tc.expectedStatus, resp.StatusCode)
+			}
+
+			if !tc.matchResults(respBody) {
+				t.Errorf("[%s] Unmatched results. Got %s", testLabel, string(respBody))
 			}
 		})
 	}
