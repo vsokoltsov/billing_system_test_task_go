@@ -10,6 +10,59 @@ import (
 	reflect "reflect"
 )
 
+// MockFileWithMetadata is a mock of FileWithMetadata interface
+type MockFileWithMetadata struct {
+	ctrl     *gomock.Controller
+	recorder *MockFileWithMetadataMockRecorder
+}
+
+// MockFileWithMetadataMockRecorder is the mock recorder for MockFileWithMetadata
+type MockFileWithMetadataMockRecorder struct {
+	mock *MockFileWithMetadata
+}
+
+// NewMockFileWithMetadata creates a new mock instance
+func NewMockFileWithMetadata(ctrl *gomock.Controller) *MockFileWithMetadata {
+	mock := &MockFileWithMetadata{ctrl: ctrl}
+	mock.recorder = &MockFileWithMetadataMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use
+func (m *MockFileWithMetadata) EXPECT() *MockFileWithMetadataMockRecorder {
+	return m.recorder
+}
+
+// Read mocks base method
+func (m *MockFileWithMetadata) Read(p []byte) (int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Read", p)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Read indicates an expected call of Read
+func (mr *MockFileWithMetadataMockRecorder) Read(p interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockFileWithMetadata)(nil).Read), p)
+}
+
+// Stat mocks base method
+func (m *MockFileWithMetadata) Stat() (os.FileInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Stat")
+	ret0, _ := ret[0].(os.FileInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Stat indicates an expected call of Stat
+func (mr *MockFileWithMetadataMockRecorder) Stat() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stat", reflect.TypeOf((*MockFileWithMetadata)(nil).Stat))
+}
+
 // MockFileHandlingManager is a mock of FileHandlingManager interface
 type MockFileHandlingManager struct {
 	ctrl     *gomock.Controller
@@ -61,6 +114,21 @@ func (m *MockFileHandlingManager) CreateMarshaller(file *os.File, format string,
 func (mr *MockFileHandlingManagerMockRecorder) CreateMarshaller(file, format, csvWriter interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMarshaller", reflect.TypeOf((*MockFileHandlingManager)(nil).CreateMarshaller), file, format, csvWriter)
+}
+
+// GetFileMetadata mocks base method
+func (m *MockFileHandlingManager) GetFileMetadata(file FileWithMetadata) (*Metadata, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFileMetadata", file)
+	ret0, _ := ret[0].(*Metadata)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFileMetadata indicates an expected call of GetFileMetadata
+func (mr *MockFileHandlingManagerMockRecorder) GetFileMetadata(file interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFileMetadata", reflect.TypeOf((*MockFileHandlingManager)(nil).GetFileMetadata), file)
 }
 
 // MockFileStorageManager is a mock of FileStorageManager interface

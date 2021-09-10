@@ -3,10 +3,13 @@ package operations
 import (
 	"encoding/csv"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
+
+	gomock "github.com/golang/mock/gomock"
 )
 
 type FailedFileStore struct {
@@ -101,5 +104,61 @@ func TestNewFileHandlerFunction(t *testing.T) {
 	handler := NewFileHandler(storage)
 	if reflect.TypeOf(handler.fileStorage) != reflect.TypeOf(storage) {
 		t.Errorf("Types mismatch. Expected: %s. Got: %s", reflect.TypeOf(storage), reflect.TypeOf(handler.fileStorage))
+	}
+}
+
+// Test success receiving of file's metadata
+func TestSuccessFileHandlerGetFileMetadata(t *testing.T) {
+	fh := FileHandler{
+		fileStorage: FileStorage{},
+	}
+	tmpFile, _ := ioutil.TempFile(os.TempDir(), "test")
+	data := []byte("Test file\n")
+	tmpFile.Write(data)
+	tmpFile.Seek(0, 0)
+
+	res, err := fh.GetFileMetadata(tmpFile)
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err)
+	}
+
+	if res.size != "10" {
+		t.Errorf("Unexpected file size - expected 10")
+	}
+}
+
+// Test failed receiving file's metadata (Read() error)
+func TestFailedFileHandlerGetFileMetadataErrorRead(t *testing.T) {
+	fh := FileHandler{
+		fileStorage: FileStorage{},
+	}
+	tmpFile, _ := ioutil.TempFile(os.TempDir(), "test")
+	data := []byte("Test file\n")
+	tmpFile.Write(data)
+
+	_, err := fh.GetFileMetadata(tmpFile)
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
+}
+
+// Test failed receiving file's metadata (Stat() error)
+func TestFailedFileHandlerGetFileMetadataErrorStats(t *testing.T) {
+	fh := FileHandler{
+		fileStorage: FileStorage{},
+	}
+
+	ctrl := gomock.NewController(t)
+	mockFM := NewMockFileWithMetadata(ctrl)
+	mockFM.EXPECT().Read(gomock.Any()).Return(0, nil)
+	mockFM.EXPECT().Stat().Return(nil, fmt.Errorf("file stat get error"))
+
+	_, err := fh.GetFileMetadata(mockFM)
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "file stat get error") {
+		t.Errorf("Error should contain 'file stat get error' message")
 	}
 }

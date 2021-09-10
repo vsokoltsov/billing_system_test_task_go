@@ -4,16 +4,24 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"sync"
 )
+
+type FileWithMetadata interface {
+	Read(p []byte) (n int, err error)
+	Stat() (os.FileInfo, error)
+}
 
 // FileHandlingManager represents interface for file handler
 type FileHandlingManager interface {
 	Create(format string) (*FileParams, error)
 	CreateMarshaller(file *os.File, format string, csvWriter CSVWriter) (FileMarshallingManager, error)
+	GetFileMetadata(file FileWithMetadata) (*Metadata, error)
 }
 
 // FileStorageManager represents interface for file storage
@@ -28,6 +36,12 @@ type FileHandler struct {
 
 // FileStorage implements FileStorageManager interface
 type FileStorage struct{}
+
+// Metadata represents given file's metadata
+type Metadata struct {
+	size        string
+	contentType string
+}
 
 // NewFileHandler returns new instance of FileHandler
 func NewFileHandler(storage FileStorageManager) FileHandler {
@@ -105,4 +119,22 @@ func (fh FileHandler) CreateMarshaller(file *os.File, format string, csvWriter C
 		}
 	}
 	return fileHandler, nil
+}
+
+func (fh FileHandler) GetFileMetadata(file FileWithMetadata) (*Metadata, error) {
+	header := make([]byte, 512)
+	_, readErr := file.Read(header)
+	if readErr != nil {
+		return nil, fmt.Errorf("error of file header's reading: %s", readErr)
+	}
+	stat, statErr := file.Stat()
+	if statErr != nil {
+		return nil, fmt.Errorf("error of file stats's receiving: %s", statErr)
+	}
+	size := strconv.FormatInt(stat.Size(), 10)
+	contentType := http.DetectContentType(header)
+	return &Metadata{
+		size:        size,
+		contentType: contentType,
+	}, nil
 }
