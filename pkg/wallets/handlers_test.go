@@ -29,8 +29,8 @@ type walletHandlerTestCase struct {
 	matchResults   func(actual []byte) bool
 }
 
-var testCases = []walletHandlerTestCase{
-	walletHandlerTestCase{
+var (
+	transfer = walletHandlerTestCase{
 		name:   "Success funds transfering",
 		method: "POST",
 		url:    "/api/wallets/transfer/",
@@ -48,7 +48,11 @@ var testCases = []walletHandlerTestCase{
 			_ = json.Unmarshal(actual, &ws)
 			return ws.WalletFrom == 1
 		},
-	},
+	}
+)
+
+var testCases = []walletHandlerTestCase{
+	transfer,
 	walletHandlerTestCase{
 		name:   "Failed funds transfering (form decoding error)",
 		method: "POST",
@@ -152,6 +156,56 @@ func TestWalletHandlers(t *testing.T) {
 
 			if !tc.matchResults(respBody) {
 				t.Errorf("[%s] Unmatched results. Got %s", testLabel, string(respBody))
+			}
+		})
+	}
+}
+
+var benchmarks = []walletHandlerTestCase{
+	transfer,
+}
+
+func BenchmarkWalletsHandler(b *testing.B) {
+	for _, tc := range benchmarks {
+		testLabel := strings.Join([]string{"API", tc.method, tc.url, tc.name}, " ")
+		b.Run(testLabel, func(b *testing.B) {
+			ctx := context.Background()
+			ctrl := gomock.NewController(b)
+			defer ctrl.Finish()
+
+			sqlDB, _, err := sqlmock.New()
+			if err != nil {
+				b.Fatalf("cant create mock: %s", err)
+			}
+			defer sqlDB.Close()
+
+			mockWalletsRepo := NewMockWalletsManager(ctrl)
+
+			r := mux.NewRouter()
+
+			handler := WalletsHandler{
+				WalletRepo: mockWalletsRepo,
+			}
+			api_router := r.PathPrefix("/api").Subrouter()
+			api_router.HandleFunc("/wallets/transfer/", handler.Transfer).Methods("POST")
+			tc.mockData(ctrl, ctx, mockWalletsRepo)
+
+			testServer := httptest.NewServer(r)
+			defer testServer.Close()
+
+			var body []byte
+			if tc.formError {
+				body = []byte(`{"test": "data"`)
+			} else {
+				body, _ = json.Marshal(tc.body)
+			}
+
+			req, _ := http.NewRequest(tc.method, testServer.URL+tc.url, bytes.NewBuffer(body))
+			w := httptest.NewRecorder()
+			b.ResetTimer()
+
+			for i := 0; i < b.N; i++ {
+				r.ServeHTTP(w, req)
 			}
 		})
 	}
