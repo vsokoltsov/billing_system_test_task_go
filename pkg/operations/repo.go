@@ -61,7 +61,7 @@ func (wor WalletOperationService) Create(ctx context.Context, tx *sql.Tx, operat
 	for stmt.Next() {
 		scanErr := stmt.Scan(&walletOperationID)
 		if scanErr != nil {
-			return 0, fmt.Errorf("error wallet operation id retrieving: %s", insertErr)
+			return 0, fmt.Errorf("error wallet operation id retrieving: %s", scanErr)
 		}
 	}
 

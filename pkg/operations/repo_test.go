@@ -2,6 +2,7 @@ package operations
 
 import (
 	"context"
+	"database/sql"
 	"database/sql/driver"
 	"fmt"
 	"reflect"
@@ -13,11 +14,12 @@ import (
 )
 
 type operationRepoTestCase struct {
-	name      string
-	funcName  string
-	mockQuery func(mock sqlmock.Sqlmock)
-	args      []driver.Value
-	err       error
+	name                string
+	funcName            string
+	mockQuery           func(mock sqlmock.Sqlmock)
+	args                []driver.Value
+	err                 error
+	expectedResultMatch func(actual interface{}) bool
 }
 
 var operationRepoTestCases = []operationRepoTestCase{
@@ -37,6 +39,9 @@ var operationRepoTestCases = []operationRepoTestCase{
 				WillReturnRows(rows)
 
 		},
+		expectedResultMatch: func(actual interface{}) bool {
+			return actual.(int) == 1
+		},
 	},
 	operationRepoTestCase{
 		name:     "Success operation creation (walletFrom is 0)",
@@ -53,6 +58,9 @@ var operationRepoTestCases = []operationRepoTestCase{
 				WithArgs([]driver.Value{Create, nil, 2, decimal.NewFromInt(0)}...).
 				WillReturnRows(rows)
 
+		},
+		expectedResultMatch: func(actual interface{}) bool {
+			return actual.(int) == 1
 		},
 	},
 	operationRepoTestCase{
@@ -100,6 +108,14 @@ var operationRepoTestCases = []operationRepoTestCase{
 				WillReturnRows(rows)
 
 		},
+		expectedResultMatch: func(actual interface{}) bool {
+			rows := actual.(*sql.Rows)
+			operation := WalletOperation{}
+			for rows.Next() {
+				_ = rows.Scan(&operation.ID)
+			}
+			return operation.ID == 1
+		},
 	},
 	operationRepoTestCase{
 		name:     "Success receiving list of items with paging",
@@ -116,6 +132,14 @@ var operationRepoTestCases = []operationRepoTestCase{
 				WithArgs([]driver.Value{0, 10}...).
 				WillReturnRows(rows)
 
+		},
+		expectedResultMatch: func(actual interface{}) bool {
+			rows := actual.(*sql.Rows)
+			operation := WalletOperation{}
+			for rows.Next() {
+				_ = rows.Scan(&operation.ID)
+			}
+			return operation.ID == 1
 		},
 	},
 	operationRepoTestCase{
@@ -134,6 +158,14 @@ var operationRepoTestCases = []operationRepoTestCase{
 				WillReturnRows(rows)
 
 		},
+		expectedResultMatch: func(actual interface{}) bool {
+			rows := actual.(*sql.Rows)
+			operation := WalletOperation{}
+			for rows.Next() {
+				_ = rows.Scan(&operation.ID)
+			}
+			return operation.ID == 1
+		},
 	},
 	operationRepoTestCase{
 		name:     "Success receiving list of items date filtering",
@@ -151,6 +183,14 @@ var operationRepoTestCases = []operationRepoTestCase{
 				WillReturnRows(rows)
 
 		},
+		expectedResultMatch: func(actual interface{}) bool {
+			rows := actual.(*sql.Rows)
+			operation := WalletOperation{}
+			for rows.Next() {
+				_ = rows.Scan(&operation.ID)
+			}
+			return operation.ID == 1
+		},
 	},
 	operationRepoTestCase{
 		name:     "Success receiving list of items with all parameters",
@@ -167,6 +207,14 @@ var operationRepoTestCases = []operationRepoTestCase{
 				WithArgs([]driver.Value{"2020-01-01", 0, 10}...).
 				WillReturnRows(rows)
 
+		},
+		expectedResultMatch: func(actual interface{}) bool {
+			rows := actual.(*sql.Rows)
+			operation := WalletOperation{}
+			for rows.Next() {
+				_ = rows.Scan(&operation.ID)
+			}
+			return operation.ID == 1
 		},
 	},
 }
@@ -225,6 +273,7 @@ func TestWalletRepo(t *testing.T) {
 				).Call(realArgs)
 			}
 			var reflectErr error
+			resultValue := result[0].Interface()
 			rerr := result[1].Interface()
 			if rerr != nil {
 				reflectErr = rerr.(error)
@@ -240,6 +289,14 @@ func TestWalletRepo(t *testing.T) {
 					t.Errorf("expected error, got nil: %s", reflectErr)
 					return
 				}
+				if reflectErr != nil && !strings.Contains(reflectErr.Error(), tc.err.Error()) {
+					t.Errorf("Expected string does not match receivede error. Got %s; Expected %s", reflectErr, tc.err)
+					return
+				}
+			}
+
+			if tc.err == nil && !tc.expectedResultMatch(resultValue) {
+				t.Errorf("result data is not matched. Got %s", resultValue)
 			}
 		})
 	}

@@ -662,7 +662,7 @@ func (wor WalletOperationService) Create(ctx context.Context, tx *sql.Tx, operat
         <span class="cov8" title="1">for stmt.Next() </span><span class="cov8" title="1">{
                 scanErr := stmt.Scan(&amp;walletOperationID)
                 if scanErr != nil </span><span class="cov8" title="1">{
-                        return 0, fmt.Errorf("error wallet operation id retrieving: %s", insertErr)
+                        return 0, fmt.Errorf("error wallet operation id retrieving: %s", scanErr)
                 }</span>
         }
 
