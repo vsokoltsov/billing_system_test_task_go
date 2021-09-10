@@ -99,16 +99,24 @@ import (
         "encoding/csv"
         "encoding/json"
         "fmt"
+        "net/http"
         "os"
         "path/filepath"
         "runtime"
+        "strconv"
         "sync"
 )
+
+type FileWithMetadata interface {
+        Read(p []byte) (n int, err error)
+        Stat() (os.FileInfo, error)
+}
 
 // FileHandlingManager represents interface for file handler
 type FileHandlingManager interface {
         Create(format string) (*FileParams, error)
         CreateMarshaller(file *os.File, format string, csvWriter CSVWriter) (FileMarshallingManager, error)
+        GetFileMetadata(file FileWithMetadata) (*Metadata, error)
 }
 
 // FileStorageManager represents interface for file storage
@@ -123,6 +131,12 @@ type FileHandler struct {
 
 // FileStorage implements FileStorageManager interface
 type FileStorage struct{}
+
+// Metadata represents given file's metadata
+type Metadata struct {
+        size        string
+        contentType string
+}
 
 // NewFileHandler returns new instance of FileHandler
 func NewFileHandler(storage FileStorageManager) FileHandler <span class="cov8" title="1">{
@@ -200,6 +214,24 @@ func (fh FileHandler) CreateMarshaller(file *os.File, format string, csvWriter C
                 }
         }</span>
         <span class="cov8" title="1">return fileHandler, nil</span>
+}
+
+func (fh FileHandler) GetFileMetadata(file FileWithMetadata) (*Metadata, error) <span class="cov8" title="1">{
+        header := make([]byte, 512)
+        _, readErr := file.Read(header)
+        if readErr != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("error of file header's reading: %s", readErr)
+        }</span>
+        <span class="cov8" title="1">stat, statErr := file.Stat()
+        if statErr != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("error of file stats's receiving: %s", statErr)
+        }</span>
+        <span class="cov8" title="1">size := strconv.FormatInt(stat.Size(), 10)
+        contentType := http.DetectContentType(header)
+        return &amp;Metadata{
+                size:        size,
+                contentType: contentType,
+        }, nil</span>
 }
 </pre>
 		
@@ -297,7 +329,6 @@ import (
         "context"
         "net/http"
         "os"
-        "strconv"
 )
 
 type OperationsHandler struct {
@@ -367,15 +398,14 @@ func (oh *OperationsHandler) List(w http.ResponseWriter, r *http.Request) <span 
                 return
         }</span>
 
-        <span class="cov8" title="1">header := make([]byte, 512)
-        _, _ = fileParams.f.Read(header)
-        stat, _ := fileParams.f.Stat()
-        size := strconv.FormatInt(stat.Size(), 10)
-        contentType := http.DetectContentType(header)
-        _, _ = fileParams.f.Seek(0, 0)
-        w.Header().Set("Content-Disposition", "attachment; filename="+fileParams.name)
-        w.Header().Set("Content-Type", contentType)
-        w.Header().Set("Content-Length", size)
+        <span class="cov8" title="1">metadata, metadataErr := oh.fh.GetFileMetadata(fileParams.f)
+        if metadataErr != nil </span><span class="cov8" title="1">{
+                utils.JsonResponseError(w, http.StatusBadRequest, metadataErr.Error())
+                return
+        }</span>
+        <span class="cov8" title="1">w.Header().Set("Content-Disposition", "attachment; filename="+fileParams.name)
+        w.Header().Set("Content-Type", metadata.contentType)
+        w.Header().Set("Content-Length", metadata.size)
         w.WriteHeader(http.StatusOK)
         if fileParams.csvWriter != nil </span><span class="cov8" title="1">{
                 fileParams.csvWriter.Flush()
