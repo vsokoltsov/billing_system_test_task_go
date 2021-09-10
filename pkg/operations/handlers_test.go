@@ -33,6 +33,13 @@ type opHandlerTestCase struct {
 	errMsg         string
 }
 
+type benchmarkTestCase struct {
+	name        string
+	url         string
+	paramsMap   map[string]string
+	queryParams *QueryParams
+}
+
 var testCases = []opHandlerTestCase{
 	opHandlerTestCase{
 		name:           "Success file receiving",
@@ -266,6 +273,63 @@ func TestOperationsHandler(t *testing.T) {
 	}
 }
 
+var benchmarks = []benchmarkTestCase{
+	benchmarkTestCase{
+		name: "Test load for csv format only",
+		url:  "/api/operations/?format=csv",
+		paramsMap: map[string]string{
+			"format": "csv",
+		},
+		queryParams: &QueryParams{
+			format: "csv",
+		},
+	},
+	benchmarkTestCase{
+		name: "Test load for reports paging",
+		url:  "/api/operations/?page=1&per_page=10",
+		paramsMap: map[string]string{
+			"page":     "1",
+			"per_page": "10",
+		},
+		queryParams: &QueryParams{
+			listParams: &ListParams{
+				page:    1,
+				perPage: 10,
+			},
+		},
+	},
+	benchmarkTestCase{
+		name: "Test load for reports date filtering",
+		url:  "/api/operations/?date=2020-01-01",
+		paramsMap: map[string]string{
+			"date": "2020-01-01",
+		},
+		queryParams: &QueryParams{
+			listParams: &ListParams{
+				date: "2020-01-01",
+			},
+		},
+	},
+	benchmarkTestCase{
+		name: "Test load for csv format, date and paging",
+		url:  "/api/operations/?format=csv&page=1&per_page=10&date=2020-01-01",
+		paramsMap: map[string]string{
+			"format":   "csv",
+			"page":     "1",
+			"per_page": "10",
+			"date":     "2020-01-01",
+		},
+		queryParams: &QueryParams{
+			format: "csv",
+			listParams: &ListParams{
+				page:    1,
+				perPage: 10,
+				date:    "2020-01-01",
+			},
+		},
+	},
+}
+
 func BenchmarkOperationsList(b *testing.B) {
 	ctx := context.Background()
 	ctrl := gomock.NewController(b)
@@ -285,13 +349,7 @@ func BenchmarkOperationsList(b *testing.B) {
 	api_router := r.PathPrefix("/api").Subrouter()
 	api_router.HandleFunc("/operations/", handler.List).Methods("GET")
 
-	queryParams := make(url.Values)
-	queryParams.Set("format", "csv")
 	f, _ := os.CreateTemp("", "_example_file")
-	params := &QueryParams{
-		format:     "csv",
-		listParams: nil,
-	}
 	fileParams := &FileParams{
 		f:         f,
 		path:      "/a/b/c/" + f.Name(),
@@ -307,25 +365,33 @@ func BenchmarkOperationsList(b *testing.B) {
 	rows = rows.AddRow(1, "test@example.com", 1, 1, decimal.NewFromInt(100), "USD")
 	mock.ExpectQuery(query).WithArgs([]driver.Value{1}...).WillReturnRows(rows)
 
-	mockParamsReader.EXPECT().Parse(queryParams).Return(params, nil).AnyTimes()
-	mockFileHandler.EXPECT().Create("csv").Return(fileParams, nil).AnyTimes()
-	mockFileHandler.EXPECT().CreateMarshaller(fileParams.f, params.format, fileParams.csvWriter).Return(marshaller, nil).AnyTimes()
-	mockProcessor.EXPECT().Process(ctx, mockOpRepo, params.listParams, marshaller).Return(nil).AnyTimes()
-	mockFileHandler.EXPECT().GetFileMetadata(fileParams.f).Return(&Metadata{
-		size:        "10",
-		contentType: "application/json",
-	}, nil).AnyTimes()
-
 	testServer := httptest.NewServer(r)
 	defer testServer.Close()
 
 	body, _ := json.Marshal(map[string]interface{}{})
 
-	req, _ := http.NewRequest("GET", testServer.URL+"/api/operations/?format=csv", bytes.NewBuffer(body))
-	w := httptest.NewRecorder()
-	b.ResetTimer()
+	for _, bm := range benchmarks {
+		b.Run(bm.name, func(b *testing.B) {
+			queryParams := make(url.Values)
+			for k, v := range bm.paramsMap {
+				queryParams.Set(k, v)
+			}
+			mockFileHandler.EXPECT().Create(bm.queryParams.format).Return(fileParams, nil).AnyTimes()
+			mockFileHandler.EXPECT().GetFileMetadata(fileParams.f).Return(&Metadata{
+				size:        "10",
+				contentType: "application/json",
+			}, nil).AnyTimes()
+			mockParamsReader.EXPECT().Parse(queryParams).Return(bm.queryParams, nil).AnyTimes()
+			mockFileHandler.EXPECT().CreateMarshaller(fileParams.f, bm.queryParams.format, fileParams.csvWriter).Return(marshaller, nil).AnyTimes()
+			mockProcessor.EXPECT().Process(ctx, mockOpRepo, bm.queryParams.listParams, marshaller).Return(nil).AnyTimes()
 
-	for i := 0; i < b.N; i++ {
-		r.ServeHTTP(w, req)
+			req, _ := http.NewRequest("GET", testServer.URL+bm.url, bytes.NewBuffer(body))
+			w := httptest.NewRecorder()
+			b.ResetTimer()
+
+			for i := 0; i < b.N; i++ {
+				r.ServeHTTP(w, req)
+			}
+		})
 	}
 }
