@@ -46,7 +46,8 @@ func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if formError != nil {
 		log.Println(fmt.Sprintf("[ERROR] Create user: %s", formError))
 		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
+		serializer := utils.FormErrorSerializer{Messages: *formError}
+		_ = json.NewEncoder(w).Encode(serializer)
 		return
 	}
 

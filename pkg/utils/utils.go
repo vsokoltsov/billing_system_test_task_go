@@ -21,9 +21,7 @@ type ErrorMsg struct {
 func JsonResponseError(w http.ResponseWriter, status int, message string) {
 	log.Println(fmt.Sprintf("[ERROR]: %s", message))
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(map[string]string{
-		"message": message,
-	})
+	_ = json.NewEncoder(w).Encode(ErrorMsg{Message: message})
 }
 
 // ValidateForm performs base form validation
@@ -35,11 +33,22 @@ func ValidateForm(form interface{}, formErrors map[string][]string) map[string][
 			errKey := strings.ToLower(err.Field())
 			_, ok := formErrors[errKey]
 			if ok {
-				formErrors[errKey] = append(formErrors[errKey], err.Tag())
+				formErrors[errKey] = append(formErrors[errKey], ErrorTagMessage(err.Tag()))
 			} else {
-				formErrors[errKey] = []string{err.Tag()}
+				formErrors[errKey] = []string{ErrorTagMessage(err.Tag())}
 			}
 		}
 	}
 	return formErrors
+}
+
+func ErrorTagMessage(tag string) string {
+	var result string
+	switch tag {
+	case "required":
+		result = "Field required"
+	case "email":
+		result = "Invalid email format"
+	}
+	return result
 }

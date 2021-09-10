@@ -1,11 +1,13 @@
 package users
 
 import (
+	"billing_system_test_task/pkg/utils"
 	"billing_system_test_task/pkg/wallets"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -25,6 +27,7 @@ type userHandlerTestCase struct {
 	expectedStatus int
 	mockData       func(ctrl *gomock.Controller, ctx context.Context, userService *MockUsersManager, walletRepo *wallets.MockWalletsManager)
 	formError      bool
+	matchResults   func(actual []byte) bool
 }
 
 var testCases = []userHandlerTestCase{
@@ -55,6 +58,11 @@ var testCases = []userHandlerTestCase{
 				)
 		},
 		expectedStatus: 201,
+		matchResults: func(actual []byte) bool {
+			var serializer UserSerializer
+			json.Unmarshal(actual, &serializer)
+			return serializer.ID == 1 && serializer.Email == "example@mail.com" && serializer.Balance.IntPart() == int64(100) && serializer.Currency == "USD"
+		},
 	},
 	userHandlerTestCase{
 		name:   "Failed user creation (form decode error)",
@@ -67,6 +75,11 @@ var testCases = []userHandlerTestCase{
 		},
 		expectedStatus: 400,
 		formError:      true,
+		matchResults: func(actual []byte) bool {
+			var errors utils.ErrorMsg
+			json.Unmarshal(actual, &errors)
+			return strings.Contains(errors.Message, "unexpected EOF")
+		},
 	},
 	userHandlerTestCase{
 		name:   "Failed user creation (wrong parameters)",
@@ -78,6 +91,11 @@ var testCases = []userHandlerTestCase{
 		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockUsersManager, walletRepo *wallets.MockWalletsManager) {
 		},
 		expectedStatus: 400,
+		matchResults: func(actual []byte) bool {
+			var errors utils.FormErrorSerializer
+			json.Unmarshal(actual, &errors)
+			return errors.Messages["email"][0] == "Invalid email format"
+		},
 	},
 	userHandlerTestCase{
 		name:   "Failed user creation (failed user repo Create())",
@@ -92,6 +110,11 @@ var testCases = []userHandlerTestCase{
 				Return(int64(0), fmt.Errorf("User creation error"))
 		},
 		expectedStatus: 400,
+		matchResults: func(actual []byte) bool {
+			var errors utils.ErrorMsg
+			json.Unmarshal(actual, &errors)
+			return strings.Contains(errors.Message, "User creation error")
+		},
 	},
 	userHandlerTestCase{
 		name:   "Failed user creation (failed user repo GetByID())",
@@ -110,6 +133,11 @@ var testCases = []userHandlerTestCase{
 				Return(nil, fmt.Errorf("error of user retrieving"))
 		},
 		expectedStatus: 400,
+		matchResults: func(actual []byte) bool {
+			var errors utils.ErrorMsg
+			json.Unmarshal(actual, &errors)
+			return strings.Contains(errors.Message, "error of user retrieving")
+		},
 	},
 	userHandlerTestCase{
 		name:   "Success wallet enroll",
@@ -139,6 +167,11 @@ var testCases = []userHandlerTestCase{
 			userService.EXPECT().GetByWalletID(ctx, user.Wallet.ID).Return(&user, nil)
 		},
 		expectedStatus: 200,
+		matchResults: func(actual []byte) bool {
+			var serializer UserSerializer
+			json.Unmarshal(actual, &serializer)
+			return serializer.ID == 1 && serializer.Email == "example@mail.com" && serializer.Balance.IntPart() == int64(100) && serializer.Currency == "USD"
+		},
 	},
 	userHandlerTestCase{
 		name:   "Failed wallet enroll (vars parameter does not exists)",
@@ -150,6 +183,11 @@ var testCases = []userHandlerTestCase{
 		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockUsersManager, walletRepo *wallets.MockWalletsManager) {
 		},
 		expectedStatus: 500,
+		matchResults: func(actual []byte) bool {
+			var errors utils.ErrorMsg
+			json.Unmarshal(actual, &errors)
+			return strings.Contains(errors.Message, "user's id attribute does not exists")
+		},
 	},
 	userHandlerTestCase{
 		name:   "Failed wallet enroll (error of user id to int conversion)",
@@ -161,6 +199,11 @@ var testCases = []userHandlerTestCase{
 		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockUsersManager, walletRepo *wallets.MockWalletsManager) {
 		},
 		expectedStatus: 400,
+		matchResults: func(actual []byte) bool {
+			var errors utils.ErrorMsg
+			json.Unmarshal(actual, &errors)
+			return strings.Contains(errors.Message, "Error formatting user id to int")
+		},
 	},
 	userHandlerTestCase{
 		name:   "Failed wallet enroll (form decoding error)",
@@ -173,6 +216,11 @@ var testCases = []userHandlerTestCase{
 		},
 		expectedStatus: 400,
 		formError:      true,
+		matchResults: func(actual []byte) bool {
+			var errors utils.ErrorMsg
+			json.Unmarshal(actual, &errors)
+			return strings.Contains(errors.Message, "Error json form decoding")
+		},
 	},
 	userHandlerTestCase{
 		name:   "Failed wallet enroll (form validation error)",
@@ -184,6 +232,11 @@ var testCases = []userHandlerTestCase{
 		mockData: func(ctrl *gomock.Controller, ctx context.Context, userService *MockUsersManager, walletRepo *wallets.MockWalletsManager) {
 		},
 		expectedStatus: 400,
+		matchResults: func(actual []byte) bool {
+			var errors utils.FormErrorSerializer
+			json.Unmarshal(actual, &errors)
+			return errors.Messages["amount"][0] == "less than a zero"
+		},
 	},
 	userHandlerTestCase{
 		name:   "Failed wallet enroll (user not found)",
@@ -196,6 +249,11 @@ var testCases = []userHandlerTestCase{
 			userService.EXPECT().GetByID(ctx, 1).Return(nil, fmt.Errorf("user not found"))
 		},
 		expectedStatus: 404,
+		matchResults: func(actual []byte) bool {
+			var errors utils.ErrorMsg
+			json.Unmarshal(actual, &errors)
+			return strings.Contains(errors.Message, "user not found")
+		},
 	},
 	userHandlerTestCase{
 		name:   "Failed wallet enroll (wallet repo Enroll() failed)",
@@ -221,6 +279,11 @@ var testCases = []userHandlerTestCase{
 			walletRepo.EXPECT().Enroll(ctx, user.Wallet.ID, amount).Return(0, fmt.Errorf("enroll has failed"))
 		},
 		expectedStatus: 400,
+		matchResults: func(actual []byte) bool {
+			var errors utils.ErrorMsg
+			json.Unmarshal(actual, &errors)
+			return strings.Contains(errors.Message, "enroll has failed")
+		},
 	},
 	userHandlerTestCase{
 		name:   "Failed wallet enroll (failed user repo GetByWalletID())",
@@ -250,6 +313,11 @@ var testCases = []userHandlerTestCase{
 			userService.EXPECT().GetByWalletID(ctx, user.Wallet.ID).Return(nil, fmt.Errorf("error of user retrieving"))
 		},
 		expectedStatus: 400,
+		matchResults: func(actual []byte) bool {
+			var errors utils.ErrorMsg
+			json.Unmarshal(actual, &errors)
+			return strings.Contains(errors.Message, "error of user retrieving")
+		},
 	},
 }
 
@@ -300,8 +368,14 @@ func TestUsersHandlers(t *testing.T) {
 			w := httptest.NewRecorder()
 			r.ServeHTTP(w, req)
 			resp := w.Result()
+			respBody, _ := ioutil.ReadAll(resp.Body)
+
 			if resp.StatusCode != tc.expectedStatus {
 				t.Errorf("[%s] Expected response code %d. Got %d", testLabel, tc.expectedStatus, resp.StatusCode)
+			}
+
+			if !tc.matchResults(respBody) {
+				t.Errorf("[%s] Unmatched results. Got %s", testLabel, string(respBody))
 			}
 		})
 	}

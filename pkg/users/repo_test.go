@@ -292,12 +292,6 @@ var UserRepoTestCases = []userRepoTestCase{
 				WithArgs([]driver.Value{int64(1)}...).
 				WillReturnRows(walletRows)
 
-			// Exec insert wallets query
-			mock.
-				ExpectQuery("insert into wallet_operations").
-				WithArgs([]driver.Value{int64(1)}...).
-				WillReturnRows(walletRows)
-
 			// Commit users create transaction
 			mock.ExpectCommit()
 
@@ -523,11 +517,9 @@ func TestUsersRepo(t *testing.T) {
 				}
 			}
 
-			// if resultValue != nil {
 			if tc.err == nil && !tc.expectedResultMatch(resultValue) {
 				t.Errorf("result data is not matched. Got %s", resultValue)
 			}
-			// }
 		})
 	}
 }
