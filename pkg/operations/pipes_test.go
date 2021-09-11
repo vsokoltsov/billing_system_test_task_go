@@ -383,6 +383,7 @@ func TestFailedWritePipe(t *testing.T) {
 	}
 }
 
+// Test success pipeline running
 func TestSuccessPipelineRun(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockFileMarshaller := NewMockFileMarshallingManager(ctrl)
@@ -420,6 +421,7 @@ func TestSuccessPipelineRun(t *testing.T) {
 	}
 }
 
+// Test failed pipeline running
 func TestFailedPipelineRun(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockFileMarshaller := NewMockFileMarshallingManager(ctrl)
@@ -456,6 +458,7 @@ func TestFailedPipelineRun(t *testing.T) {
 	}
 }
 
+// Benchmark whole pipeline run
 func BenchmarkPipeline(b *testing.B) {
 	ctrl := gomock.NewController(b)
 	mockFileMarshaller := NewMockFileMarshallingManager(ctrl)
@@ -493,6 +496,7 @@ func BenchmarkPipeline(b *testing.B) {
 	}
 }
 
+// Benchmark read pipe
 func BenchmarkReadPipe(b *testing.B) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -533,6 +537,7 @@ func BenchmarkReadPipe(b *testing.B) {
 	}
 }
 
+// Benchmark marshall pipe
 func BenchmarkMarshallPipe(b *testing.B) {
 	ctrl := gomock.NewController(b)
 	mockFileMarshaller := NewMockFileMarshallingManager(ctrl)
@@ -567,6 +572,7 @@ func BenchmarkMarshallPipe(b *testing.B) {
 	}
 }
 
+// Benchmark write pipe
 func BenchmarkWritePipe(b *testing.B) {
 	ctrl := gomock.NewController(b)
 	mockFileMarshaller := NewMockFileMarshallingManager(ctrl)

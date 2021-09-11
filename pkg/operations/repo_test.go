@@ -13,6 +13,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// operationRepoTestCase represents test cases for repository
 type operationRepoTestCase struct {
 	name                string
 	funcName            string
@@ -219,7 +220,8 @@ var operationRepoTestCases = []operationRepoTestCase{
 	},
 }
 
-func TestWalletRepo(t *testing.T) {
+// Test operations repository actions
+func TestOperationsRepo(t *testing.T) {
 	for _, tc := range operationRepoTestCases {
 		testLabel := strings.Join([]string{"Repo", "Operation", tc.name}, " ")
 		t.Run(testLabel, func(t *testing.T) {
@@ -302,6 +304,7 @@ func TestWalletRepo(t *testing.T) {
 	}
 }
 
+// Test service constructor
 func TestNewWalletService(t *testing.T) {
 	db, _, _ := sqlmock.New()
 	walletOperation := NewWalletOperationRepo(db)
@@ -311,6 +314,7 @@ func TestNewWalletService(t *testing.T) {
 	}
 }
 
+// Benchmark repository Create operation
 func BenchmarkCreate(b *testing.B) {
 	sqlDB, mock, err := sqlmock.New()
 	if err != nil {
@@ -340,6 +344,7 @@ func BenchmarkCreate(b *testing.B) {
 	}
 }
 
+// Benchmark repository List operation
 func BenchmarkList(b *testing.B) {
 	sqlDB, mock, err := sqlmock.New()
 	if err != nil {

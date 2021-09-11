@@ -22,13 +22,14 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// opHandlerTestCase represents test cases for handler
 type opHandlerTestCase struct {
 	name           string
 	method         string
 	url            string
 	body           map[string]interface{}
 	expectedStatus int
-	mockData       func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockOperationsManager, pr *MockQueryReaderManager, fh *MockFileHandlingManager, op *MockIOperationsProcessesManager)
+	mockData       func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockOperationsManager, pr *MockQueryReaderManager, fh *MockFileHandlingManager, op *MockPipelineManager)
 	formError      bool
 	errMsg         string
 }
@@ -47,7 +48,7 @@ var testCases = []opHandlerTestCase{
 		url:            "/api/operations/?format=csv",
 		body:           map[string]interface{}{},
 		expectedStatus: 200,
-		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockOperationsManager, pr *MockQueryReaderManager, fh *MockFileHandlingManager, op *MockIOperationsProcessesManager) {
+		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockOperationsManager, pr *MockQueryReaderManager, fh *MockFileHandlingManager, op *MockPipelineManager) {
 			queryParams := make(url.Values)
 			queryParams.Set("format", "csv")
 			f, _ := os.CreateTemp("", "_example_file")
@@ -86,7 +87,7 @@ var testCases = []opHandlerTestCase{
 		url:            "/api/operations/?format=csv",
 		body:           map[string]interface{}{},
 		expectedStatus: 400,
-		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockOperationsManager, pr *MockQueryReaderManager, fh *MockFileHandlingManager, op *MockIOperationsProcessesManager) {
+		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockOperationsManager, pr *MockQueryReaderManager, fh *MockFileHandlingManager, op *MockPipelineManager) {
 			queryParams := make(url.Values)
 			queryParams.Set("format", "csv")
 
@@ -100,7 +101,7 @@ var testCases = []opHandlerTestCase{
 		url:            "/api/operations/?format=csv",
 		body:           map[string]interface{}{},
 		expectedStatus: 400,
-		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockOperationsManager, pr *MockQueryReaderManager, fh *MockFileHandlingManager, op *MockIOperationsProcessesManager) {
+		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockOperationsManager, pr *MockQueryReaderManager, fh *MockFileHandlingManager, op *MockPipelineManager) {
 			queryParams := make(url.Values)
 			queryParams.Set("format", "csv")
 			params := &QueryParams{
@@ -119,7 +120,7 @@ var testCases = []opHandlerTestCase{
 		url:            "/api/operations/?format=csv",
 		body:           map[string]interface{}{},
 		expectedStatus: 400,
-		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockOperationsManager, pr *MockQueryReaderManager, fh *MockFileHandlingManager, op *MockIOperationsProcessesManager) {
+		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockOperationsManager, pr *MockQueryReaderManager, fh *MockFileHandlingManager, op *MockPipelineManager) {
 			queryParams := make(url.Values)
 			queryParams.Set("format", "csv")
 			f, _ := os.CreateTemp("", "_example_file")
@@ -146,7 +147,7 @@ var testCases = []opHandlerTestCase{
 		url:            "/api/operations/?format=csv",
 		body:           map[string]interface{}{},
 		expectedStatus: 400,
-		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockOperationsManager, pr *MockQueryReaderManager, fh *MockFileHandlingManager, op *MockIOperationsProcessesManager) {
+		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockOperationsManager, pr *MockQueryReaderManager, fh *MockFileHandlingManager, op *MockPipelineManager) {
 			queryParams := make(url.Values)
 			queryParams.Set("format", "csv")
 			f, _ := os.CreateTemp("", "_example_file")
@@ -182,7 +183,7 @@ var testCases = []opHandlerTestCase{
 		url:            "/api/operations/?format=csv",
 		body:           map[string]interface{}{},
 		expectedStatus: 400,
-		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockOperationsManager, pr *MockQueryReaderManager, fh *MockFileHandlingManager, op *MockIOperationsProcessesManager) {
+		mockData: func(ctx context.Context, ctrl *gomock.Controller, mock sqlmock.Sqlmock, opRepo *MockOperationsManager, pr *MockQueryReaderManager, fh *MockFileHandlingManager, op *MockPipelineManager) {
 			queryParams := make(url.Values)
 			queryParams.Set("format", "csv")
 			f, _ := os.CreateTemp("", "_example_file")
@@ -215,6 +216,7 @@ var testCases = []opHandlerTestCase{
 	},
 }
 
+// Test operations package endpoints
 func TestOperationsHandler(t *testing.T) {
 	for _, tc := range testCases {
 		testLabel := strings.Join([]string{"API", tc.method, tc.url, tc.name}, " ")
@@ -232,7 +234,7 @@ func TestOperationsHandler(t *testing.T) {
 			mockOpRepo := NewMockOperationsManager(ctrl)
 			mockParamsReader := NewMockQueryReaderManager(ctrl)
 			mockFileHandler := NewMockFileHandlingManager(ctrl)
-			mockProcessor := NewMockIOperationsProcessesManager(ctrl)
+			mockProcessor := NewMockPipelineManager(ctrl)
 
 			r := mux.NewRouter()
 
@@ -330,6 +332,7 @@ var benchmarks = []benchmarkTestCase{
 	},
 }
 
+// Benchmark /api/operations endpoint with different parameters
 func BenchmarkOperationsList(b *testing.B) {
 	ctx := context.Background()
 	ctrl := gomock.NewController(b)
@@ -341,7 +344,7 @@ func BenchmarkOperationsList(b *testing.B) {
 	mockOpRepo := NewMockOperationsManager(ctrl)
 	mockParamsReader := NewMockQueryReaderManager(ctrl)
 	mockFileHandler := NewMockFileHandlingManager(ctrl)
-	mockProcessor := NewMockIOperationsProcessesManager(ctrl)
+	mockProcessor := NewMockPipelineManager(ctrl)
 
 	r := mux.NewRouter()
 

@@ -121,6 +121,7 @@ func (fh FileHandler) CreateMarshaller(file *os.File, format string, csvWriter C
 	return fileHandler, nil
 }
 
+// GetFileMetadata retrieves file's metadata
 func (fh FileHandler) GetFileMetadata(file FileWithMetadata) (*Metadata, error) {
 	header := make([]byte, 512)
 	_, readErr := file.Read(header)

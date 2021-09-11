@@ -7,7 +7,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-//easyjson:json
+// WalletOperation represents storage for wallet's operatiosn info
 type WalletOperation struct {
 	ID         int             `json:"id"`
 	Operation  string          `json:"operation"`

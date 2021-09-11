@@ -7,14 +7,15 @@ import (
 	"sync"
 )
 
-// IOperationsProcessesManager defines operations for processing WalletOperation
-type IOperationsProcessesManager interface {
+// PipelineManager defines operations for processing WalletOperation
+type PipelineManager interface {
 	Process(ctx context.Context, or OperationsManager, listParams *ListParams, marshaller FileMarshallingManager) error
 }
 
-// OperationsProcessesManager represents IOperationsProcessesManager interface
+// OperationsProcessesManager represents PipelineManager interface
 type OperationsProcessesManager struct{}
 
+// Process runs pipeline through all the stages
 func (op OperationsProcessesManager) Process(ctx context.Context, or OperationsManager, listParams *ListParams, marshaller FileMarshallingManager) error {
 	var (
 		wg     = &sync.WaitGroup{}
@@ -144,6 +145,7 @@ func (wp WritePipe) Call(in, out chan interface{}) {
 	}
 }
 
+// MarshalledResult represents result of marshalling operation
 type MarshalledResult struct {
 	id   int
 	data interface{}

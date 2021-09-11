@@ -12,6 +12,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 )
 
+// FailedFileStore represents implementation of store interface with error methods
 type FailedFileStore struct {
 }
 
@@ -19,6 +20,7 @@ func (ffs FailedFileStore) Create(path string, flag int, perm os.FileMode) (*os.
 	return nil, fmt.Errorf("error file creation")
 }
 
+// Test success file creation (json format)
 func TestFileHandlerSuccessCreateFile(t *testing.T) {
 	fh := FileHandler{
 		fileStorage: FileStorage{},
@@ -31,6 +33,7 @@ func TestFileHandlerSuccessCreateFile(t *testing.T) {
 	}
 }
 
+// Test failed file creation (file store error)
 func TestFileHandlerFailedCreateFile(t *testing.T) {
 	fh := FileHandler{
 		fileStorage: FailedFileStore{},
@@ -43,6 +46,7 @@ func TestFileHandlerFailedCreateFile(t *testing.T) {
 	}
 }
 
+// Test success file creation (csv format)
 func TestFileHandlerSuccessCreateFileCSVFormat(t *testing.T) {
 	fh := FileHandler{
 		fileStorage: FileStorage{},
@@ -59,6 +63,7 @@ func TestFileHandlerSuccessCreateFileCSVFormat(t *testing.T) {
 	}
 }
 
+// Test success operation marshalling (csv format)
 func TestFileHandlerSuccessCreateMarshallerCSV(t *testing.T) {
 	fh := FileHandler{
 		fileStorage: FileStorage{},
@@ -71,6 +76,7 @@ func TestFileHandlerSuccessCreateMarshallerCSV(t *testing.T) {
 	}
 }
 
+// Test failed operation marshalling (csv format)
 func TestFileHandlerFailedCreateMarshallerCSV(t *testing.T) {
 	fh := FileHandler{
 		fileStorage: FileStorage{},
@@ -87,6 +93,7 @@ func TestFileHandlerFailedCreateMarshallerCSV(t *testing.T) {
 	}
 }
 
+// Test success operation marshalling (json format)
 func TestFileHandlerSuccessCreateMarshallerJSON(t *testing.T) {
 	fh := FileHandler{
 		fileStorage: FileStorage{},
@@ -99,6 +106,7 @@ func TestFileHandlerSuccessCreateMarshallerJSON(t *testing.T) {
 	}
 }
 
+// Test file handling constructor
 func TestNewFileHandlerFunction(t *testing.T) {
 	storage := FileStorage{}
 	handler := NewFileHandler(storage)

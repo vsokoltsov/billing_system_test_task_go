@@ -7,22 +7,26 @@ import (
 	"sync"
 )
 
+// FileMarshallingManager defines contracts for file marshalling
 type FileMarshallingManager interface {
 	MarshallOperation(operation *WalletOperation) (*MarshalledResult, error)
 	WriteToFile(mr *MarshalledResult) error
 }
 
+// FileMarshallingManager represents methods for csv writing
 type CSVWriter interface {
 	Write(record []string) error
 	Flush()
 }
 
+// JSONHandler implements FileMarshallingManager interface for json format
 type JSONHandler struct {
 	file     io.Writer
 	mu       *sync.Mutex
 	marshall func(v interface{}) ([]byte, error)
 }
 
+// MarshallOperation marshal WalletOperation instance to json
 func (jh *JSONHandler) MarshallOperation(operation *WalletOperation) (*MarshalledResult, error) {
 	jsonBytes, jsonMarshallErr := jh.marshall(operation)
 	if jsonMarshallErr != nil {
@@ -36,6 +40,7 @@ func (jh *JSONHandler) MarshallOperation(operation *WalletOperation) (*Marshalle
 	}, nil
 }
 
+// WriteToFile writes given marshall result to json file
 func (jh *JSONHandler) WriteToFile(mr *MarshalledResult) error {
 	var syncErr error
 	bytesData := mr.data.([]byte)
@@ -48,11 +53,13 @@ func (jh *JSONHandler) WriteToFile(mr *MarshalledResult) error {
 	return nil
 }
 
+// JSONHandler implements FileMarshallingManager interface for csv format
 type CSVHandler struct {
 	csvWriter CSVWriter
 	mu        *sync.Mutex
 }
 
+// MarshallOperation marshal WalletOperation instance to csv
 func (ch *CSVHandler) MarshallOperation(operation *WalletOperation) (*MarshalledResult, error) {
 	idStr := strconv.Itoa(operation.ID)
 	walletFromStr := strconv.Itoa(int(operation.WalletFrom.Int32))
@@ -73,6 +80,7 @@ func (ch *CSVHandler) MarshallOperation(operation *WalletOperation) (*Marshalled
 	}, nil
 }
 
+// WriteToFile writes given marshall result to csv file
 func (ch *CSVHandler) WriteToFile(mr *MarshalledResult) error {
 	row := mr.data.([]string)
 	ch.mu.Lock()

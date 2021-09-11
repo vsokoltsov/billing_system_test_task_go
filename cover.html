@@ -333,13 +333,13 @@ import (
 
 type OperationsHandler struct {
         or OperationsManager
-        op IOperationsProcessesManager
+        op PipelineManager
         pr QueryReaderManager
         fh FileHandlingManager
 }
 
 // NewOperationsHandler returns controller instance
-func NewOperationsHandler(or OperationsManager, pr QueryReaderManager, fh FileHandlingManager, op IOperationsProcessesManager) OperationsHandler <span class="cov8" title="1">{
+func NewOperationsHandler(or OperationsManager, pr QueryReaderManager, fh FileHandlingManager, op PipelineManager) OperationsHandler <span class="cov8" title="1">{
         return OperationsHandler{
                 or: or,
                 pr: pr,
@@ -424,12 +424,12 @@ import (
         "sync"
 )
 
-// IOperationsProcessesManager defines operations for processing WalletOperation
-type IOperationsProcessesManager interface {
+// PipelineManager defines operations for processing WalletOperation
+type PipelineManager interface {
         Process(ctx context.Context, or OperationsManager, listParams *ListParams, marshaller FileMarshallingManager) error
 }
 
-// OperationsProcessesManager represents IOperationsProcessesManager interface
+// OperationsProcessesManager represents PipelineManager interface
 type OperationsProcessesManager struct{}
 
 func (op OperationsProcessesManager) Process(ctx context.Context, or OperationsManager, listParams *ListParams, marshaller FileMarshallingManager) error <span class="cov8" title="1">{

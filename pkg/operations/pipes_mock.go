@@ -10,31 +10,31 @@ import (
 	reflect "reflect"
 )
 
-// MockIOperationsProcessesManager is a mock of IOperationsProcessesManager interface
-type MockIOperationsProcessesManager struct {
+// MockPipelineManager is a mock of PipelineManager interface
+type MockPipelineManager struct {
 	ctrl     *gomock.Controller
-	recorder *MockIOperationsProcessesManagerMockRecorder
+	recorder *MockPipelineManagerMockRecorder
 }
 
-// MockIOperationsProcessesManagerMockRecorder is the mock recorder for MockIOperationsProcessesManager
-type MockIOperationsProcessesManagerMockRecorder struct {
-	mock *MockIOperationsProcessesManager
+// MockPipelineManagerMockRecorder is the mock recorder for MockPipelineManager
+type MockPipelineManagerMockRecorder struct {
+	mock *MockPipelineManager
 }
 
-// NewMockIOperationsProcessesManager creates a new mock instance
-func NewMockIOperationsProcessesManager(ctrl *gomock.Controller) *MockIOperationsProcessesManager {
-	mock := &MockIOperationsProcessesManager{ctrl: ctrl}
-	mock.recorder = &MockIOperationsProcessesManagerMockRecorder{mock}
+// NewMockPipelineManager creates a new mock instance
+func NewMockPipelineManager(ctrl *gomock.Controller) *MockPipelineManager {
+	mock := &MockPipelineManager{ctrl: ctrl}
+	mock.recorder = &MockPipelineManagerMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockIOperationsProcessesManager) EXPECT() *MockIOperationsProcessesManagerMockRecorder {
+func (m *MockPipelineManager) EXPECT() *MockPipelineManagerMockRecorder {
 	return m.recorder
 }
 
 // Process mocks base method
-func (m *MockIOperationsProcessesManager) Process(ctx context.Context, or OperationsManager, listParams *ListParams, marshaller FileMarshallingManager) error {
+func (m *MockPipelineManager) Process(ctx context.Context, or OperationsManager, listParams *ListParams, marshaller FileMarshallingManager) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Process", ctx, or, listParams, marshaller)
 	ret0, _ := ret[0].(error)
@@ -42,7 +42,7 @@ func (m *MockIOperationsProcessesManager) Process(ctx context.Context, or Operat
 }
 
 // Process indicates an expected call of Process
-func (mr *MockIOperationsProcessesManagerMockRecorder) Process(ctx, or, listParams, marshaller interface{}) *gomock.Call {
+func (mr *MockPipelineManagerMockRecorder) Process(ctx, or, listParams, marshaller interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Process", reflect.TypeOf((*MockIOperationsProcessesManager)(nil).Process), ctx, or, listParams, marshaller)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Process", reflect.TypeOf((*MockPipelineManager)(nil).Process), ctx, or, listParams, marshaller)
 }

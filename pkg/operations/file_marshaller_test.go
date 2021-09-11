@@ -13,6 +13,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// Test success marshalling (json format)
 func TestJSONHandlerFileMarshallerSuccessMarshallOperation(t *testing.T) {
 	mu := &sync.Mutex{}
 	operation := &WalletOperation{
@@ -29,6 +30,7 @@ func TestJSONHandlerFileMarshallerSuccessMarshallOperation(t *testing.T) {
 	}
 }
 
+// Test failed marshalling for json format (marshall error)
 func TestJSONHandlerFileMarshallerFailedMarshallOperation(t *testing.T) {
 
 	mu := &sync.Mutex{}
@@ -48,6 +50,7 @@ func TestJSONHandlerFileMarshallerFailedMarshallOperation(t *testing.T) {
 	}
 }
 
+// Test success write to file for json format
 func TestJSONHandlerFileMarshallerSuccessWriteFile(t *testing.T) {
 	mu := &sync.Mutex{}
 	operation := &WalletOperation{
@@ -66,20 +69,25 @@ func TestJSONHandlerFileMarshallerSuccessWriteFile(t *testing.T) {
 	}
 }
 
+// ErrorFile implements Writer interface
 type ErrorFile struct{}
 
+// ErrorFile implements CSVWriter interface
 type ErrorCSVFile struct{}
 
+// Write represents failed writing for ErrorFile struct
 func (ef ErrorFile) Write(p []byte) (int, error) {
 	return 0, fmt.Errorf("Error of file writing")
 }
 
+// Write represents failed writing for ErrorCSVFile struct
 func (ecf ErrorCSVFile) Write(record []string) error {
 	return fmt.Errorf("Error of file writing")
 }
 
 func (ecf ErrorCSVFile) Flush() {}
 
+// Test failed json marshalling for json format
 func TestJSONHandlerFileMarshallFailedWriteFile(t *testing.T) {
 
 	mu := &sync.Mutex{}
@@ -98,6 +106,7 @@ func TestJSONHandlerFileMarshallFailedWriteFile(t *testing.T) {
 	}
 }
 
+// Test success file marshalling for csv format
 func TestCSVHandlerFileMarshallSuccessMarshallOperation(t *testing.T) {
 	mu := &sync.Mutex{}
 	operation := &WalletOperation{
@@ -122,7 +131,8 @@ func TestCSVHandlerFileMarshallSuccessMarshallOperation(t *testing.T) {
 	}
 }
 
-func TestCSVHandlerFileMarshallSuccessWriteFile(t *testing.T) {
+// Test failed file write for csv format (write error)
+func TestCSVHandlerFileMarshallFailedWriteFile(t *testing.T) {
 	mu := &sync.Mutex{}
 	operation := &WalletOperation{
 		ID:         1,
@@ -144,7 +154,8 @@ func TestCSVHandlerFileMarshallSuccessWriteFile(t *testing.T) {
 	}
 }
 
-func TestCSVHandlerFileMarshallSuccessWroteFile(t *testing.T) {
+// Test success file writing for csv format
+func TestCSVHandlerFileMarshallSuccessWriteFile(t *testing.T) {
 	mu := &sync.Mutex{}
 	operation := &WalletOperation{
 		ID:         1,
@@ -166,6 +177,7 @@ func TestCSVHandlerFileMarshallSuccessWroteFile(t *testing.T) {
 	}
 }
 
+// Benchmark json marshalling
 func BenchmarkMarshallOperationJSON(b *testing.B) {
 	wo := &WalletOperation{
 		ID:         1,
@@ -187,6 +199,7 @@ func BenchmarkMarshallOperationJSON(b *testing.B) {
 	}
 }
 
+// Benchmark csv marshalling
 func BenchmarkMarshallOperationCSV(b *testing.B) {
 	mu := &sync.Mutex{}
 	operation := &WalletOperation{
@@ -208,6 +221,7 @@ func BenchmarkMarshallOperationCSV(b *testing.B) {
 	}
 }
 
+// Benchmark json write to file
 func BenchmarkWriteToFileJSON(b *testing.B) {
 	wo := &WalletOperation{
 		ID:         1,
@@ -229,6 +243,7 @@ func BenchmarkWriteToFileJSON(b *testing.B) {
 	}
 }
 
+// Benchmark csv write to file
 func BenchmarkWriteToFileCSV(b *testing.B) {
 	mu := &sync.Mutex{}
 	wo := &WalletOperation{

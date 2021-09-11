@@ -7,15 +7,16 @@ import (
 	"os"
 )
 
+// OperationsHandler represents handler structure for the operatons
 type OperationsHandler struct {
 	or OperationsManager
-	op IOperationsProcessesManager
+	op PipelineManager
 	pr QueryReaderManager
 	fh FileHandlingManager
 }
 
 // NewOperationsHandler returns controller instance
-func NewOperationsHandler(or OperationsManager, pr QueryReaderManager, fh FileHandlingManager, op IOperationsProcessesManager) OperationsHandler {
+func NewOperationsHandler(or OperationsManager, pr QueryReaderManager, fh FileHandlingManager, op PipelineManager) OperationsHandler {
 	return OperationsHandler{
 		or: or,
 		pr: pr,

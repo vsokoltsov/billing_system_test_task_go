@@ -6,6 +6,7 @@ import (
 	"testing"
 )
 
+// Test success query params parsing
 func TestSuccessQueryParamsParser(t *testing.T) {
 	params := make(url.Values)
 	params.Set("format", "json")
@@ -34,6 +35,7 @@ func TestSuccessQueryParamsParser(t *testing.T) {
 	}
 }
 
+// Test success query params parsing with empty format
 func TestSuccessQueryParamsParserEmptyFormat(t *testing.T) {
 	params := make(url.Values)
 	params.Set("page", "1")
@@ -56,7 +58,8 @@ func TestSuccessQueryParamsParserEmptyFormat(t *testing.T) {
 	}
 }
 
-func TestSuccessQueryParamsParserWrongPageFormat(t *testing.T) {
+// Test failed query params parsing with wrong page type
+func TestFailedQueryParamsParserWrongPageFormat(t *testing.T) {
 	params := make(url.Values)
 	params.Set("page", "awdaw")
 	params.Set("per_page", "10")
@@ -71,7 +74,8 @@ func TestSuccessQueryParamsParserWrongPageFormat(t *testing.T) {
 	}
 }
 
-func TestSuccessQueryParamsParserWrongPerPageFormat(t *testing.T) {
+// Test failed query params parsing with wrong per_page type
+func TestFailedQueryParamsParserWrongPerPageFormat(t *testing.T) {
 	params := make(url.Values)
 	params.Set("page", "1")
 	params.Set("per_page", "awdaw")
@@ -86,6 +90,7 @@ func TestSuccessQueryParamsParserWrongPerPageFormat(t *testing.T) {
 	}
 }
 
+// Benchmark parameters parsing
 func BenchmarkParse(b *testing.B) {
 	params := make(url.Values)
 	params.Set("format", "json")
