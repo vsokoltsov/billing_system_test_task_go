@@ -16,6 +16,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// App represents base application info
 type App struct {
 	host          string
 	port          string
@@ -26,6 +27,7 @@ type App struct {
 	wait          time.Duration
 }
 
+// App populates struct parameters with data
 func (a *App) Initialize(env, host, port, pathDelimiter, dbProvider, sqlDbConnStr string) {
 	var (
 		sqlDB        *sql.DB
@@ -58,6 +60,7 @@ func (a *App) Initialize(env, host, port, pathDelimiter, dbProvider, sqlDbConnSt
 	}
 }
 
+// Run starts application (with gracefull shutdown)
 func (a *App) Run() {
 	log.Printf("Starting web server on port %s...", a.port)
 	go func() {
