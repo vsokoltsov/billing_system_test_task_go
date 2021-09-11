@@ -18,6 +18,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// walletHandlerTestCase stores data for wallet handler tests
 type walletHandlerTestCase struct {
 	name           string
 	method         string
@@ -109,6 +110,7 @@ var testCases = []walletHandlerTestCase{
 	},
 }
 
+// Test wallets handlers
 func TestWalletHandlers(t *testing.T) {
 	for _, tc := range testCases {
 		testLabel := strings.Join([]string{"API", tc.method, tc.url, tc.name}, " ")
@@ -165,6 +167,7 @@ var benchmarks = []walletHandlerTestCase{
 	transfer,
 }
 
+// Benchmarks wallets handlers
 func BenchmarkWalletsHandler(b *testing.B) {
 	for _, tc := range benchmarks {
 		testLabel := strings.Join([]string{"API", tc.method, tc.url, tc.name}, " ")

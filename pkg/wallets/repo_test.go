@@ -13,6 +13,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// walletRepoTestCase represents data for wallet repository test cases
 type walletRepoTestCase struct {
 	name                string
 	queryMock           sqlQueryMock
@@ -653,6 +654,7 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 	},
 }
 
+// Tests wallets repository
 func TestWalletRepo(t *testing.T) {
 	for _, tc := range WalletsRepoTestCase {
 		testLabel := strings.Join([]string{"Repo", "Wallet", tc.name}, " ")
@@ -729,6 +731,7 @@ func TestWalletRepo(t *testing.T) {
 	}
 }
 
+// Tests wallets repository constructor
 func TestNewWalletService(t *testing.T) {
 	db, _, _ := sqlmock.New()
 	walletOperation := operations.NewWalletOperationRepo(db)
@@ -739,6 +742,7 @@ func TestNewWalletService(t *testing.T) {
 	}
 }
 
+// Tests repository Create action
 func BenchmarkCreate(b *testing.B) {
 	sqlDB, mock, err := sqlmock.New()
 	if err != nil {
@@ -778,6 +782,7 @@ func BenchmarkCreate(b *testing.B) {
 	}
 }
 
+// Tests repository Enroll action
 func BenchmarkEnroll(b *testing.B) {
 	sqlDB, mock, err := sqlmock.New()
 	if err != nil {
@@ -820,6 +825,7 @@ func BenchmarkEnroll(b *testing.B) {
 	}
 }
 
+// Tests repository GetByUserID action
 func BenchmarkGetByUserID(b *testing.B) {
 	sqlDB, mock, err := sqlmock.New()
 	if err != nil {
@@ -844,6 +850,7 @@ func BenchmarkGetByUserID(b *testing.B) {
 	}
 }
 
+// Tests repository GetByID action
 func BenchmarkGetByID(b *testing.B) {
 	sqlDB, mock, err := sqlmock.New()
 	if err != nil {
@@ -868,6 +875,7 @@ func BenchmarkGetByID(b *testing.B) {
 	}
 }
 
+// Tests repository Transfer action
 func BenchmarkTransfer(b *testing.B) {
 	sqlDB, mock, err := sqlmock.New()
 	if err != nil {
