@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// UsersHandler stores attributes for handler
 type UsersHandler struct {
 	UsersRepo   UsersManager
 	WalletsRepo wallets.WalletsManager

@@ -23,6 +23,7 @@ func (s2 Step2) Call(in, out chan interface{}) {
 	}
 }
 
+// Test pipeline running
 func TestPipeline(t *testing.T) {
 	pipeline := []Pipe{
 		Step1{},

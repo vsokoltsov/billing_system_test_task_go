@@ -19,6 +19,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// userHandlerTestCase store test cases information
 type userHandlerTestCase struct {
 	name           string
 	method         string
@@ -326,6 +327,7 @@ var testCases = []userHandlerTestCase{
 	},
 }
 
+// Tests users' handlers
 func TestUsersHandlers(t *testing.T) {
 	for _, tc := range testCases {
 		testLabel := strings.Join([]string{"API", tc.method, tc.url, tc.name}, " ")
@@ -391,6 +393,7 @@ var benchmarks = []userHandlerTestCase{
 	enroll,
 }
 
+// Benchmark users' handlers
 func BenchmarkUsers(b *testing.B) {
 	for _, tc := range benchmarks {
 		testLabel := strings.Join([]string{"API", tc.method, tc.url, tc.name}, " ")

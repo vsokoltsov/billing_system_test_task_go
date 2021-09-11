@@ -15,6 +15,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// userRepoTestCase saves information about user repo tests
 type userRepoTestCase struct {
 	name                string
 	args                []driver.Value
@@ -456,6 +457,7 @@ var UserRepoTestCases = []userRepoTestCase{
 	},
 }
 
+// Test user repository
 func TestUsersRepo(t *testing.T) {
 	for _, tc := range UserRepoTestCases {
 		testLabel := strings.Join([]string{"Repo", "User", tc.name}, " ")
@@ -524,6 +526,7 @@ func TestUsersRepo(t *testing.T) {
 	}
 }
 
+// Test user repository constructur
 func TestNewUserService(t *testing.T) {
 	db, _, _ := sqlmock.New()
 	walletOperation := operations.NewWalletOperationRepo(db)
@@ -535,6 +538,7 @@ func TestNewUserService(t *testing.T) {
 	}
 }
 
+// Benchmarks repository's GetById operation
 func BenchmarkGetById(b *testing.B) {
 	ctrl := gomock.NewController(b)
 	defer ctrl.Finish()
@@ -562,6 +566,7 @@ func BenchmarkGetById(b *testing.B) {
 	}
 }
 
+// Benchmarks repository's GetByWalletID operation
 func BenchmarkGetByWalletID(b *testing.B) {
 	ctrl := gomock.NewController(b)
 	defer ctrl.Finish()
@@ -587,6 +592,7 @@ func BenchmarkGetByWalletID(b *testing.B) {
 	}
 }
 
+// Benchmarks repository's Create operation
 func BenchmarkCreate(b *testing.B) {
 	sqlDB, mock, err := sqlmock.New()
 	if err != nil {
