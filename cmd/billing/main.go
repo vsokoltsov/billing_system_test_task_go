@@ -2,13 +2,10 @@ package main
 
 import (
 	"billing_system_test_task/pkg/app"
-	"fmt"
+	"billing_system_test_task/pkg/entities"
 	"log"
 	"os"
-	"path"
 	"strings"
-
-	"github.com/joho/godotenv"
 )
 
 func getEnv(key, def string) string {
@@ -43,31 +40,38 @@ func getProjectPath(delimeter string) string {
 }
 
 func main() {
-	pathDelimiter := getEnv("PATH_SEPARATOR", "cmd")
-	projectPath := getProjectPath(pathDelimiter)
+	// pathDelimiter := getEnv("PATH_SEPARATOR", "cmd")
+	// projectPath := getProjectPath(pathDelimiter)
+	// projectDirectory, directoryErr := os.Getwd()
 
-	err := godotenv.Load(path.Join(projectPath, ".env"))
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	// if directoryErr != nil {
+	// 	log.Fatalf("Could not locate current directory: %s", directoryErr)
+	// }
 
-	var (
-		env           = getEnv("APP_ENV", "development")
-		host          = getEnv("APP_HOST", "app")
-		port          = getEnv("APP_PORT", "8000")
-		sqlDbUser     = getEnv("DB_USER", "user")
-		sqlDbPassword = getEnv("DB_PASSWORD", "password")
-		sqlDbHost     = getEnv("DB_HOST", "postgres")
-		sqlDbPort     = getEnv("DB_PORT", "3306")
-		sqlDbName     = getEnv("POSTGRES_DB", "billing")
-		dbProvider    = getEnv("DB_PROVIDER", "postgres")
-	)
+	// err := godotenv.Load(path.Join(projectPath, ".env"))
+	// if err != nil {
+	// 	log.Fatal("Error loading .env file")
+	// }
 
-	dbConnString := fmt.Sprintf("port=%s host=%s user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		sqlDbPort, sqlDbHost, sqlDbUser, sqlDbPassword, sqlDbName)
+	// var (
+	// 	env           = getEnv("APP_ENV", "development")
+	// 	host          = getEnv("APP_HOST", "app")
+	// 	port          = getEnv("APP_PORT", "8000")
+	// 	sqlDbUser     = getEnv("DB_USER", "user")
+	// 	sqlDbPassword = getEnv("DB_PASSWORD", "password")
+	// 	sqlDbHost     = getEnv("DB_HOST", "postgres")
+	// 	sqlDbPort     = getEnv("DB_PORT", "3306")
+	// 	sqlDbName     = getEnv("POSTGRES_DB", "billing")
+	// 	dbProvider    = getEnv("DB_PROVIDER", "postgres")
+	// )
 
-	app := app.App{}
-	app.Initialize(env, host, port, pathDelimiter, dbProvider, dbConnString)
+	// dbConnString := fmt.Sprintf("port=%s host=%s user=%s "+
+	// 	"password=%s dbname=%s sslmode=disable",
+	// 	sqlDbPort, sqlDbHost, sqlDbUser, sqlDbPassword, sqlDbName)
+
+	config := entities.NewEnvConfig()
+	config.LoadEnvVariables("cmd")
+	app := app.NewApp(config)
+	app.Initialize()
 	app.Run()
 }

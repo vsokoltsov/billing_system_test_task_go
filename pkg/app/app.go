@@ -2,6 +2,7 @@ package app
 
 import (
 	"billing_system_test_task/pkg/api"
+	"billing_system_test_task/pkg/entities"
 	"context"
 	"database/sql"
 	"log"
@@ -16,31 +17,44 @@ import (
 	_ "github.com/lib/pq"
 )
 
+type AppAdapter interface {
+	Initialize()
+	Run()
+}
+
 // App represents base application info
 type App struct {
+	config        entities.ConfigAdapter
 	host          string
 	port          string
-	env           string
 	pathDelimiter string
 	router        *mux.Router
 	server        *http.Server
 	wait          time.Duration
 }
 
+func NewApp(config entities.ConfigAdapter) AppAdapter {
+	return App{
+		config: config,
+	}
+}
+
 // App populates struct parameters with data
-func (a *App) Initialize(env, host, port, pathDelimiter, dbProvider, sqlDbConnStr string) {
+func (a App) Initialize() {
 	var (
 		sqlDB        *sql.DB
 		sqlDbOpenErr error
 	)
 
-	a.env = env
-	a.host = host
-	a.port = port
-	a.pathDelimiter = pathDelimiter
+	a.host = a.config.GetAppHost()
+	a.port = a.config.GetAppPort()
+	a.pathDelimiter = a.config.GetPathDelimiter()
 	a.wait = time.Second * 5
 
-	sqlDB, sqlDbOpenErr = sql.Open(dbProvider, sqlDbConnStr)
+	dbProvider := a.config.GetDBProvider()
+	dbConnString := a.config.GetDBConnectionString()
+
+	sqlDB, sqlDbOpenErr = sql.Open(dbProvider, dbConnString)
 	if sqlDbOpenErr != nil {
 		log.Fatalf("Error sql database open: %s", sqlDbOpenErr)
 		return
@@ -49,7 +63,7 @@ func (a *App) Initialize(env, host, port, pathDelimiter, dbProvider, sqlDbConnSt
 		log.Fatalf("Error sql database connection: %s", pingErr)
 	}
 
-	a.router = api.SetUpRoutes(pathDelimiter, sqlDB)
+	a.router = api.SetUpRoutes(a.pathDelimiter, sqlDB)
 
 	url := strings.Join([]string{a.host, a.port}, ":")
 	a.server = &http.Server{
@@ -61,7 +75,7 @@ func (a *App) Initialize(env, host, port, pathDelimiter, dbProvider, sqlDbConnSt
 }
 
 // Run starts application (with gracefull shutdown)
-func (a *App) Run() {
+func (a App) Run() {
 	log.Printf("Starting web server on port %s...", a.port)
 	go func() {
 		if err := a.server.ListenAndServe(); err != nil {
