@@ -1,8 +1,6 @@
-package wallets
+package entities
 
-import (
-	"github.com/shopspring/decimal"
-)
+import "github.com/shopspring/decimal"
 
 // Wallet represents internal information about users' wallet structure
 type Wallet struct {
