@@ -1,4 +1,4 @@
-package wallets
+package forms
 
 import (
 	"billing_system_test_task/pkg/utils"
