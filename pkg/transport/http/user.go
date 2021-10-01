@@ -1,8 +1,11 @@
-package users
+package http
 
 import (
+	"billing_system_test_task/pkg/entities"
+	"billing_system_test_task/pkg/repositories"
+	"billing_system_test_task/pkg/transport/http/forms"
+	"billing_system_test_task/pkg/transport/http/serializers"
 	"billing_system_test_task/pkg/utils"
-	"billing_system_test_task/pkg/wallets"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -15,8 +18,8 @@ import (
 
 // UsersHandler stores attributes for handler
 type UsersHandler struct {
-	UsersRepo   UsersManager
-	WalletsRepo wallets.WalletsManager
+	UsersRepo   repositories.UsersManager
+	WalletsRepo repositories.WalletsManager
 }
 
 // Create godoc
@@ -32,7 +35,7 @@ type UsersHandler struct {
 // @Router /api/users/ [post]
 func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var (
-		userForm UserForm
+		userForm forms.UserForm
 		ctx      = context.Background()
 	)
 	decoder := json.NewDecoder(r.Body)
@@ -64,7 +67,7 @@ func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(UserSerializer{
+	_ = json.NewEncoder(w).Encode(serializers.UserSerializer{
 		ID:       user.ID,
 		Email:    user.Email,
 		Balance:  user.Wallet.Balance,
@@ -85,9 +88,9 @@ func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Router /api/users/{id}/enroll/ [post]
 func (uh *UsersHandler) Enroll(w http.ResponseWriter, r *http.Request) {
 	var (
-		enrollForm EnrollForm
+		enrollForm forms.EnrollForm
 		ctx        = context.Background()
-		user       *User
+		user       *entities.User
 		userGetErr error
 	)
 
@@ -140,7 +143,7 @@ func (uh *UsersHandler) Enroll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(UserSerializer{
+	_ = json.NewEncoder(w).Encode(serializers.UserSerializer{
 		ID:       user.ID,
 		Email:    user.Email,
 		Balance:  user.Wallet.Balance,
