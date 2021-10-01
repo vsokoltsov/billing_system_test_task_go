@@ -1,6 +1,6 @@
-package wallets
+package serializers
 
 // walletSerializer serializes data to json
-type walletSerializer struct {
+type WalletSerializer struct {
 	WalletFrom int `json:"wallet_from"`
 }

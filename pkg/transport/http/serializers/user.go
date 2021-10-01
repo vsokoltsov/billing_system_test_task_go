@@ -1,4 +1,4 @@
-package users
+package serializers
 
 import "github.com/shopspring/decimal"
 
