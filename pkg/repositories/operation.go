@@ -1,4 +1,4 @@
-package operations
+package repositories
 
 import (
 	"context"
@@ -25,9 +25,9 @@ type WalletOperationService struct {
 }
 
 type ListParams struct {
-	page    int
-	perPage int
-	date    string
+	Page    int
+	PerPage int
+	Date    string
 }
 
 func NewWalletOperationRepo(db *sql.DB) OperationsManager {
@@ -72,19 +72,19 @@ func (wor WalletOperationService) List(ctx context.Context, params *ListParams) 
 	query := "select id, operation, wallet_from, wallet_to, amount, created_at from wallet_operations"
 	if params != nil {
 		args := []interface{}{}
-		page := params.page
+		page := params.Page
 		if page == 1 {
 			page = 0
 		} else {
 			page -= 1
 		}
 
-		if params.date != "" {
+		if params.Date != "" {
 			query += " where created_at = to_date($1, 'YYYY-MM-DD') "
-			args = append(args, params.date)
+			args = append(args, params.Date)
 		}
 
-		if params.perPage != 0 {
+		if params.PerPage != 0 {
 			var (
 				pageIdx    int
 				perPageIdx int
@@ -99,8 +99,8 @@ func (wor WalletOperationService) List(ctx context.Context, params *ListParams) 
 				perPageIdx = pageIdx + 1
 			}
 			query += fmt.Sprintf(" offset $%d limit $%d", pageIdx, perPageIdx)
-			args = append(args, page*params.perPage)
-			args = append(args, params.perPage)
+			args = append(args, page*params.PerPage)
+			args = append(args, params.PerPage)
 		}
 		fmt.Println(query)
 		return wor.db.QueryContext(
