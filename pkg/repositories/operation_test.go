@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"billing_system_test_task/pkg/adapters/tx"
 	"billing_system_test_task/pkg/entities"
 	"context"
 	"database/sql"
@@ -305,11 +306,25 @@ func TestOperationsRepo(t *testing.T) {
 	}
 }
 
+// Test operation service constructor with transaction
+func TestWithTransactionWalletOperationService(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	mock.ExpectBegin()
+	txManager := tx.NewTxBeginner(db)
+	localTx, _ := txManager.BeginTrx(context.Background(), nil)
+	repo := NewWalletOperationRepo(db)
+	repoWithTx := repo.WithTx(localTx)
+	_, correctType := repoWithTx.(*WalletOperationService)
+	if !correctType {
+		t.Errorf("Wrong type of WalletOperationService")
+	}
+}
+
 // Test service constructor
 func TestNewWalletOperationService(t *testing.T) {
 	db, _, _ := sqlmock.New()
 	walletOperation := NewWalletOperationRepo(db)
-	_, correctType := walletOperation.(WalletOperationService)
+	_, correctType := walletOperation.(*WalletOperationService)
 	if !correctType {
 		t.Errorf("Wrong type of WalletOperationService")
 	}

@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"billing_system_test_task/pkg/adapters/tx"
 	"context"
 	"database/sql"
 	"fmt"
@@ -16,12 +17,13 @@ const (
 )
 
 type OperationsManager interface {
+	WithTx(t tx.Tx) OperationsManager
 	Create(ctx context.Context, tx *sql.Tx, operation string, walletFrom, walletTo int, amount decimal.Decimal) (int, error)
 	List(ctx context.Context, params *ListParams) (*sql.Rows, error)
 }
 
 type WalletOperationService struct {
-	db *sql.DB
+	db tx.SQLQueryAdapter
 }
 
 type ListParams struct {
@@ -30,10 +32,14 @@ type ListParams struct {
 	Date    string
 }
 
-func NewWalletOperationRepo(db *sql.DB) OperationsManager {
-	return WalletOperationService{
+func NewWalletOperationRepo(db tx.SQLQueryAdapter) OperationsManager {
+	return &WalletOperationService{
 		db: db,
 	}
+}
+
+func (wor WalletOperationService) WithTx(t tx.Tx) OperationsManager {
+	return NewWalletOperationRepo(t.(tx.SQLQueryAdapter))
 }
 
 func (wor WalletOperationService) Create(ctx context.Context, tx *sql.Tx, operation string, walletFrom, walletTo int, amount decimal.Decimal) (int, error) {
