@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"billing_system_test_task/pkg/adapters"
 	"billing_system_test_task/pkg/adapters/tx"
 	"billing_system_test_task/pkg/entities"
 	"context"
@@ -22,19 +21,20 @@ type UsersManager interface {
 
 // UsersService implements SQLRepository
 type UsersService struct {
-	db adapters.SQLAdapter
+	db tx.SQLQueryAdapter
+	// db *sql.DB
 	// walletsRepo wallets.WalletsManager
 }
 
 // NewUsersService returns instance of UserService
-func NewUsersService(db adapters.SQLAdapter) UsersManager {
+func NewUsersService(db tx.SQLQueryAdapter) UsersManager {
 	return &UsersService{
 		db: db,
 	}
 }
 
 func (us *UsersService) WithTx(t tx.Tx) UsersManager {
-	return NewUsersService(t.(adapters.SQLAdapter))
+	return NewUsersService(t.(tx.SQLQueryAdapter))
 }
 
 // GetByID receives user information by id

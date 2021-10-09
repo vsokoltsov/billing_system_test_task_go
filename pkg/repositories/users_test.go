@@ -1,8 +1,8 @@
 package repositories
 
 import (
+	"billing_system_test_task/pkg/adapters/tx"
 	"billing_system_test_task/pkg/entities"
-	"billing_system_test_task/pkg/operations"
 	"context"
 	"database/sql/driver"
 	"fmt"
@@ -34,43 +34,11 @@ var UserRepoTestCases = []userRepoTestCase{
 			userRows := sqlmock.NewRows([]string{"id"})
 			userRows = userRows.AddRow(1)
 
-			walletRows := sqlmock.NewRows([]string{"id"})
-			walletRows = walletRows.AddRow(1)
-
-			// Lock operation
-			// mock.
-			// 	ExpectExec("select pg_advisory_lock").
-			// 	WithArgs(CreateUser).
-			// 	WillReturnResult(sqlmock.NewResult(2, 2))
-
-			// Start users create transaction
-			// mock.ExpectBegin()
-
 			// Exec insert users query
 			mock.
 				ExpectQuery("insert into users").
 				WithArgs([]driver.Value{"example@mail.com"}...).
 				WillReturnRows(userRows)
-
-			// Exec insert wallets query
-			// mock.
-			// 	ExpectQuery("insert into wallets").
-			// 	WithArgs([]driver.Value{int64(1)}...).
-			// 	WillReturnRows(walletRows)
-
-			// mock.
-			// 	ExpectQuery("insert into wallet_operations").
-			// 	WithArgs([]driver.Value{operations.Create, nil, 1, decimal.NewFromInt(0)}...).
-			// 	WillReturnRows(walletRows)
-
-			// Commit users create transaction
-			// mock.ExpectCommit()
-
-			// Unlock operation
-			// mock.
-			// 	ExpectExec("select pg_advisory_unlock").
-			// 	WithArgs(CreateUser).
-			// 	WillReturnResult(sqlmock.NewResult(2, 2))
 		},
 		expectedResultMatch: func(actual interface{}) bool {
 			return actual.(int64) == int64(1)
@@ -81,229 +49,14 @@ var UserRepoTestCases = []userRepoTestCase{
 		funcName: "Create",
 		args:     []driver.Value{"example@mail.com"},
 		mockQuery: func(mock sqlmock.Sqlmock) {
-			// Lock operation
-			// mock.
-			// 	ExpectExec("select pg_advisory_lock").
-			// 	WithArgs(CreateUser).
-			// 	WillReturnResult(sqlmock.NewResult(2, 2))
-
-			// Start users create transaction
-			// mock.ExpectBegin()
-
 			// Exec insert users query with error
 			mock.
 				ExpectExec("insert into users").
 				WithArgs([]driver.Value{"example@mail.com"}...).
 				WillReturnError(fmt.Errorf("insert error"))
-
-			// Rollback transaction
-			// mock.ExpectRollback()
-
-			// Unlock operation
-			// mock.
-			// 	ExpectExec("select pg_advisory_unlock").
-			// 	WithArgs(CreateUser).
-			// 	WillReturnResult(sqlmock.NewResult(2, 2))
 		},
 		err: fmt.Errorf("Insert error"),
 	},
-	// userRepoTestCase{
-	// 	name:     "Failed user creation (advisory lock error)",
-	// 	funcName: "Create",
-	// 	args:     []driver.Value{"example@mail.com"},
-	// 	mockQuery: func(mock sqlmock.Sqlmock) {
-	// 		// Lock operation
-	// 		mock.
-	// 			ExpectExec("select pg_advisory_lock").
-	// 			WithArgs(CreateUser).
-	// 			WillReturnError(fmt.Errorf("Insert error (advisory_lock)"))
-	// 	},
-	// 	err: fmt.Errorf("Insert error (advisory_lock)"),
-	// },
-	// userRepoTestCase{
-	// 	name:     "Failed user creation (begin transaction error)",
-	// 	funcName: "Create",
-	// 	args:     []driver.Value{"example@mail.com"},
-	// 	mockQuery: func(mock sqlmock.Sqlmock) {
-	// 		// Lock operation
-	// 		mock.
-	// 			ExpectExec("select pg_advisory_lock").
-	// 			WithArgs(CreateUser).
-	// 			WillReturnResult(sqlmock.NewResult(2, 2))
-
-	// 		// Begin users transaction with error
-	// 		mock.ExpectBegin().WillReturnError(fmt.Errorf("Errof of transaction start"))
-	// 	},
-	// 	err: fmt.Errorf("Insert error (begin transaction error)"),
-	// },
-	// userRepoTestCase{
-	// 	name:     "Failed user creation (wallets transaction commit error)",
-	// 	funcName: "Create",
-	// 	args:     []driver.Value{"example@mail.com"},
-	// 	mockQuery: func(mock sqlmock.Sqlmock) {
-	// 		mock.
-	// 			ExpectExec("select pg_advisory_lock").
-	// 			WithArgs(CreateUser).
-	// 			WillReturnResult(sqlmock.NewResult(2, 2))
-
-	// 		// Start users create transaction
-	// 		mock.ExpectBegin()
-
-	// 		// Exec insert users query
-	// 		mock.
-	// 			ExpectExec("insert into users").
-	// 			WithArgs([]driver.Value{"example@mail.com"}...).
-	// 			WillReturnResult(sqlmock.NewResult(1, 1))
-
-	// 		// Start wallets create transaction
-	// 		mock.ExpectBegin()
-
-	// 		// Exec insert wallets query
-	// 		mock.
-	// 			ExpectExec("insert into wallets").
-	// 			WithArgs([]driver.Value{1}...).
-	// 			WillReturnResult(sqlmock.NewResult(1, 2))
-
-	// 		// Commit wallets create transaction
-	// 		mock.ExpectCommit().WillReturnError(fmt.Errorf("Transaction commit error"))
-	// 		// Commit users create transaction with error
-	// 		mock.ExpectRollback()
-	// 		// Unlock operation
-	// 		mock.
-	// 			ExpectExec("select pg_advisory_unlock").
-	// 			WithArgs(CreateUser).
-	// 			WillReturnResult(sqlmock.NewResult(2, 2))
-	// 	},
-	// 	err: fmt.Errorf("Insert error (wallet transaction error)"),
-	// },
-	// userRepoTestCase{
-	// 	name:     "Failed user creation (wallet repo create error)",
-	// 	funcName: "Create",
-	// 	args:     []driver.Value{"example@mail.com"},
-	// 	mockQuery: func(mock sqlmock.Sqlmock) {
-	// 		userRows := sqlmock.NewRows([]string{"id"})
-	// 		userRows = userRows.AddRow(1)
-
-	// 		// Lock operation
-	// 		mock.
-	// 			ExpectExec("select pg_advisory_lock").
-	// 			WithArgs(CreateUser).
-	// 			WillReturnResult(sqlmock.NewResult(2, 2))
-
-	// 		// Start users create transaction
-	// 		mock.ExpectBegin()
-
-	// 		// Exec insert users query
-	// 		mock.
-	// 			ExpectQuery("insert into users").
-	// 			WithArgs([]driver.Value{"example@mail.com"}...).
-	// 			WillReturnRows(userRows)
-
-	// 		// Exec insert wallets query
-	// 		mock.
-	// 			ExpectQuery("insert into wallets").
-	// 			WithArgs([]driver.Value{int64(1)}...).
-	// 			WillReturnError(fmt.Errorf("User wallet creation error"))
-
-	// 		// Commit users create transaction with error
-	// 		mock.ExpectRollback()
-
-	// 		// Unlock operation
-	// 		mock.
-	// 			ExpectExec("select pg_advisory_unlock").
-	// 			WithArgs(CreateUser).
-	// 			WillReturnResult(sqlmock.NewResult(2, 2))
-	// 	},
-	// 	err: fmt.Errorf("User wallet creation error"),
-	// },
-	// userRepoTestCase{
-	// 	name:     "Failed user creation (users transaction commit error)",
-	// 	funcName: "Create",
-	// 	args:     []driver.Value{"example@mail.com"},
-	// 	mockQuery: func(mock sqlmock.Sqlmock) {
-	// 		userRows := sqlmock.NewRows([]string{"id"})
-	// 		userRows = userRows.AddRow(1)
-
-	// 		walletRows := sqlmock.NewRows([]string{"id"})
-	// 		walletRows = walletRows.AddRow(1)
-
-	// 		mock.
-	// 			ExpectExec("select pg_advisory_lock").
-	// 			WithArgs(CreateUser).
-	// 			WillReturnResult(sqlmock.NewResult(2, 2))
-
-	// 		// Start users create transaction
-	// 		mock.ExpectBegin()
-
-	// 		// Exec insert users query
-	// 		mock.
-	// 			ExpectQuery("insert into users").
-	// 			WithArgs([]driver.Value{"example@mail.com"}...).
-	// 			WillReturnRows(userRows)
-
-	// 		// Exec insert wallets query
-	// 		mock.
-	// 			ExpectQuery("insert into wallets").
-	// 			WithArgs([]driver.Value{int64(1)}...).
-	// 			WillReturnRows(walletRows)
-
-	// 		// Commit users create transaction with error
-	// 		mock.ExpectCommit().WillReturnError(fmt.Errorf("Transaction commit error"))
-
-	// 		// Rollback users transaction
-	// 		mock.ExpectRollback()
-
-	// 		// Unlock operation
-	// 		mock.
-	// 			ExpectExec("select pg_advisory_unlock").
-	// 			WithArgs(CreateUser).
-	// 			WillReturnResult(sqlmock.NewResult(2, 2))
-	// 	},
-	// 	err: fmt.Errorf("Insert error (wallet transaction error)"),
-	// },
-	// userRepoTestCase{
-	// 	name:     "Failed user creation (advisory unlock error)",
-	// 	funcName: "Create",
-	// 	args:     []driver.Value{"example@mail.com"},
-	// 	mockQuery: func(mock sqlmock.Sqlmock) {
-	// 		userRows := sqlmock.NewRows([]string{"id"})
-	// 		userRows = userRows.AddRow(1)
-
-	// 		walletRows := sqlmock.NewRows([]string{"id"})
-	// 		walletRows = walletRows.AddRow(1)
-
-	// 		// Lock operation
-	// 		mock.
-	// 			ExpectExec("select pg_advisory_lock").
-	// 			WithArgs(CreateUser).
-	// 			WillReturnResult(sqlmock.NewResult(2, 2))
-
-	// 		// Start users create transaction
-	// 		mock.ExpectBegin()
-
-	// 		// Exec insert users query
-	// 		mock.
-	// 			ExpectQuery("insert into users").
-	// 			WithArgs([]driver.Value{"example@mail.com"}...).
-	// 			WillReturnRows(userRows)
-
-	// 		// Exec insert wallets query
-	// 		mock.
-	// 			ExpectQuery("insert into wallets").
-	// 			WithArgs([]driver.Value{int64(1)}...).
-	// 			WillReturnRows(walletRows)
-
-	// 		// Commit users create transaction
-	// 		mock.ExpectCommit()
-
-	// 		// Unlock operation
-	// 		mock.
-	// 			ExpectExec("select pg_advisory_unlock").
-	// 			WithArgs(CreateUser).
-	// 			WillReturnError(fmt.Errorf("advisory unlock error"))
-	// 	},
-	// 	err: fmt.Errorf("Insert error (advisor unlock error)"),
-	// },
 	userRepoTestCase{
 		name:     "Failed user creation (scan error)",
 		funcName: "Create",
@@ -312,15 +65,6 @@ var UserRepoTestCases = []userRepoTestCase{
 			rows := sqlmock.NewRows([]string{"id", "email", "balance", "currency"}).
 				AddRow(nil, "test@example.com", decimal.NewFromInt(100), "USD").
 				RowError(1, fmt.Errorf("Scan error"))
-
-			// Lock operation
-			mock.
-				ExpectExec("select pg_advisory_lock").
-				WithArgs(CreateUser).
-				WillReturnResult(sqlmock.NewResult(2, 2))
-
-			// Start users create transaction
-			mock.ExpectBegin()
 
 			// Exec insert users query
 			mock.
@@ -534,6 +278,19 @@ func TestNewUserService(t *testing.T) {
 	}
 }
 
+func TestWithTransactionUserService(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	mock.ExpectBegin()
+	txManager := tx.NewTxBeginner(db)
+	localTx, _ := txManager.BeginTrx(context.Background(), nil)
+	repo := NewUsersService(db)
+	repoWithTx := repo.WithTx(localTx)
+	_, correctType := repoWithTx.(*UsersService)
+	if !correctType {
+		t.Errorf("Wrong type of UserService")
+	}
+}
+
 // Benchmarks repository's GetById operation
 func BenchmarkGetById(b *testing.B) {
 	ctrl := gomock.NewController(b)
@@ -587,7 +344,7 @@ func BenchmarkGetByWalletID(b *testing.B) {
 }
 
 // Benchmarks repository's Create operation
-func BenchmarkCreate(b *testing.B) {
+func BenchmarkCreateUser(b *testing.B) {
 	sqlDB, mock, err := sqlmock.New()
 	if err != nil {
 		b.Fatalf("cant create mock: %s", err)
@@ -627,7 +384,7 @@ func BenchmarkCreate(b *testing.B) {
 
 	mock.
 		ExpectQuery("insert into wallet_operations").
-		WithArgs([]driver.Value{operations.Create, nil, 1, amount}...).
+		WithArgs([]driver.Value{Create, nil, 1, amount}...).
 		WillReturnRows(woRows)
 
 	mock.ExpectCommit()
