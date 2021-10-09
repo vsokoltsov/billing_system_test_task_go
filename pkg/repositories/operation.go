@@ -18,7 +18,7 @@ const (
 
 type OperationsManager interface {
 	WithTx(t tx.Tx) OperationsManager
-	Create(ctx context.Context, tx *sql.Tx, operation string, walletFrom, walletTo int, amount decimal.Decimal) (int, error)
+	Create(ctx context.Context, operation string, walletFrom, walletTo int, amount decimal.Decimal) (int, error)
 	List(ctx context.Context, params *ListParams) (*sql.Rows, error)
 }
 
@@ -42,7 +42,7 @@ func (wor WalletOperationService) WithTx(t tx.Tx) OperationsManager {
 	return NewWalletOperationRepo(t.(tx.SQLQueryAdapter))
 }
 
-func (wor WalletOperationService) Create(ctx context.Context, tx *sql.Tx, operation string, walletFrom, walletTo int, amount decimal.Decimal) (int, error) {
+func (wor WalletOperationService) Create(ctx context.Context, operation string, walletFrom, walletTo int, amount decimal.Decimal) (int, error) {
 	var (
 		walletOperationID int
 		walletFromValue   interface{}
@@ -54,7 +54,7 @@ func (wor WalletOperationService) Create(ctx context.Context, tx *sql.Tx, operat
 		walletFromValue = walletFrom
 	}
 
-	stmt, insertErr := tx.QueryContext(
+	stmt, insertErr := wor.db.QueryContext(
 		ctx,
 		"insert into wallet_operations(operation, wallet_from, wallet_to, amount) values($1, $2, $3, $4) returning id",
 		operation, walletFromValue, walletTo, amount,

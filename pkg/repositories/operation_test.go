@@ -237,17 +237,6 @@ func TestOperationsRepo(t *testing.T) {
 			}
 			defer db.Close()
 
-			// Create Connection instance for Create wallet tests
-			if tc.funcName == "Create" {
-				mock.ExpectBegin()
-				conn, _ := db.Conn(ctx)
-				tx, txErr := conn.BeginTx(ctx, nil)
-				if txErr != nil {
-					fmt.Printf("error of transaction initialization: %s", txErr)
-				}
-				realArgs = append(realArgs, reflect.ValueOf(tx))
-			}
-
 			repo := WalletOperationService{
 				db: db,
 			}
@@ -340,11 +329,6 @@ func BenchmarkCreate(b *testing.B) {
 	ctx := context.Background()
 
 	mock.ExpectBegin()
-	conn, _ := sqlDB.Conn(ctx)
-	tx, txErr := conn.BeginTx(ctx, nil)
-	if txErr != nil {
-		fmt.Printf("error of transaction initialization: %s", txErr)
-	}
 
 	rows := sqlmock.NewRows([]string{"id"})
 	rows = rows.AddRow(1)
@@ -356,7 +340,7 @@ func BenchmarkCreate(b *testing.B) {
 
 	repo := NewWalletOperationRepo(sqlDB)
 	for i := 0; i < b.N; i++ {
-		_, _ = repo.Create(ctx, tx, Create, 1, 2, decimal.NewFromInt(0))
+		_, _ = repo.Create(ctx, Create, 1, 2, decimal.NewFromInt(0))
 	}
 }
 
