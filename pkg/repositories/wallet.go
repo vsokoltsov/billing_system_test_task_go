@@ -1,10 +1,9 @@
 package repositories
 
 import (
+	"billing_system_test_task/pkg/adapters/tx"
 	"billing_system_test_task/pkg/entities"
-	"billing_system_test_task/pkg/operations"
 	"context"
-	"database/sql"
 	"fmt"
 
 	"github.com/shopspring/decimal"
@@ -18,7 +17,8 @@ const (
 
 // WalletsManager represents communication with wallets
 type WalletsManager interface {
-	Create(ctx context.Context, tx *sql.Tx, userID int64) (int64, error)
+	WithTx(t tx.Tx) WalletsManager
+	Create(ctx context.Context, userID int64) (int64, error)
 	Enroll(ctx context.Context, walletID int, amount decimal.Decimal) (int, error)
 	GetByUserId(ctx context.Context, userID int) (*entities.Wallet, error)
 	GetByID(ctx context.Context, walletID int) (*entities.Wallet, error)
@@ -27,23 +27,27 @@ type WalletsManager interface {
 
 // WalletService shows structure for service of wallets
 type WalletService struct {
-	db *sql.DB
+	db tx.SQLQueryAdapter
 }
 
 // NewWalletService returns instance of WalletService
-func NewWalletService(db *sql.DB, walletOperationRepo operations.OperationsManager) WalletsManager {
-	return WalletService{
+func NewWalletService(db tx.SQLQueryAdapter) WalletsManager {
+	return &WalletService{
 		db: db,
 	}
 }
 
+func (ws WalletService) WithTx(t tx.Tx) WalletsManager {
+	return NewWalletService(t.(tx.SQLQueryAdapter))
+}
+
 // Create creates new wallet for user
-func (ws WalletService) Create(ctx context.Context, tx *sql.Tx, userID int64) (int64, error) {
+func (ws WalletService) Create(ctx context.Context, userID int64) (int64, error) {
 	var (
 		walletID int64
 	)
 
-	stmt, insertErr := tx.QueryContext(
+	stmt, insertErr := ws.db.QueryContext(
 		ctx,
 		"insert into wallets(user_id) values($1) returning id",
 		userID,
