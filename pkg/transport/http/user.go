@@ -5,6 +5,7 @@ import (
 	"billing_system_test_task/pkg/repositories"
 	"billing_system_test_task/pkg/transport/http/forms"
 	"billing_system_test_task/pkg/transport/http/serializers"
+	"billing_system_test_task/pkg/usecases"
 	"billing_system_test_task/pkg/utils"
 	"context"
 	"encoding/json"
@@ -20,6 +21,13 @@ import (
 type UsersHandler struct {
 	UsersRepo   repositories.UsersManager
 	WalletsRepo repositories.WalletsManager
+	userUseCase usecases.UserUseCase
+}
+
+func NewUserHandler(userUseCase usecases.UserUseCase) *UsersHandler {
+	return &UsersHandler{
+		userUseCase: userUseCase,
+	}
 }
 
 // Create godoc
@@ -28,8 +36,8 @@ type UsersHandler struct {
 // @Tags users
 // @Accept  json
 // @Produce  json
-// @Param user body UserForm true "User attributes"
-// @Success 201 {object} UserSerializer "Create user response"
+// @Param user body forms.UserForm true "User attributes"
+// @Success 201 {object} serializers.UserSerializer "Create user response"
 // @Failure 400 {object} utils.FormErrorSerializer "User form validation error"
 // @Failure default {object} utils.ErrorMsg
 // @Router /api/users/ [post]
@@ -55,15 +63,17 @@ func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, createdUserError := uh.UsersRepo.Create(ctx, userForm.Email)
-	if createdUserError != nil {
-		utils.JsonResponseError(w, http.StatusBadRequest, createdUserError.Error())
-		return
-	}
+	user, createUserErr := uh.userUseCase.Create(ctx, userForm.Email)
 
-	user, getUserError := uh.UsersRepo.GetByID(ctx, int(userID))
-	if getUserError != nil {
-		utils.JsonResponseError(w, http.StatusBadRequest, getUserError.Error())
+	// userID, createdUserError := uh.UsersRepo.Create(ctx, userForm.Email)
+	// if createdUserError != nil {
+	// 	utils.JsonResponseError(w, http.StatusBadRequest, createdUserError.Error())
+	// 	return
+	// }
+
+	// user, getUserError := uh.UsersRepo.GetByID(ctx, int(userID))
+	if createUserErr != nil {
+		utils.JsonResponseError(w, http.StatusBadRequest, createUserErr.Error())
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
@@ -81,8 +91,8 @@ func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Accept  json
 // @Produce  json
 // @Param id path int true "User ID"
-// @Param enroll body EnrollForm true "Enrollment attributes"
-// @Success 200 {object} UserSerializer "Retrieving user information with updated balance"
+// @Param enroll body forms.EnrollForm true "Enrollment attributes"
+// @Success 200 {object} serializers.UserSerializer "Retrieving user information with updated balance"
 // @Failure 400 {object} utils.FormErrorSerializer "Enroll form validation error"
 // @Failure default {object} utils.ErrorMsg
 // @Router /api/users/{id}/enroll/ [post]
@@ -91,7 +101,6 @@ func (uh *UsersHandler) Enroll(w http.ResponseWriter, r *http.Request) {
 		enrollForm forms.EnrollForm
 		ctx        = context.Background()
 		user       *entities.User
-		userGetErr error
 	)
 
 	vars := mux.Vars(r)
@@ -124,21 +133,9 @@ func (uh *UsersHandler) Enroll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, userGetErr = uh.UsersRepo.GetByID(ctx, userID)
-	if userGetErr != nil {
-		utils.JsonResponseError(w, http.StatusNotFound, userGetErr.Error())
-		return
-	}
-
-	walletID, walletEnrollErr := uh.WalletsRepo.Enroll(ctx, user.Wallet.ID, enrollForm.Amount)
+	user, walletEnrollErr := uh.userUseCase.Enroll(ctx, userID, enrollForm.Amount)
 	if walletEnrollErr != nil {
 		utils.JsonResponseError(w, http.StatusBadRequest, fmt.Sprintf("Error of wallet enroll: %s", walletEnrollErr.Error()))
-		return
-	}
-
-	user, userGetErr = uh.UsersRepo.GetByWalletID(ctx, walletID)
-	if userGetErr != nil {
-		utils.JsonResponseError(w, http.StatusBadRequest, userGetErr.Error())
 		return
 	}
 
