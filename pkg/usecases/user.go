@@ -9,8 +9,10 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// UserUseCase represents contracts for user's use cases
 type UserUseCase interface {
 	Create(ctx context.Context, email string) (*entities.User, error)
+	Enroll(ctx context.Context, userID int, amount decimal.Decimal) (*entities.User, error)
 }
 
 type UserInteractor struct {
@@ -58,12 +60,47 @@ func (ui UserInteractor) Create(ctx context.Context, email string) (*entities.Us
 
 	user, getUserErr := txUserRepo.GetByWalletID(ctx, int(walletID))
 	if getUserErr != nil {
+		_ = tx.Rollback()
 		return nil, getUserErr
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
+		_ = tx.Rollback()
 		return nil, commitErr
 	}
 
 	return user, nil
+}
+
+func (ui UserInteractor) Enroll(ctx context.Context, userID int, amount decimal.Decimal) (*entities.User, error) {
+	tx, txErr := ui.txManager.BeginTrx(ctx, nil)
+	if txErr != nil {
+		return nil, txErr
+	}
+
+	txUserRepo := ui.userRepo.WithTx(tx)
+
+	user, getUserErr := txUserRepo.GetByID(ctx, userID)
+	if getUserErr != nil {
+		_ = tx.Rollback()
+		return nil, getUserErr
+	}
+
+	walletID, enrollWalletErr := ui.walletsRepo.WithTx(tx).Enroll(ctx, user.Wallet.ID, amount)
+	if enrollWalletErr != nil {
+		_ = tx.Rollback()
+		return nil, enrollWalletErr
+	}
+
+	enrolledUser, enrolledUserErr := txUserRepo.GetByWalletID(ctx, walletID)
+	if enrolledUserErr != nil {
+		_ = tx.Rollback()
+		return nil, enrolledUserErr
+	}
+
+	if commitErr := tx.Commit(); commitErr != nil {
+		_ = tx.Rollback()
+		return nil, commitErr
+	}
+	return enrolledUser, nil
 }

@@ -201,8 +201,168 @@ var userUsecaseTests = []userUsecaseTest{
 
 			// Commit users create transaction
 			txMock.EXPECT().Commit().Return(fmt.Errorf("transaction commit error"))
+			txMock.EXPECT().Rollback().Return(nil)
 		},
 		err: fmt.Errorf("transaction commit error"),
+	},
+	userUsecaseTest{
+		name:     "Success user's wallet enrollment",
+		funcName: "Enroll",
+		args:     []driver.Value{1, decimal.NewFromInt(10)},
+		mockQuery: func(ctx context.Context, mockUserRepo *repositories.MockUsersManager, mockWalletRepo *repositories.MockWalletsManager, mockOperationRepo *repositories.MockOperationsManager, mockTxManager *tx.MockTxBeginner, txMock *tx.MockTx) {
+			user := &entities.User{
+				ID:    1,
+				Email: "test@example.com",
+				Wallet: &entities.Wallet{
+					ID:       1,
+					Balance:  decimal.NewFromInt(100),
+					Currency: "USD",
+				},
+			}
+			// Start users enroll transaction
+			mockTxManager.EXPECT().BeginTrx(ctx, nil).Return(txMock, nil)
+			mockUserRepo.EXPECT().WithTx(txMock).Return(mockUserRepo)
+			mockUserRepo.EXPECT().GetByID(ctx, 1).Return(user, nil)
+
+			// Exec insert wallets query
+			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
+			mockWalletRepo.EXPECT().Enroll(ctx, 1, decimal.NewFromInt(10)).Return(1, nil)
+
+			mockUserRepo.EXPECT().WithTx(txMock).Return(mockUserRepo)
+			user.Wallet.Balance = user.Wallet.Balance.Add(decimal.NewFromInt(10))
+			mockUserRepo.EXPECT().GetByWalletID(ctx, 1).Return(user, nil)
+
+			// Commit users create transaction
+			txMock.EXPECT().Commit().Return(nil)
+		},
+		expectedResultMatch: func(actual interface{}) bool {
+			user := entities.User{
+				ID:    1,
+				Email: "test@example.com",
+				Wallet: &entities.Wallet{
+					ID:       1,
+					Balance:  decimal.NewFromInt(110),
+					Currency: "USD",
+				},
+			}
+			actualUser := actual.(*entities.User)
+			return actualUser.ID == user.ID
+		},
+	},
+	userUsecaseTest{
+		name:     "Failed user's wallet enrollment (transaction begin)",
+		funcName: "Enroll",
+		args:     []driver.Value{1, decimal.NewFromInt(10)},
+		mockQuery: func(ctx context.Context, mockUserRepo *repositories.MockUsersManager, mockWalletRepo *repositories.MockWalletsManager, mockOperationRepo *repositories.MockOperationsManager, mockTxManager *tx.MockTxBeginner, txMock *tx.MockTx) {
+			// Start users enroll transaction
+			mockTxManager.EXPECT().BeginTrx(ctx, nil).Return(nil, fmt.Errorf("tx start error"))
+		},
+		err: fmt.Errorf("tx start error"),
+	},
+	userUsecaseTest{
+		name:     "Failed user's wallet enrollment (GetByID error)",
+		funcName: "Enroll",
+		args:     []driver.Value{1, decimal.NewFromInt(10)},
+		mockQuery: func(ctx context.Context, mockUserRepo *repositories.MockUsersManager, mockWalletRepo *repositories.MockWalletsManager, mockOperationRepo *repositories.MockOperationsManager, mockTxManager *tx.MockTxBeginner, txMock *tx.MockTx) {
+			// Start users enroll transaction
+			mockTxManager.EXPECT().BeginTrx(ctx, nil).Return(txMock, nil)
+
+			mockUserRepo.EXPECT().WithTx(txMock).Return(mockUserRepo)
+			mockUserRepo.EXPECT().GetByID(ctx, 1).Return(nil, fmt.Errorf("tx start error"))
+			txMock.EXPECT().Rollback().Return(nil)
+		},
+		err: fmt.Errorf("tx start error"),
+	},
+	userUsecaseTest{
+		name:     "Failed user's wallet enrollment",
+		funcName: "Enroll",
+		args:     []driver.Value{1, decimal.NewFromInt(10)},
+		mockQuery: func(ctx context.Context, mockUserRepo *repositories.MockUsersManager, mockWalletRepo *repositories.MockWalletsManager, mockOperationRepo *repositories.MockOperationsManager, mockTxManager *tx.MockTxBeginner, txMock *tx.MockTx) {
+			user := &entities.User{
+				ID:    1,
+				Email: "test@example.com",
+				Wallet: &entities.Wallet{
+					ID:       1,
+					Balance:  decimal.NewFromInt(100),
+					Currency: "USD",
+				},
+			}
+			// Start users enroll transaction
+			mockTxManager.EXPECT().BeginTrx(ctx, nil).Return(txMock, nil)
+			mockUserRepo.EXPECT().WithTx(txMock).Return(mockUserRepo)
+			mockUserRepo.EXPECT().GetByID(ctx, 1).Return(user, nil)
+
+			// Exec insert wallets query
+			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
+			mockWalletRepo.EXPECT().Enroll(ctx, 1, decimal.NewFromInt(10)).Return(0, fmt.Errorf("Enroll error"))
+			txMock.EXPECT().Rollback().Return(nil)
+		},
+		err: fmt.Errorf("Enroll error"),
+	},
+	userUsecaseTest{
+		name:     "Failed user's wallet enrollment (GetByWalletID error)",
+		funcName: "Enroll",
+		args:     []driver.Value{1, decimal.NewFromInt(10)},
+		mockQuery: func(ctx context.Context, mockUserRepo *repositories.MockUsersManager, mockWalletRepo *repositories.MockWalletsManager, mockOperationRepo *repositories.MockOperationsManager, mockTxManager *tx.MockTxBeginner, txMock *tx.MockTx) {
+			user := &entities.User{
+				ID:    1,
+				Email: "test@example.com",
+				Wallet: &entities.Wallet{
+					ID:       1,
+					Balance:  decimal.NewFromInt(100),
+					Currency: "USD",
+				},
+			}
+			// Start users enroll transaction
+			mockTxManager.EXPECT().BeginTrx(ctx, nil).Return(txMock, nil)
+			mockUserRepo.EXPECT().WithTx(txMock).Return(mockUserRepo)
+			mockUserRepo.EXPECT().GetByID(ctx, 1).Return(user, nil)
+
+			// Exec insert wallets query
+			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
+			mockWalletRepo.EXPECT().Enroll(ctx, 1, decimal.NewFromInt(10)).Return(1, nil)
+
+			mockUserRepo.EXPECT().WithTx(txMock).Return(mockUserRepo)
+			user.Wallet.Balance = user.Wallet.Balance.Add(decimal.NewFromInt(10))
+			mockUserRepo.EXPECT().GetByWalletID(ctx, 1).Return(nil, fmt.Errorf("GetByWalletID error"))
+
+			// Commit users create transaction
+			txMock.EXPECT().Rollback().Return(nil)
+		},
+		err: fmt.Errorf("GetByWalletID error"),
+	},
+	userUsecaseTest{
+		name:     "Failed user's wallet enrollment (Commit error)",
+		funcName: "Enroll",
+		args:     []driver.Value{1, decimal.NewFromInt(10)},
+		mockQuery: func(ctx context.Context, mockUserRepo *repositories.MockUsersManager, mockWalletRepo *repositories.MockWalletsManager, mockOperationRepo *repositories.MockOperationsManager, mockTxManager *tx.MockTxBeginner, txMock *tx.MockTx) {
+			user := &entities.User{
+				ID:    1,
+				Email: "test@example.com",
+				Wallet: &entities.Wallet{
+					ID:       1,
+					Balance:  decimal.NewFromInt(100),
+					Currency: "USD",
+				},
+			}
+			// Start users enroll transaction
+			mockTxManager.EXPECT().BeginTrx(ctx, nil).Return(txMock, nil)
+			mockUserRepo.EXPECT().WithTx(txMock).Return(mockUserRepo)
+			mockUserRepo.EXPECT().GetByID(ctx, 1).Return(user, nil)
+
+			// Exec insert wallets query
+			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
+			mockWalletRepo.EXPECT().Enroll(ctx, 1, decimal.NewFromInt(10)).Return(1, nil)
+
+			mockUserRepo.EXPECT().WithTx(txMock).Return(mockUserRepo)
+			user.Wallet.Balance = user.Wallet.Balance.Add(decimal.NewFromInt(10))
+			mockUserRepo.EXPECT().GetByWalletID(ctx, 1).Return(user, nil)
+
+			// Commit users create transaction
+			txMock.EXPECT().Commit().Return(fmt.Errorf("commit error"))
+			txMock.EXPECT().Rollback().Return(nil)
+		},
+		err: fmt.Errorf("commit error"),
 	},
 }
 
