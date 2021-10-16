@@ -1,30 +1,41 @@
 package tx
 
 import (
-	"billing_system_test_task/pkg/adapters"
 	"context"
 	"database/sql"
 	"fmt"
 )
 
+type SQLAdapter interface {
+	BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
+	SQLQueryAdapter
+}
+
+type SQLQueryAdapter interface {
+	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
+	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
+}
+
 type Tx interface {
-	TxCommit(context context.Context) error
-	TxRollback(context context.Context) error
+	Commit() error
+	Rollback() error
 }
 
 type TxBeginner interface {
-	Begin(ctx context.Context, opts *sql.TxOptions) (Tx, error)
+	BeginTrx(ctx context.Context, opts *sql.TxOptions) (Tx, error)
 }
 
 type txBeginner struct {
-	adapters.SQLAdapter
+	SQLAdapter
 }
 
-func NewTxBeginner(sqlDB adapters.SQLAdapter) TxBeginner {
-	return txBeginner{sqlDB}
+func NewTxBeginner(sqlDB SQLAdapter) TxBeginner {
+	return &txBeginner{sqlDB}
 }
 
-func (tb txBeginner) Begin(ctx context.Context, opts *sql.TxOptions) (Tx, error) {
+func (tb *txBeginner) BeginTrx(ctx context.Context, opts *sql.TxOptions) (Tx, error) {
+
 	sqlTx, txErr := tb.BeginTx(ctx, opts)
 	if txErr != nil {
 		return nil, fmt.Errorf("transaction initialization error: %s", txErr)
@@ -36,10 +47,10 @@ type tx struct {
 	*sql.Tx
 }
 
-func (t tx) TxCommit(context context.Context) error {
-	return t.Commit()
+func (t *tx) Commit() error {
+	return t.Tx.Commit()
 }
 
-func (t tx) TxRollback(context context.Context) error {
-	return t.Rollback()
+func (t *tx) Rollback() error {
+	return t.Tx.Rollback()
 }
