@@ -65,15 +65,8 @@ func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	user, createUserErr := uh.userUseCase.Create(ctx, userForm.Email)
 
-	// userID, createdUserError := uh.UsersRepo.Create(ctx, userForm.Email)
-	// if createdUserError != nil {
-	// 	utils.JsonResponseError(w, http.StatusBadRequest, createdUserError.Error())
-	// 	return
-	// }
-
-	// user, getUserError := uh.UsersRepo.GetByID(ctx, int(userID))
 	if createUserErr != nil {
-		utils.JsonResponseError(w, http.StatusBadRequest, createUserErr.Error())
+		utils.JsonResponseError(w, createUserErr.GetStatus(), createUserErr.GetError().Error())
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
@@ -135,7 +128,7 @@ func (uh *UsersHandler) Enroll(w http.ResponseWriter, r *http.Request) {
 
 	user, walletEnrollErr := uh.userUseCase.Enroll(ctx, userID, enrollForm.Amount)
 	if walletEnrollErr != nil {
-		utils.JsonResponseError(w, http.StatusBadRequest, fmt.Sprintf("Error of wallet enroll: %s", walletEnrollErr.Error()))
+		utils.JsonResponseError(w, walletEnrollErr.GetStatus(), fmt.Sprintf("Error of wallet enroll: %s", walletEnrollErr.GetError()))
 		return
 	}
 
