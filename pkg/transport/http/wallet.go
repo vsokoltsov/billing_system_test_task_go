@@ -4,6 +4,7 @@ import (
 	"billing_system_test_task/pkg/repositories"
 	"billing_system_test_task/pkg/transport/http/forms"
 	"billing_system_test_task/pkg/transport/http/serializers"
+	"billing_system_test_task/pkg/usecases"
 	"billing_system_test_task/pkg/utils"
 	"context"
 	"encoding/json"
@@ -13,7 +14,14 @@ import (
 )
 
 type WalletsHandler struct {
-	WalletRepo repositories.WalletsManager
+	WalletRepo    repositories.WalletsManager
+	walletUseCase usecases.WalletUseCase
+}
+
+func NewWalletsHandler(walletUseCase usecases.WalletUseCase) *WalletsHandler {
+	return &WalletsHandler{
+		walletUseCase: walletUseCase,
+	}
 }
 
 // Create godoc
@@ -22,7 +30,7 @@ type WalletsHandler struct {
 // @Tags wallets
 // @Accept  json
 // @Produce  json
-// @Param user body WalletForm true "Transfer parameters"
+// @Param user body forms.WalletForm true "Transfer parameters"
 // @Success 200 {object} serializers.WalletSerializer "Wallet from id"
 // @Failure 400 {object} utils.FormErrorSerializer "Wallet transfer validation error"
 // @Failure default {object} utils.ErrorMsg
@@ -48,9 +56,9 @@ func (wh *WalletsHandler) Transfer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	walletFrom, walletTransferErr := wh.WalletRepo.Transfer(ctx, walletForm.WalletFrom, walletForm.WalletTo, walletForm.Amount)
+	walletFrom, walletTransferErr := wh.walletUseCase.Transfer(ctx, walletForm.WalletFrom, walletForm.WalletTo, walletForm.Amount)
 	if walletTransferErr != nil {
-		utils.JsonResponseError(w, http.StatusBadRequest, fmt.Sprintf("Error of funds transfer: %s", walletTransferErr.Error()))
+		utils.JsonResponseError(w, walletTransferErr.GetStatus(), fmt.Sprintf("Error of funds transfer: %s", walletTransferErr.GetError()))
 		return
 	}
 	w.WriteHeader(http.StatusOK)

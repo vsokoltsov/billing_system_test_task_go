@@ -24,6 +24,12 @@ func (wf *WalletForm) Submit() *map[string][]string {
 		}
 	}
 
+	if wf.WalletFrom == wf.WalletTo {
+		errors["wallet_from"] = []string{
+			"source wallet is equal to destination wallet",
+		}
+	}
+
 	// Perform validations by tags
 	if len(errors) > 0 {
 		return &errors
