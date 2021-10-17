@@ -2,8 +2,8 @@ package repositories
 
 import (
 	"billing_system_test_task/pkg/adapters/tx"
+	"billing_system_test_task/pkg/entities"
 	"context"
-	"database/sql"
 	"fmt"
 
 	"github.com/shopspring/decimal"
@@ -19,7 +19,7 @@ const (
 type OperationsManager interface {
 	WithTx(t tx.Tx) OperationsManager
 	Create(ctx context.Context, operation string, walletFrom, walletTo int, amount decimal.Decimal) (int, error)
-	List(ctx context.Context, params *ListParams) (*sql.Rows, error)
+	List(ctx context.Context, params *ListParams) (chan *entities.WalletOperation, error)
 }
 
 type WalletOperationService struct {
@@ -74,10 +74,13 @@ func (wor WalletOperationService) Create(ctx context.Context, operation string, 
 	return walletOperationID, nil
 }
 
-func (wor WalletOperationService) List(ctx context.Context, params *ListParams) (*sql.Rows, error) {
+func (wor WalletOperationService) List(ctx context.Context, params *ListParams) (chan *entities.WalletOperation, error) {
+	opCh := make(chan *entities.WalletOperation, 1)
+	defer close(opCh)
+
 	query := "select id, operation, wallet_from, wallet_to, amount, created_at from wallet_operations"
+	args := []interface{}{}
 	if params != nil {
-		args := []interface{}{}
 		page := params.Page
 		if page == 1 {
 			page = 0
@@ -108,15 +111,24 @@ func (wor WalletOperationService) List(ctx context.Context, params *ListParams) 
 			args = append(args, page*params.PerPage)
 			args = append(args, params.PerPage)
 		}
-		fmt.Println(query)
-		return wor.db.QueryContext(
-			ctx,
-			query,
-			args...,
-		)
 	}
-	return wor.db.QueryContext(
+	rows, queryRowErr := wor.db.QueryContext(
 		ctx,
 		query,
+		args...,
 	)
+	if queryRowErr != nil {
+		return nil, fmt.Errorf("[OPERATIONS_LIST]: %s", queryRowErr)
+	}
+
+	for rows.Next() {
+		operation := entities.WalletOperation{}
+		scanErr := rows.Scan(&operation.ID, &operation.Operation, &operation.WalletFrom, &operation.WalletTo, &operation.Amount, &operation.CreatedAt)
+		if scanErr != nil {
+			return nil, fmt.Errorf("[OPERATIONS_LIST_ROW]: %s", scanErr)
+		}
+		opCh <- &operation
+	}
+
+	return opCh, nil
 }

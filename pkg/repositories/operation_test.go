@@ -4,12 +4,12 @@ import (
 	"billing_system_test_task/pkg/adapters/tx"
 	"billing_system_test_task/pkg/entities"
 	"context"
-	"database/sql"
 	"database/sql/driver"
 	"fmt"
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/shopspring/decimal"
@@ -102,8 +102,8 @@ var operationRepoTestCases = []operationRepoTestCase{
 		args:     []driver.Value{nil},
 		mockQuery: func(mock sqlmock.Sqlmock) {
 			// Begin transaction
-			rows := sqlmock.NewRows([]string{"id"})
-			rows = rows.AddRow(1)
+			rows := sqlmock.NewRows([]string{"id", "operation", "wallet_from", "wallet_to", "amount", "created_at"})
+			rows = rows.AddRow(1, Create, nil, 1, decimal.NewFromInt(0), time.Now())
 
 			// Exec insert wallets
 			mock.
@@ -112,11 +112,8 @@ var operationRepoTestCases = []operationRepoTestCase{
 
 		},
 		expectedResultMatch: func(actual interface{}) bool {
-			rows := actual.(*sql.Rows)
-			operation := entities.WalletOperation{}
-			for rows.Next() {
-				_ = rows.Scan(&operation.ID)
-			}
+			rows := actual.(chan *entities.WalletOperation)
+			operation := <-rows
 			return operation.ID == 1
 		},
 	},
@@ -126,8 +123,8 @@ var operationRepoTestCases = []operationRepoTestCase{
 		args:     []driver.Value{&ListParams{Page: 1, PerPage: 10}},
 		mockQuery: func(mock sqlmock.Sqlmock) {
 			// Begin transaction
-			rows := sqlmock.NewRows([]string{"id"})
-			rows = rows.AddRow(1)
+			rows := sqlmock.NewRows([]string{"id", "operation", "wallet_from", "wallet_to", "amount", "created_at"})
+			rows = rows.AddRow(1, Create, nil, 1, decimal.NewFromInt(0), time.Now())
 
 			// Exec insert wallets
 			mock.
@@ -137,11 +134,8 @@ var operationRepoTestCases = []operationRepoTestCase{
 
 		},
 		expectedResultMatch: func(actual interface{}) bool {
-			rows := actual.(*sql.Rows)
-			operation := entities.WalletOperation{}
-			for rows.Next() {
-				_ = rows.Scan(&operation.ID)
-			}
+			rows := actual.(chan *entities.WalletOperation)
+			operation := <-rows
 			return operation.ID == 1
 		},
 	},
@@ -151,8 +145,8 @@ var operationRepoTestCases = []operationRepoTestCase{
 		args:     []driver.Value{&ListParams{Page: 3, PerPage: 10}},
 		mockQuery: func(mock sqlmock.Sqlmock) {
 			// Begin transaction
-			rows := sqlmock.NewRows([]string{"id"})
-			rows = rows.AddRow(1)
+			rows := sqlmock.NewRows([]string{"id", "operation", "wallet_from", "wallet_to", "amount", "created_at"})
+			rows = rows.AddRow(1, Create, nil, 1, decimal.NewFromInt(0), time.Now())
 
 			// Exec insert wallets
 			mock.
@@ -162,11 +156,8 @@ var operationRepoTestCases = []operationRepoTestCase{
 
 		},
 		expectedResultMatch: func(actual interface{}) bool {
-			rows := actual.(*sql.Rows)
-			operation := entities.WalletOperation{}
-			for rows.Next() {
-				_ = rows.Scan(&operation.ID)
-			}
+			rows := actual.(chan *entities.WalletOperation)
+			operation := <-rows
 			return operation.ID == 1
 		},
 	},
@@ -176,8 +167,8 @@ var operationRepoTestCases = []operationRepoTestCase{
 		args:     []driver.Value{&ListParams{Date: "2020-01-01"}},
 		mockQuery: func(mock sqlmock.Sqlmock) {
 			// Begin transaction
-			rows := sqlmock.NewRows([]string{"id"})
-			rows = rows.AddRow(1)
+			rows := sqlmock.NewRows([]string{"id", "operation", "wallet_from", "wallet_to", "amount", "created_at"})
+			rows = rows.AddRow(1, Create, nil, 1, decimal.NewFromInt(0), time.Now())
 
 			// Exec insert wallets
 			mock.
@@ -187,11 +178,8 @@ var operationRepoTestCases = []operationRepoTestCase{
 
 		},
 		expectedResultMatch: func(actual interface{}) bool {
-			rows := actual.(*sql.Rows)
-			operation := entities.WalletOperation{}
-			for rows.Next() {
-				_ = rows.Scan(&operation.ID)
-			}
+			rows := actual.(chan *entities.WalletOperation)
+			operation := <-rows
 			return operation.ID == 1
 		},
 	},
@@ -201,8 +189,8 @@ var operationRepoTestCases = []operationRepoTestCase{
 		args:     []driver.Value{&ListParams{Page: 1, PerPage: 10, Date: "2020-01-01"}},
 		mockQuery: func(mock sqlmock.Sqlmock) {
 			// Begin transaction
-			rows := sqlmock.NewRows([]string{"id"})
-			rows = rows.AddRow(1)
+			rows := sqlmock.NewRows([]string{"id", "operation", "wallet_from", "wallet_to", "amount", "created_at"})
+			rows = rows.AddRow(1, Create, nil, 1, decimal.NewFromInt(0), time.Now())
 
 			// Exec insert wallets
 			mock.
@@ -212,13 +200,67 @@ var operationRepoTestCases = []operationRepoTestCase{
 
 		},
 		expectedResultMatch: func(actual interface{}) bool {
-			rows := actual.(*sql.Rows)
-			operation := entities.WalletOperation{}
-			for rows.Next() {
-				_ = rows.Scan(&operation.ID)
-			}
+			rows := actual.(chan *entities.WalletOperation)
+			operation := <-rows
 			return operation.ID == 1
 		},
+	},
+	operationRepoTestCase{
+		name:     "Success receiving of empty list",
+		funcName: "List",
+		args:     []driver.Value{&ListParams{Page: 1, PerPage: 10, Date: "2020-01-01"}},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			// Begin transaction
+			rows := sqlmock.NewRows([]string{"id", "operation", "wallet_from", "wallet_to", "amount", "created_at"})
+
+			// Exec insert wallets
+			mock.
+				ExpectQuery("select id, operation, wallet_from, wallet_to, amount, created_at from wallet_operations").
+				WillReturnRows(rows)
+
+		},
+		expectedResultMatch: func(actual interface{}) bool {
+			rows := actual.(chan *entities.WalletOperation)
+			rowReceived := false
+			for row := range rows {
+				rowReceived = row.ID == 1
+			}
+			return rowReceived == false
+		},
+	},
+	operationRepoTestCase{
+		name:     "Failed receiving list of items (query row)",
+		funcName: "List",
+		args:     []driver.Value{nil},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			// Begin transaction
+			rows := sqlmock.NewRows([]string{"id", "operation", "wallet_from", "wallet_to", "amount", "created_at"})
+			rows = rows.AddRow(1, Create, nil, 1, decimal.NewFromInt(0), time.Now())
+
+			// Exec insert wallets
+			mock.
+				ExpectQuery("select id, operation, wallet_from, wallet_to, amount, created_at from wallet_operations").
+				WillReturnError(fmt.Errorf("query error"))
+
+		},
+		err: fmt.Errorf("query error"),
+	},
+	operationRepoTestCase{
+		name:     "Failed receiving list of items (scan row error)",
+		funcName: "List",
+		args:     []driver.Value{nil},
+		mockQuery: func(mock sqlmock.Sqlmock) {
+			// Begin transaction
+			rows := sqlmock.NewRows([]string{"id", "operation", "wallet_from", "wallet_to", "amount", "created_at"})
+			rows = rows.AddRow(nil, Create, nil, 1, decimal.NewFromInt(0), time.Now()).RowError(1, fmt.Errorf("scan error"))
+
+			// Exec insert wallets
+			mock.
+				ExpectQuery("select id, operation, wallet_from, wallet_to, amount, created_at from wallet_operations").
+				WillReturnRows(rows)
+
+		},
+		err: fmt.Errorf("[OPERATIONS_LIST_ROW]: sql: Scan error on column index 0, name \"id\": converting NULL to int is unsupported"),
 	},
 }
 
@@ -283,7 +325,7 @@ func TestOperationsRepo(t *testing.T) {
 					return
 				}
 				if reflectErr != nil && !strings.Contains(reflectErr.Error(), tc.err.Error()) {
-					t.Errorf("Expected string does not match receivede error. Got %s; Expected %s", reflectErr, tc.err)
+					t.Errorf("Expected string does not match receivede error. Got '%s'; Expected '%s'", reflectErr, tc.err)
 					return
 				}
 			}

@@ -6,8 +6,8 @@ package repositories
 
 import (
 	tx "billing_system_test_task/pkg/adapters/tx"
+	entities "billing_system_test_task/pkg/entities"
 	context "context"
-	sql "database/sql"
 	gomock "github.com/golang/mock/gomock"
 	decimal "github.com/shopspring/decimal"
 	reflect "reflect"
@@ -66,10 +66,10 @@ func (mr *MockOperationsManagerMockRecorder) Create(ctx, operation, walletFrom, 
 }
 
 // List mocks base method
-func (m *MockOperationsManager) List(ctx context.Context, params *ListParams) (*sql.Rows, error) {
+func (m *MockOperationsManager) List(ctx context.Context, params *ListParams) (chan *entities.WalletOperation, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "List", ctx, params)
-	ret0, _ := ret[0].(*sql.Rows)
+	ret0, _ := ret[0].(chan *entities.WalletOperation)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
