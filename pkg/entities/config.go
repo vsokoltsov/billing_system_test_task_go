@@ -41,7 +41,6 @@ func (ec EnvConfig) GetDBConnectionString() string {
 		sqlDbPort     = getEnv("DB_PORT", "3306")
 		sqlDbName     = getEnv("POSTGRES_DB", "billing")
 	)
-
 	return fmt.Sprintf("port=%s host=%s user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		sqlDbPort, sqlDbHost, sqlDbUser, sqlDbPassword, sqlDbName)
@@ -66,7 +65,8 @@ func (ec EnvConfig) GetDBProvider() string {
 
 func (ec EnvConfig) LoadEnvVariables(appDelimiter string) error {
 	projectPath := ec.getProjectPath(appDelimiter)
-	err := godotenv.Load(path.Join(projectPath, ".env"))
+	envPath := path.Join(projectPath, ".env")
+	err := godotenv.Overload(envPath)
 	if err != nil {
 		return err
 	}
