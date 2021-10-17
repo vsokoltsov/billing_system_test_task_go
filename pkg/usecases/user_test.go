@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"billing_system_test_task/pkg/adapters"
 	"billing_system_test_task/pkg/adapters/tx"
 	"billing_system_test_task/pkg/entities"
 	"billing_system_test_task/pkg/repositories"
@@ -379,13 +380,14 @@ func TestUserUsecase(t *testing.T) {
 		}
 		defer db.Close()
 
+		errFactory := adapters.NewHTTPErrorsFactory()
 		txManager := tx.NewMockTxBeginner(ctrl)
 		txMock := tx.NewMockTx(ctrl)
 		walletsRepo := repositories.NewMockWalletsManager(ctrl)
 		usersRepo := repositories.NewMockUsersManager(ctrl)
 		operationsRepo := repositories.NewMockOperationsManager(ctrl)
 
-		interactor := NewUserInteractor(usersRepo, walletsRepo, operationsRepo, txManager).(UserInteractor)
+		interactor := NewUserInteractor(usersRepo, walletsRepo, operationsRepo, txManager, errFactory).(UserInteractor)
 
 		for _, arg := range tc.args {
 			realArgs = append(realArgs, reflect.ValueOf(arg))
@@ -407,26 +409,26 @@ func TestUserUsecase(t *testing.T) {
 			).Call(realArgs)
 		}
 		var (
-			reflectErr error
+			reflectErr *adapters.HTTPError
 		)
 		resultValue := result[0].Interface()
 		rerr := result[1].Interface()
 		if rerr != nil {
-			reflectErr = rerr.(error)
+			reflectErr = rerr.(*adapters.HTTPError)
 		}
 
 		if reflectErr != nil && tc.err == nil {
-			t.Errorf("unexpected err: %s", reflectErr)
+			t.Errorf("unexpected err: %s", reflectErr.GetError().Error())
 			return
 		}
 
 		if tc.err != nil {
 			if reflectErr == nil {
-				t.Errorf("expected error, got nil: %s", reflectErr)
+				t.Errorf("expected error, got nil: %s", reflectErr.GetError().Error())
 				return
 			}
-			resultErr := rerr.(error)
-			if tc.err.Error() != resultErr.Error() {
+			resultErr := rerr.(*adapters.HTTPError)
+			if tc.err.Error() != resultErr.GetError().Error() {
 				t.Errorf("errors do not match. Expected '%s', got '%s'", tc.err, rerr)
 				return
 			}
