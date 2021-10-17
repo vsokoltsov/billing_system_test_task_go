@@ -1,6 +1,7 @@
 package app
 
 import (
+	"billing_system_test_task/pkg/adapters"
 	"billing_system_test_task/pkg/adapters/tx"
 	"billing_system_test_task/pkg/entities"
 	"billing_system_test_task/pkg/repositories"
@@ -49,14 +50,17 @@ func NewApp(config entities.ConfigAdapter) AppAdapter {
 	if pingErr := sqlDB.Ping(); pingErr != nil {
 		log.Fatalf("Error sql database connection: %s", pingErr)
 	}
-
+	errFactory := adapters.NewHTTPErrorsFactory()
 	txManger := tx.NewTxBeginner(sqlDB)
-	// walletsRepo := repositories.NewWalletService(sqlDB)
+	walletsRepo := repositories.NewWalletService(sqlDB)
 	usersRepo := repositories.NewUsersService(sqlDB)
-	userInteractor := usecases.NewUserInteractor(usersRepo, txManger)
+	operationsRepo := repositories.NewWalletOperationRepo(sqlDB)
+	userInteractor := usecases.NewUserInteractor(usersRepo, walletsRepo, operationsRepo, txManger, errFactory)
+	walletInteractor := usecases.NewWalletInteractor(walletsRepo, operationsRepo, errFactory, txManger)
 
 	usersHandler := httpHandlers.NewUserHandler(userInteractor)
-	router := httpHandlers.NewRouter(*usersHandler)
+	walletsHandler := httpHandlers.NewWalletsHandler(walletInteractor)
+	router := httpHandlers.NewRouter(*usersHandler, *walletsHandler)
 
 	url := strings.Join([]string{host, port}, ":")
 
