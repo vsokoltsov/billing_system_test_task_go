@@ -60,6 +60,12 @@ var doc = `{
                         "description": "Number of items per page",
                         "name": "per_page",
                         "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page",
+                        "name": "date",
+                        "in": "query"
                     }
                 ]
             }
@@ -84,7 +90,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/users.UserForm"
+                            "$ref": "#/definitions/forms.UserForm"
                         }
                     }
                 ],
@@ -92,7 +98,7 @@ var doc = `{
                     "201": {
                         "description": "Create user response",
                         "schema": {
-                            "$ref": "#/definitions/users.UserSerializer"
+                            "$ref": "#/definitions/serializers.UserSerializer"
                         }
                     },
                     "400": {
@@ -137,7 +143,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/users.EnrollForm"
+                            "$ref": "#/definitions/forms.EnrollForm"
                         }
                     }
                 ],
@@ -145,7 +151,7 @@ var doc = `{
                     "200": {
                         "description": "Retrieving user information with updated balance",
                         "schema": {
-                            "$ref": "#/definitions/users.UserSerializer"
+                            "$ref": "#/definitions/serializers.UserSerializer"
                         }
                     },
                     "400": {
@@ -183,7 +189,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/wallets.WalletForm"
+                            "$ref": "#/definitions/forms.WalletForm"
                         }
                     }
                 ],
@@ -191,7 +197,7 @@ var doc = `{
                     "200": {
                         "description": "Wallet from id",
                         "schema": {
-                            "$ref": "#/definitions/wallets.walletSerializer"
+                            "$ref": "#/definitions/serializers.WalletSerializer"
                         }
                     },
                     "400": {
@@ -211,7 +217,7 @@ var doc = `{
         }
     },
     "definitions": {
-        "users.EnrollForm": {
+        "forms.EnrollForm": {
             "type": "object",
             "required": [
                 "amount"
@@ -222,7 +228,7 @@ var doc = `{
                 }
             }
         },
-        "users.UserForm": {
+        "forms.UserForm": {
             "type": "object",
             "required": [
                 "email"
@@ -233,7 +239,26 @@ var doc = `{
                 }
             }
         },
-        "users.UserSerializer": {
+        "forms.WalletForm": {
+            "type": "object",
+            "required": [
+                "amount",
+                "wallet_from",
+                "wallet_to"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "wallet_from": {
+                    "type": "integer"
+                },
+                "wallet_to": {
+                    "type": "integer"
+                }
+            }
+        },
+        "serializers.UserSerializer": {
             "type": "object",
             "properties": {
                 "balance": {
@@ -246,6 +271,14 @@ var doc = `{
                     "type": "string"
                 },
                 "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "serializers.WalletSerializer": {
+            "type": "object",
+            "properties": {
+                "wallet_from": {
                     "type": "integer"
                 }
             }
@@ -269,33 +302,6 @@ var doc = `{
                             "type": "string"
                         }
                     }
-                }
-            }
-        },
-        "wallets.WalletForm": {
-            "type": "object",
-            "required": [
-                "amount",
-                "wallet_from",
-                "wallet_to"
-            ],
-            "properties": {
-                "amount": {
-                    "type": "number"
-                },
-                "wallet_from": {
-                    "type": "integer"
-                },
-                "wallet_to": {
-                    "type": "integer"
-                }
-            }
-        },
-        "wallets.walletSerializer": {
-            "type": "object",
-            "properties": {
-                "wallet_from": {
-                    "type": "integer"
                 }
             }
         }

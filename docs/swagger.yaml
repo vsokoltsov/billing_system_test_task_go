@@ -1,20 +1,33 @@
 basePath: /
 definitions:
-  users.EnrollForm:
+  forms.EnrollForm:
     properties:
       amount:
         type: number
     required:
     - amount
     type: object
-  users.UserForm:
+  forms.UserForm:
     properties:
       email:
         type: string
     required:
     - email
     type: object
-  users.UserSerializer:
+  forms.WalletForm:
+    properties:
+      amount:
+        type: number
+      wallet_from:
+        type: integer
+      wallet_to:
+        type: integer
+    required:
+    - amount
+    - wallet_from
+    - wallet_to
+    type: object
+  serializers.UserSerializer:
     properties:
       balance:
         type: number
@@ -23,6 +36,11 @@ definitions:
       email:
         type: string
       id:
+        type: integer
+    type: object
+  serializers.WalletSerializer:
+    properties:
+      wallet_from:
         type: integer
     type: object
   utils.ErrorMsg:
@@ -38,24 +56,6 @@ definitions:
             type: string
           type: array
         type: object
-    type: object
-  wallets.WalletForm:
-    properties:
-      amount:
-        type: number
-      wallet_from:
-        type: integer
-      wallet_to:
-        type: integer
-    required:
-    - amount
-    - wallet_from
-    - wallet_to
-    type: object
-  wallets.walletSerializer:
-    properties:
-      wallet_from:
-        type: integer
     type: object
 host: localhost:8000
 info:
@@ -86,6 +86,10 @@ paths:
         in: query
         name: per_page
         type: integer
+      - description: Number of items per page
+        in: query
+        name: date
+        type: integer
       produces:
       - application/octet-stream
       summary: Wallet operations
@@ -102,14 +106,14 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/users.UserForm'
+          $ref: '#/definitions/forms.UserForm'
       produces:
       - application/json
       responses:
         "201":
           description: Create user response
           schema:
-            $ref: '#/definitions/users.UserSerializer'
+            $ref: '#/definitions/serializers.UserSerializer'
         "400":
           description: User form validation error
           schema:
@@ -137,14 +141,14 @@ paths:
         name: enroll
         required: true
         schema:
-          $ref: '#/definitions/users.EnrollForm'
+          $ref: '#/definitions/forms.EnrollForm'
       produces:
       - application/json
       responses:
         "200":
           description: Retrieving user information with updated balance
           schema:
-            $ref: '#/definitions/users.UserSerializer'
+            $ref: '#/definitions/serializers.UserSerializer'
         "400":
           description: Enroll form validation error
           schema:
@@ -167,14 +171,14 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/wallets.WalletForm'
+          $ref: '#/definitions/forms.WalletForm'
       produces:
       - application/json
       responses:
         "200":
           description: Wallet from id
           schema:
-            $ref: '#/definitions/wallets.walletSerializer'
+            $ref: '#/definitions/serializers.WalletSerializer'
         "400":
           description: Wallet transfer validation error
           schema:
