@@ -13,7 +13,7 @@ coverage:
 .PHONY: swagger
 swagger:
 	@echo "Generate Swagger documentation"
-	@exec ~/go/bin/swag init -g pkg/api/api.go
+	@exec ~/go/bin/swag init -g pkg/transport/http/api.go
 
 .PHONY: build
 build:
