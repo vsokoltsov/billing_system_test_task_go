@@ -21,6 +21,10 @@ type QueryParams struct {
 // QueryParams implements QueryReaderManager interface
 type QueryParamsReader struct{}
 
+func NewQueryParamsReader() *QueryParamsReader {
+	return &QueryParamsReader{}
+}
+
 // Parse returns given URL query parameters
 func (qpr QueryParamsReader) Parse(query url.Values) (*QueryParams, error) {
 	var (

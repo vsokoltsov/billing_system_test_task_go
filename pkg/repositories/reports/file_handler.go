@@ -38,6 +38,10 @@ type FileHandler struct {
 // FileStorage implements FileStorageManager interface
 type FileStorage struct{}
 
+func NewFileStorage() *FileStorage {
+	return &FileStorage{}
+}
+
 // Metadata represents given file's metadata
 type Metadata struct {
 	size        string

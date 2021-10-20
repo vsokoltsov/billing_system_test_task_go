@@ -17,6 +17,10 @@ type PipelineManager interface {
 // OperationsProcessesManager represents PipelineManager interface
 type OperationsProcessesManager struct{}
 
+func NewOperationsProcessesManager() *OperationsProcessesManager {
+	return &OperationsProcessesManager{}
+}
+
 // Process runs pipeline through all the stages
 func (op OperationsProcessesManager) Process(ctx context.Context, or repositories.OperationsManager, listParams *repositories.ListParams, marshaller FileMarshallingManager) error {
 	var (

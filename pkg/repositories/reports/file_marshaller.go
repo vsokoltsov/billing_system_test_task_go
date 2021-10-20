@@ -68,6 +68,13 @@ type CSVHandler struct {
 	mu        *sync.Mutex
 }
 
+func NewCSVHandler(csvWriter CSVWriter, mu *sync.Mutex) *CSVHandler {
+	return &CSVHandler{
+		csvWriter: csvWriter,
+		mu:        mu,
+	}
+}
+
 // MarshallOperation marshal entities.WalletOperation instance to csv
 func (ch *CSVHandler) MarshallOperation(operation *entities.WalletOperation) (*MarshalledResult, error) {
 	idStr := strconv.Itoa(operation.ID)
