@@ -355,12 +355,6 @@ func BenchmarkCreateUser(b *testing.B) {
 	userRows := sqlmock.NewRows([]string{"id"})
 	userRows = userRows.AddRow(1)
 
-	walletRows := sqlmock.NewRows([]string{"id"})
-	walletRows = walletRows.AddRow(1)
-
-	woRows := sqlmock.NewRows([]string{"id"})
-	woRows = woRows.AddRow(1)
-
 	repo := NewUsersService(sqlDB)
 
 	// amount := decimal.NewFromInt(0)

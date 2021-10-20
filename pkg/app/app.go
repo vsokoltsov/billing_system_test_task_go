@@ -27,7 +27,6 @@ type AppAdapter interface {
 
 // App represents base application info
 type App struct {
-	config entities.ConfigAdapter
 	host   string
 	port   string
 	server *http.Server
@@ -69,7 +68,7 @@ func NewApp(config entities.ConfigAdapter) AppAdapter {
 	usersHandler := httpHandlers.NewUserHandler(userInteractor)
 	walletsHandler := httpHandlers.NewWalletsHandler(walletInteractor)
 	operationsHandler := httpHandlers.NewOperationsHandler(operationsInteractor)
-	router := httpHandlers.NewRouter(*usersHandler, *walletsHandler, *&operationsHandler)
+	router := httpHandlers.NewRouter(*usersHandler, *walletsHandler, operationsHandler)
 
 	url := strings.Join([]string{host, port}, ":")
 

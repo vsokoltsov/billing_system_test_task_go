@@ -10,6 +10,7 @@ type FileParams struct {
 	CsvWriter CSVWriter
 }
 
+// Metadata represents given file's metadata
 type Metadata struct {
 	Size        string
 	ContentType string

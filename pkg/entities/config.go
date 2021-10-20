@@ -22,7 +22,6 @@ type ConfigAdapter interface {
 }
 
 type EnvConfig struct {
-	pathDelimiter string
 }
 
 func NewEnvConfig() ConfigAdapter {

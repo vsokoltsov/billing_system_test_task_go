@@ -37,7 +37,6 @@ type operationWalletTest struct {
 	expectedStatus int
 	mockData       func(ctx context.Context, operationUseCase *usecases.MockWalletOperationUsecase)
 	formError      bool
-	matchResults   func(actual []byte) bool
 	errMsg         string
 }
 

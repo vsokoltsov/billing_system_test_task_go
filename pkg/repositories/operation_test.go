@@ -233,10 +233,6 @@ var operationRepoTestCases = []operationRepoTestCase{
 		funcName: "List",
 		args:     []driver.Value{nil},
 		mockQuery: func(mock sqlmock.Sqlmock) {
-			// Begin transaction
-			rows := sqlmock.NewRows([]string{"id", "operation", "wallet_from", "wallet_to", "amount", "created_at"})
-			rows = rows.AddRow(1, Create, nil, 1, decimal.NewFromInt(0), time.Now())
-
 			// Exec insert wallets
 			mock.
 				ExpectQuery("select id, operation, wallet_from, wallet_to, amount, created_at from wallet_operations").

@@ -42,12 +42,6 @@ func NewFileStorage() *FileStorage {
 	return &FileStorage{}
 }
 
-// Metadata represents given file's metadata
-type Metadata struct {
-	size        string
-	contentType string
-}
-
 // NewFileHandler returns new instance of FileHandler
 func NewFileHandler(storage FileStorageManager) FileHandler {
 	return FileHandler{

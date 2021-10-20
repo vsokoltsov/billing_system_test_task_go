@@ -196,8 +196,7 @@ func TestWalletOperationUsecase(t *testing.T) {
 		}
 		tc.mockQuery(ctx, operationsRepo, *mockQueryParams, *mockPipes, *mockFileMarshaller, *mockFileHandler)
 
-		var result []reflect.Value
-		result = reflect.ValueOf(
+		result := reflect.ValueOf(
 			interactor,
 		).MethodByName(
 			tc.funcName,
