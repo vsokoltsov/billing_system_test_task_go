@@ -363,36 +363,12 @@ func BenchmarkCreateUser(b *testing.B) {
 
 	repo := NewUsersService(sqlDB)
 
-	amount := decimal.NewFromInt(0)
-
-	mock.
-		ExpectExec("select pg_advisory_lock").
-		WithArgs(CreateUser).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-
-	mock.ExpectBegin()
+	// amount := decimal.NewFromInt(0)
 
 	mock.
 		ExpectQuery("insert into users").
 		WithArgs([]driver.Value{"example@mail.com"}...).
 		WillReturnRows(userRows)
-
-	mock.
-		ExpectQuery("insert into wallets").
-		WithArgs([]driver.Value{int64(1)}...).
-		WillReturnRows(walletRows)
-
-	mock.
-		ExpectQuery("insert into wallet_operations").
-		WithArgs([]driver.Value{Create, nil, 1, amount}...).
-		WillReturnRows(woRows)
-
-	mock.ExpectCommit()
-
-	mock.
-		ExpectExec("select pg_advisory_unlock").
-		WithArgs(CreateUser).
-		WillReturnResult(sqlmock.NewResult(2, 2))
 
 	for i := 0; i < b.N; i++ {
 		_, _ = repo.Create(ctx, "example@mail.com")

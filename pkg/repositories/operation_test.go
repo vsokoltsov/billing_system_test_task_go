@@ -252,7 +252,7 @@ var operationRepoTestCases = []operationRepoTestCase{
 		mockQuery: func(mock sqlmock.Sqlmock) {
 			// Begin transaction
 			rows := sqlmock.NewRows([]string{"id", "operation", "wallet_from", "wallet_to", "amount", "created_at"})
-			rows = rows.AddRow(nil, Create, nil, 1, decimal.NewFromInt(0), time.Now()).RowError(1, fmt.Errorf("scan error"))
+			rows = rows.AddRow(nil, Create, nil, 1, decimal.NewFromInt(0), time.Now()).RowError(2, fmt.Errorf("scan error"))
 
 			// Exec insert wallets
 			mock.
