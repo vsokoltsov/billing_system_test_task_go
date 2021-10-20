@@ -18,14 +18,14 @@ import (
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 // @host localhost:8000
 // @BasePath /
-func NewRouter(usersHandler UsersHandler, walletsHandler WalletsHandler) http.Handler {
+func NewRouter(usersHandler UsersHandler, walletsHandler WalletsHandler, operationsHandler OperationsHandler) http.Handler {
 	r := mux.NewRouter()
 
 	api := r.PathPrefix("/api").Subrouter()
 	api.HandleFunc("/users/", usersHandler.Create).Methods("POST").Name("CREATE_USER")
 	api.HandleFunc("/users/{id}/enroll/", usersHandler.Enroll).Methods("POST").Name("ENROLL_USER_WALLET")
 	api.HandleFunc("/wallets/transfer/", walletsHandler.Transfer).Methods("POST").Name("Transfer funds")
-	// api.HandleFunc("/operations/", operations.List).Methods("GET").Name("OPERATIONS_LIST")
+	api.HandleFunc("/operations/", operationsHandler.List).Methods("GET").Name("OPERATIONS_LIST")
 	r.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)
 	r.Handle("/metrics", promhttp.Handler())
 	return r

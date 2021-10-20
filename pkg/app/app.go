@@ -5,6 +5,7 @@ import (
 	"billing_system_test_task/pkg/adapters/tx"
 	"billing_system_test_task/pkg/entities"
 	"billing_system_test_task/pkg/repositories"
+	"billing_system_test_task/pkg/repositories/reports"
 	httpHandlers "billing_system_test_task/pkg/transport/http"
 	"billing_system_test_task/pkg/usecases"
 	"context"
@@ -58,9 +59,17 @@ func NewApp(config entities.ConfigAdapter) AppAdapter {
 	userInteractor := usecases.NewUserInteractor(usersRepo, walletsRepo, operationsRepo, txManger, errFactory)
 	walletInteractor := usecases.NewWalletInteractor(walletsRepo, operationsRepo, errFactory, txManger)
 
+	queryParams := reports.NewQueryParamsReader()
+	fileStorage := reports.NewFileStorage()
+	fileHandler := reports.NewFileHandler(fileStorage)
+	pipesManager := reports.NewOperationsProcessesManager()
+
+	operationsInteractor := usecases.NewWalletOperationInteractor(operationsRepo, queryParams, fileHandler, pipesManager, errFactory)
+
 	usersHandler := httpHandlers.NewUserHandler(userInteractor)
 	walletsHandler := httpHandlers.NewWalletsHandler(walletInteractor)
-	router := httpHandlers.NewRouter(*usersHandler, *walletsHandler)
+	operationsHandler := httpHandlers.NewOperationsHandler(operationsInteractor)
+	router := httpHandlers.NewRouter(*usersHandler, *walletsHandler, *&operationsHandler)
 
 	url := strings.Join([]string{host, port}, ":")
 
