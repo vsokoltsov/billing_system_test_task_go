@@ -17,17 +17,15 @@ type WalletOperationInteractor struct {
 	walletOperationRepo     repositories.OperationsManager
 	queryParameters         reports.QueryReaderManager
 	fileHandler             reports.FileHandlingManager
-	fileMarshaller          reports.FileMarshallingManager
 	operationProcessManager reports.PipelineManager
 	errorsFactory           adapters.ErrorsFactory
 }
 
-func NewWalletOperationInteractor(walletOperationRepo repositories.OperationsManager, queryParameters reports.QueryReaderManager, fileHandler reports.FileHandlingManager, fileMarshaller reports.FileMarshallingManager, operationProcessManager reports.PipelineManager, errorsFactory adapters.ErrorsFactory) WalletOperationUsecase {
+func NewWalletOperationInteractor(walletOperationRepo repositories.OperationsManager, queryParameters reports.QueryReaderManager, fileHandler reports.FileHandlingManager, operationProcessManager reports.PipelineManager, errorsFactory adapters.ErrorsFactory) WalletOperationUsecase {
 	return &WalletOperationInteractor{
 		walletOperationRepo:     walletOperationRepo,
 		queryParameters:         queryParameters,
 		fileHandler:             fileHandler,
-		fileMarshaller:          fileMarshaller,
 		operationProcessManager: operationProcessManager,
 		errorsFactory:           errorsFactory,
 	}

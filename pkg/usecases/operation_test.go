@@ -182,10 +182,6 @@ func TestWalletOperationUsecase(t *testing.T) {
 		defer db.Close()
 
 		errFactory := adapters.NewHTTPErrorsFactory()
-		// txManager := tx.NewMockTxBeginner(ctrl)
-		// txMock := tx.NewMockTx(ctrl)
-		// walletsRepo := repositories.NewMockWalletsManager(ctrl)
-		// usersRepo := repositories.NewMockUsersManager(ctrl)
 		operationsRepo := repositories.NewMockOperationsManager(ctrl)
 
 		mockQueryParams := reports.NewMockQueryReaderManager(ctrl)
@@ -193,7 +189,7 @@ func TestWalletOperationUsecase(t *testing.T) {
 		mockFileMarshaller := reports.NewMockFileMarshallingManager(ctrl)
 		mockFileHandler := reports.NewMockFileHandlingManager(ctrl)
 
-		interactor := NewWalletOperationInteractor(operationsRepo, mockQueryParams, mockFileHandler, mockFileMarshaller, mockPipes, errFactory).(*WalletOperationInteractor)
+		interactor := NewWalletOperationInteractor(operationsRepo, mockQueryParams, mockFileHandler, mockPipes, errFactory).(*WalletOperationInteractor)
 
 		for _, arg := range tc.args {
 			realArgs = append(realArgs, reflect.ValueOf(arg))
