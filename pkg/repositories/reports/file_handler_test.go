@@ -170,3 +170,11 @@ func TestFailedFileHandlerGetFileMetadataErrorStats(t *testing.T) {
 		t.Errorf("Error should contain 'file stat get error' message")
 	}
 }
+
+// Test success return of FileStorage instance
+func TestNewFileStorage(t *testing.T) {
+	storage := NewFileStorage()
+	if storage == nil {
+		t.Error("Expected FileStorage instance, got nil")
+	}
+}

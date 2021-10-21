@@ -266,3 +266,24 @@ func BenchmarkWriteToFileCSV(b *testing.B) {
 		_ = handler.WriteToFile(mr)
 	}
 }
+
+// Test success receiving of JSONHandler
+func TestNewJSONHandler(t *testing.T) {
+	f, _ := os.CreateTemp("", "_example_file")
+	mu := &sync.Mutex{}
+	handler := NewJSONHandler(f, mu, json.Marshal)
+	if handler == nil {
+		t.Error("Expected instance of JSONHandler, got nil")
+	}
+}
+
+// Test success receiving of CSVHandler
+func TestNewCSVHandler(t *testing.T) {
+	mu := &sync.Mutex{}
+	f, _ := os.CreateTemp("", "_example_file")
+	csvWriter := csv.NewWriter(f)
+	handler := NewCSVHandler(csvWriter, mu)
+	if handler == nil {
+		t.Error("Expected instance of CSVHandler, got nil")
+	}
+}

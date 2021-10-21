@@ -608,3 +608,11 @@ func BenchmarkWritePipe(b *testing.B) {
 		go marshallPipe.Call(in, out)
 	}
 }
+
+// Test success return of OperationProcessesManager instance
+func TestNewOperationProcessesManager(t *testing.T) {
+	processes := NewOperationsProcessesManager()
+	if processes == nil {
+		t.Error("Expected OperationProcessesManager implementation instance, got nil")
+	}
+}

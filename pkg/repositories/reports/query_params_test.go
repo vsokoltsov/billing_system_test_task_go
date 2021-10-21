@@ -103,3 +103,11 @@ func BenchmarkParse(b *testing.B) {
 		_, _ = qpr.Parse(params)
 	}
 }
+
+// Test success return of QueryParamsReader instance
+func TestNewQueryParamsReader(t *testing.T) {
+	queryReader := NewQueryParamsReader()
+	if queryReader == nil {
+		t.Error("Expected QueryParamsReader instance, got nil")
+	}
+}
