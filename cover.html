@@ -59,19 +59,19 @@
 				
 				<option value="file1">billing_system_test_task/pkg/repositories/operation.go (100.0%)</option>
 				
-				<option value="file2">billing_system_test_task/pkg/repositories/reports/file_handler.go (97.1%)</option>
+				<option value="file2">billing_system_test_task/pkg/repositories/reports/file_handler.go (100.0%)</option>
 				
-				<option value="file3">billing_system_test_task/pkg/repositories/reports/file_marshaller.go (93.3%)</option>
+				<option value="file3">billing_system_test_task/pkg/repositories/reports/file_marshaller.go (100.0%)</option>
 				
-				<option value="file4">billing_system_test_task/pkg/repositories/reports/pipes.go (97.8%)</option>
+				<option value="file4">billing_system_test_task/pkg/repositories/reports/pipes.go (100.0%)</option>
 				
-				<option value="file5">billing_system_test_task/pkg/repositories/reports/query_params.go (95.0%)</option>
+				<option value="file5">billing_system_test_task/pkg/repositories/reports/query_params.go (100.0%)</option>
 				
 				<option value="file6">billing_system_test_task/pkg/repositories/users.go (100.0%)</option>
 				
 				<option value="file7">billing_system_test_task/pkg/repositories/wallet.go (100.0%)</option>
 				
-				<option value="file8">billing_system_test_task/pkg/transport/http/api.go (0.0%)</option>
+				<option value="file8">billing_system_test_task/pkg/transport/http/api.go (100.0%)</option>
 				
 				<option value="file9">billing_system_test_task/pkg/transport/http/operation.go (100.0%)</option>
 				
@@ -303,15 +303,9 @@ type FileHandler struct {
 // FileStorage implements FileStorageManager interface
 type FileStorage struct{}
 
-func NewFileStorage() *FileStorage <span class="cov0" title="0">{
+func NewFileStorage() *FileStorage <span class="cov8" title="1">{
         return &amp;FileStorage{}
 }</span>
-
-// Metadata represents given file's metadata
-type Metadata struct {
-        size        string
-        contentType string
-}
 
 // NewFileHandler returns new instance of FileHandler
 func NewFileHandler(storage FileStorageManager) FileHandler <span class="cov8" title="1">{
@@ -432,7 +426,7 @@ type JSONHandler struct {
         marshall func(v interface{}) ([]byte, error)
 }
 
-func NewJSONHandler(file io.Writer, mu *sync.Mutex, marshall func(v interface{}) ([]byte, error)) *JSONHandler <span class="cov0" title="0">{
+func NewJSONHandler(file io.Writer, mu *sync.Mutex, marshall func(v interface{}) ([]byte, error)) *JSONHandler <span class="cov8" title="1">{
         return &amp;JSONHandler{
                 file:     file,
                 mu:       mu,
@@ -473,7 +467,7 @@ type CSVHandler struct {
         mu        *sync.Mutex
 }
 
-func NewCSVHandler(csvWriter CSVWriter, mu *sync.Mutex) *CSVHandler <span class="cov0" title="0">{
+func NewCSVHandler(csvWriter CSVWriter, mu *sync.Mutex) *CSVHandler <span class="cov8" title="1">{
         return &amp;CSVHandler{
                 csvWriter: csvWriter,
                 mu:        mu,
@@ -533,7 +527,7 @@ type PipelineManager interface {
 // OperationsProcessesManager represents PipelineManager interface
 type OperationsProcessesManager struct{}
 
-func NewOperationsProcessesManager() *OperationsProcessesManager <span class="cov0" title="0">{
+func NewOperationsProcessesManager() *OperationsProcessesManager <span class="cov8" title="1">{
         return &amp;OperationsProcessesManager{}
 }</span>
 
@@ -688,7 +682,7 @@ type QueryParams struct {
 // QueryParams implements QueryReaderManager interface
 type QueryParamsReader struct{}
 
-func NewQueryParamsReader() *QueryParamsReader <span class="cov0" title="0">{
+func NewQueryParamsReader() *QueryParamsReader <span class="cov8" title="1">{
         return &amp;QueryParamsReader{}
 }</span>
 
@@ -1147,7 +1141,7 @@ import (
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 // @host localhost:8000
 // @BasePath /
-func NewRouter(usersHandler UsersHandler, walletsHandler WalletsHandler, operationsHandler OperationsHandler) http.Handler <span class="cov0" title="0">{
+func NewRouter(usersHandler UsersHandler, walletsHandler WalletsHandler, operationsHandler OperationsHandler) http.Handler <span class="cov8" title="1">{
         r := mux.NewRouter()
 
         api := r.PathPrefix("/api").Subrouter()
@@ -1205,51 +1199,16 @@ func (oh *OperationsHandler) List(w http.ResponseWriter, r *http.Request) <span 
                 utils.JsonResponseError(w, grErr.GetStatus(), grErr.GetError().Error())
                 return
         }</span>
-        // queryParams, qpErr := oh.pr.Parse(v)
-        // if qpErr != nil {
-        // utils.JsonResponseError(w, http.StatusBadRequest, qpErr.Error())
-        // return
-        // }
-
-        // fileParams, fileCreateErr := oh.fh.Create(queryParams.format)
-        // if fileCreateErr != nil {
-        //         utils.JsonResponseError(w, http.StatusBadRequest, fileCreateErr.Error())
-        //         return
-        // }
 
         <span class="cov8" title="1">defer func(path string, f *os.File) </span><span class="cov8" title="1">{
                 f.Close()
                 os.Remove(path)
         }</span>(fileMetadata.Path, fileMetadata.File)
 
-        // fileHandler, fileHandlerErr := oh.fh.CreateMarshaller(
-        // fileParams.f,
-        // queryParams.format,
-        // fileParams.csvWriter,
-        // )
-        // if fileHandlerErr != nil {
-        //         utils.JsonResponseError(w, http.StatusBadRequest, fileHandlerErr.Error())
-        //         return
-        // }
-
-        // processErr := oh.op.Process(ctx, oh.or, queryParams.listParams, fileHandler)
-        // if processErr != nil {
-        //         utils.JsonResponseError(w, http.StatusBadRequest, processErr.Error())
-        //         return
-        // }
-
-        // metadata, metadataErr := oh.fh.GetFileMetadata(fileParams.f)
-        // if metadataErr != nil {
-        //         utils.JsonResponseError(w, http.StatusBadRequest, metadataErr.Error())
-        //         return
-        // }
         <span class="cov8" title="1">w.Header().Set("Content-Disposition", "attachment; filename="+fileMetadata.File.Name())
         w.Header().Set("Content-Type", fileMetadata.ContentType)
         w.Header().Set("Content-Length", fileMetadata.Size)
         w.WriteHeader(http.StatusOK)
-        // if fileParams.csvWriter != nil {
-        //         fileParams.csvWriter.Flush()
-        // }
 
         http.ServeFile(w, r, fileMetadata.Path)</span>
 }
