@@ -10,6 +10,13 @@ coverage:
 	@echo "Generate cover.html"
 	@exec go tool cover -html=cover.out -o cover.html
 
+.PHONY: coverage-all
+coverage-all:
+	@echo "Create coverprofile"
+	@exec go test -coverprofile=cover.out.tmp -v ./pkg/...
+	@echo "Show full coverage"
+	@exec go tool cover  -func=cover.out
+
 .PHONY: swagger
 swagger:
 	@echo "Generate Swagger documentation"

@@ -2,6 +2,64 @@
 
 [![Go](https://github.com/vsokoltsov/billing_system_test_task_go/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/vsokoltsov/billing_system_test_task_go/actions/workflows/go.yml)
 
+## Code coverage
+
+```shell
+billing_system_test_task/pkg/pipeline/pipeline.go:11:				ExecutePipeline			100.0%
+billing_system_test_task/pkg/pipeline/pipeline.go:24:				executeJob			100.0%
+billing_system_test_task/pkg/repositories/operation.go:35:			NewWalletOperationRepo		100.0%
+billing_system_test_task/pkg/repositories/operation.go:41:			WithTx				100.0%
+billing_system_test_task/pkg/repositories/operation.go:45:			Create				100.0%
+billing_system_test_task/pkg/repositories/operation.go:77:			List				100.0%
+billing_system_test_task/pkg/repositories/reports/file_handler.go:41:		NewFileStorage			100.0%
+billing_system_test_task/pkg/repositories/reports/file_handler.go:46:		NewFileHandler			100.0%
+billing_system_test_task/pkg/repositories/reports/file_handler.go:53:		Create				100.0%
+billing_system_test_task/pkg/repositories/reports/file_handler.go:58:		Create				100.0%
+billing_system_test_task/pkg/repositories/reports/file_handler.go:87:		CreateMarshaller		100.0%
+billing_system_test_task/pkg/repositories/reports/file_handler.go:116:		GetFileMetadata			100.0%
+billing_system_test_task/pkg/repositories/reports/file_marshaller.go:30:	NewJSONHandler			100.0%
+billing_system_test_task/pkg/repositories/reports/file_marshaller.go:39:	MarshallOperation		100.0%
+billing_system_test_task/pkg/repositories/reports/file_marshaller.go:53:	WriteToFile			100.0%
+billing_system_test_task/pkg/repositories/reports/file_marshaller.go:71:	NewCSVHandler			100.0%
+billing_system_test_task/pkg/repositories/reports/file_marshaller.go:79:	MarshallOperation		100.0%
+billing_system_test_task/pkg/repositories/reports/file_marshaller.go:100:	WriteToFile			100.0%
+billing_system_test_task/pkg/repositories/reports/pipes.go:20:			NewOperationsProcessesManager	100.0%
+billing_system_test_task/pkg/repositories/reports/pipes.go:25:			Process				100.0%
+billing_system_test_task/pkg/repositories/reports/pipes.go:75:			Call				100.0%
+billing_system_test_task/pkg/repositories/reports/pipes.go:102:			Call				100.0%
+billing_system_test_task/pkg/repositories/reports/pipes.go:130:			Call				100.0%
+billing_system_test_task/pkg/repositories/reports/query_params.go:24:		NewQueryParamsReader		100.0%
+billing_system_test_task/pkg/repositories/reports/query_params.go:29:		Parse				100.0%
+billing_system_test_task/pkg/repositories/users.go:30:				NewUsersService			100.0%
+billing_system_test_task/pkg/repositories/users.go:36:				WithTx				100.0%
+billing_system_test_task/pkg/repositories/users.go:41:				GetByID				100.0%
+billing_system_test_task/pkg/repositories/users.go:75:				GetByWalletID			100.0%
+billing_system_test_task/pkg/repositories/users.go:108:				Create				100.0%
+billing_system_test_task/pkg/repositories/wallet.go:34:				NewWalletService		100.0%
+billing_system_test_task/pkg/repositories/wallet.go:40:				WithTx				100.0%
+billing_system_test_task/pkg/repositories/wallet.go:45:				Create				100.0%
+billing_system_test_task/pkg/repositories/wallet.go:76:				Enroll				100.0%
+billing_system_test_task/pkg/repositories/wallet.go:132:			GetByID				100.0%
+billing_system_test_task/pkg/repositories/wallet.go:144:			GetByUserId			100.0%
+billing_system_test_task/pkg/repositories/wallet.go:156:			Transfer			100.0%
+billing_system_test_task/pkg/transport/http/api.go:21:				NewRouter			100.0%
+billing_system_test_task/pkg/transport/http/operation.go:17:			NewOperationsHandler		100.0%
+billing_system_test_task/pkg/transport/http/operation.go:36:			List				100.0%
+billing_system_test_task/pkg/transport/http/user.go:27:				NewUserHandler			100.0%
+billing_system_test_task/pkg/transport/http/user.go:44:				Create				100.0%
+billing_system_test_task/pkg/transport/http/user.go:92:				Enroll				100.0%
+billing_system_test_task/pkg/transport/http/wallet.go:21:			NewWalletsHandler		100.0%
+billing_system_test_task/pkg/transport/http/wallet.go:38:			Transfer			100.0%
+billing_system_test_task/pkg/usecases/operation.go:24:				NewWalletOperationInteractor	100.0%
+billing_system_test_task/pkg/usecases/operation.go:34:				GenerateReport			100.0%
+billing_system_test_task/pkg/usecases/user.go:27:				NewUserInteractor		100.0%
+billing_system_test_task/pkg/usecases/user.go:38:				Create				100.0%
+billing_system_test_task/pkg/usecases/user.go:78:				Enroll				100.0%
+billing_system_test_task/pkg/usecases/wallet.go:24:				NewWalletInteractor		100.0%
+billing_system_test_task/pkg/usecases/wallet.go:33:				Transfer			100.0%
+total:										(statements)			100.0%
+```
+
 ## How to run
 
 1. Populate `.env` file with necessary variables (you can find them in `.env.sample`)
