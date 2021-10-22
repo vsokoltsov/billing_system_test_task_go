@@ -55,35 +55,35 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">billing_system_test_task/pkg/pipeline/pipeline.go (100.0%)</option>
+				<option value="file0">billing_system_test_task/internal/pipeline/pipeline.go (100.0%)</option>
 				
-				<option value="file1">billing_system_test_task/pkg/repositories/operation.go (100.0%)</option>
+				<option value="file1">billing_system_test_task/internal/repositories/operation.go (100.0%)</option>
 				
-				<option value="file2">billing_system_test_task/pkg/repositories/reports/file_handler.go (100.0%)</option>
+				<option value="file2">billing_system_test_task/internal/repositories/reports/file_handler.go (100.0%)</option>
 				
-				<option value="file3">billing_system_test_task/pkg/repositories/reports/file_marshaller.go (100.0%)</option>
+				<option value="file3">billing_system_test_task/internal/repositories/reports/file_marshaller.go (100.0%)</option>
 				
-				<option value="file4">billing_system_test_task/pkg/repositories/reports/pipes.go (100.0%)</option>
+				<option value="file4">billing_system_test_task/internal/repositories/reports/pipes.go (100.0%)</option>
 				
-				<option value="file5">billing_system_test_task/pkg/repositories/reports/query_params.go (100.0%)</option>
+				<option value="file5">billing_system_test_task/internal/repositories/reports/query_params.go (100.0%)</option>
 				
-				<option value="file6">billing_system_test_task/pkg/repositories/users.go (100.0%)</option>
+				<option value="file6">billing_system_test_task/internal/repositories/users.go (100.0%)</option>
 				
-				<option value="file7">billing_system_test_task/pkg/repositories/wallet.go (100.0%)</option>
+				<option value="file7">billing_system_test_task/internal/repositories/wallet.go (100.0%)</option>
 				
-				<option value="file8">billing_system_test_task/pkg/transport/http/api.go (100.0%)</option>
+				<option value="file8">billing_system_test_task/internal/transport/http/api.go (100.0%)</option>
 				
-				<option value="file9">billing_system_test_task/pkg/transport/http/operation.go (100.0%)</option>
+				<option value="file9">billing_system_test_task/internal/transport/http/operation.go (100.0%)</option>
 				
-				<option value="file10">billing_system_test_task/pkg/transport/http/user.go (100.0%)</option>
+				<option value="file10">billing_system_test_task/internal/transport/http/user.go (100.0%)</option>
 				
-				<option value="file11">billing_system_test_task/pkg/transport/http/wallet.go (100.0%)</option>
+				<option value="file11">billing_system_test_task/internal/transport/http/wallet.go (100.0%)</option>
 				
-				<option value="file12">billing_system_test_task/pkg/usecases/operation.go (100.0%)</option>
+				<option value="file12">billing_system_test_task/internal/usecases/operation.go (100.0%)</option>
 				
-				<option value="file13">billing_system_test_task/pkg/usecases/user.go (100.0%)</option>
+				<option value="file13">billing_system_test_task/internal/usecases/user.go (100.0%)</option>
 				
-				<option value="file14">billing_system_test_task/pkg/usecases/wallet.go (100.0%)</option>
+				<option value="file14">billing_system_test_task/internal/usecases/wallet.go (100.0%)</option>
 				
 				</select>
 			</div>
@@ -130,8 +130,8 @@ func executeJob(in, out chan interface{}, j Pipe, wg *sync.WaitGroup) <span clas
 		<pre class="file" id="file1" style="display: none">package repositories
 
 import (
-        "billing_system_test_task/pkg/adapters/tx"
-        "billing_system_test_task/pkg/entities"
+        "billing_system_test_task/internal/adapters/tx"
+        "billing_system_test_task/internal/entities"
         "context"
         "fmt"
 
@@ -266,7 +266,7 @@ func (wor WalletOperationService) List(ctx context.Context, params *ListParams) 
 		<pre class="file" id="file2" style="display: none">package reports
 
 import (
-        "billing_system_test_task/pkg/entities"
+        "billing_system_test_task/internal/entities"
         "encoding/csv"
         "encoding/json"
         "fmt"
@@ -400,7 +400,7 @@ func (fh FileHandler) GetFileMetadata(file FileWithMetadata) (*entities.Metadata
 		<pre class="file" id="file3" style="display: none">package reports
 
 import (
-        "billing_system_test_task/pkg/entities"
+        "billing_system_test_task/internal/entities"
         "fmt"
         "io"
         "strconv"
@@ -511,9 +511,9 @@ func (ch *CSVHandler) WriteToFile(mr *MarshalledResult) error <span class="cov8"
 		<pre class="file" id="file4" style="display: none">package reports
 
 import (
-        "billing_system_test_task/pkg/entities"
-        "billing_system_test_task/pkg/pipeline"
-        "billing_system_test_task/pkg/repositories"
+        "billing_system_test_task/internal/entities"
+        "billing_system_test_task/internal/pipeline"
+        "billing_system_test_task/internal/repositories"
         "context"
         "fmt"
         "sync"
@@ -662,7 +662,7 @@ type MarshalledResult struct {
 		<pre class="file" id="file5" style="display: none">package reports
 
 import (
-        "billing_system_test_task/pkg/repositories"
+        "billing_system_test_task/internal/repositories"
         "fmt"
         "net/url"
         "strconv"
@@ -729,8 +729,8 @@ func (qpr QueryParamsReader) Parse(query url.Values) (*QueryParams, error) <span
 		<pre class="file" id="file6" style="display: none">package repositories
 
 import (
-        "billing_system_test_task/pkg/adapters/tx"
-        "billing_system_test_task/pkg/entities"
+        "billing_system_test_task/internal/adapters/tx"
+        "billing_system_test_task/internal/entities"
         "context"
         "fmt"
 )
@@ -894,8 +894,8 @@ func (us UsersService) Create(ctx context.Context, email string) (int64, error) 
 		<pre class="file" id="file7" style="display: none">package repositories
 
 import (
-        "billing_system_test_task/pkg/adapters/tx"
-        "billing_system_test_task/pkg/entities"
+        "billing_system_test_task/internal/adapters/tx"
+        "billing_system_test_task/internal/entities"
         "context"
         "fmt"
 
@@ -1158,8 +1158,8 @@ func NewRouter(usersHandler UsersHandler, walletsHandler WalletsHandler, operati
 		<pre class="file" id="file9" style="display: none">package http
 
 import (
-        "billing_system_test_task/pkg/usecases"
-        "billing_system_test_task/pkg/utils"
+        "billing_system_test_task/internal/usecases"
+        "billing_system_test_task/internal/utils"
         "context"
         "net/http"
         "os"
@@ -1217,12 +1217,12 @@ func (oh *OperationsHandler) List(w http.ResponseWriter, r *http.Request) <span 
 		<pre class="file" id="file10" style="display: none">package http
 
 import (
-        "billing_system_test_task/pkg/entities"
-        "billing_system_test_task/pkg/repositories"
-        "billing_system_test_task/pkg/transport/http/forms"
-        "billing_system_test_task/pkg/transport/http/serializers"
-        "billing_system_test_task/pkg/usecases"
-        "billing_system_test_task/pkg/utils"
+        "billing_system_test_task/internal/entities"
+        "billing_system_test_task/internal/repositories"
+        "billing_system_test_task/internal/transport/http/forms"
+        "billing_system_test_task/internal/transport/http/serializers"
+        "billing_system_test_task/internal/usecases"
+        "billing_system_test_task/internal/utils"
         "context"
         "encoding/json"
         "fmt"
@@ -1361,11 +1361,11 @@ func (uh *UsersHandler) Enroll(w http.ResponseWriter, r *http.Request) <span cla
 		<pre class="file" id="file11" style="display: none">package http
 
 import (
-        "billing_system_test_task/pkg/repositories"
-        "billing_system_test_task/pkg/transport/http/forms"
-        "billing_system_test_task/pkg/transport/http/serializers"
-        "billing_system_test_task/pkg/usecases"
-        "billing_system_test_task/pkg/utils"
+        "billing_system_test_task/internal/repositories"
+        "billing_system_test_task/internal/transport/http/forms"
+        "billing_system_test_task/internal/transport/http/serializers"
+        "billing_system_test_task/internal/usecases"
+        "billing_system_test_task/internal/utils"
         "context"
         "encoding/json"
         "fmt"
@@ -1431,10 +1431,10 @@ func (wh *WalletsHandler) Transfer(w http.ResponseWriter, r *http.Request) <span
 		<pre class="file" id="file12" style="display: none">package usecases
 
 import (
-        "billing_system_test_task/pkg/adapters"
-        "billing_system_test_task/pkg/entities"
-        "billing_system_test_task/pkg/repositories"
-        "billing_system_test_task/pkg/repositories/reports"
+        "billing_system_test_task/internal/adapters"
+        "billing_system_test_task/internal/entities"
+        "billing_system_test_task/internal/repositories"
+        "billing_system_test_task/internal/repositories/reports"
         "context"
         "net/url"
 )
@@ -1507,10 +1507,10 @@ func (wor *WalletOperationInteractor) GenerateReport(ctx context.Context, queryP
 		<pre class="file" id="file13" style="display: none">package usecases
 
 import (
-        "billing_system_test_task/pkg/adapters"
-        "billing_system_test_task/pkg/adapters/tx"
-        "billing_system_test_task/pkg/entities"
-        "billing_system_test_task/pkg/repositories"
+        "billing_system_test_task/internal/adapters"
+        "billing_system_test_task/internal/adapters/tx"
+        "billing_system_test_task/internal/entities"
+        "billing_system_test_task/internal/repositories"
         "context"
 
         "github.com/shopspring/decimal"
@@ -1618,9 +1618,9 @@ func (ui UserInteractor) Enroll(ctx context.Context, userID int, amount decimal.
 		<pre class="file" id="file14" style="display: none">package usecases
 
 import (
-        "billing_system_test_task/pkg/adapters"
-        "billing_system_test_task/pkg/adapters/tx"
-        "billing_system_test_task/pkg/repositories"
+        "billing_system_test_task/internal/adapters"
+        "billing_system_test_task/internal/adapters/tx"
+        "billing_system_test_task/internal/repositories"
         "context"
 
         "github.com/shopspring/decimal"

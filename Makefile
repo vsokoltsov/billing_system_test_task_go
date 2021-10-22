@@ -5,7 +5,7 @@ SHELL := /bin/bash
 .PHONY: coverage
 coverage:
 	@echo "Create coverprofile"
-	@exec go test -coverprofile=cover.out.tmp -v ./pkg/...
+	@exec go test -coverprofile=cover.out.tmp -v ./internal/...
 	@exec cat cover.out.tmp | grep -v "_mock.go" > cover.out
 	@echo "Generate cover.html"
 	@exec go tool cover -html=cover.out -o cover.html
@@ -13,14 +13,14 @@ coverage:
 .PHONY: coverage-all
 coverage-all:
 	@echo "Create coverprofile"
-	@exec go test -coverprofile=cover.out.tmp -v ./pkg/...
+	@exec go test -coverprofile=cover.out.tmp -v ./internal/...
 	@echo "Show full coverage"
 	@exec go tool cover  -func=cover.out
 
 .PHONY: swagger
 swagger:
 	@echo "Generate Swagger documentation"
-	@exec ~/go/bin/swag init -g pkg/transport/http/api.go
+	@exec ~/go/bin/swag init -g internal/transport/http/api.go
 
 .PHONY: build
 build:
@@ -47,7 +47,7 @@ migrations-down:
 .PHONY: test
 test:
 	@echo "Run tests (without coverage)"
-	@exec go test -v ./pkg/...
+	@exec go test -v ./internal/...
 
 .PHONY: lint
 lint:
@@ -59,7 +59,7 @@ lint:
 .PHONY: benchmark
 benchmark:
 	@echo "Run benchmark for '$(package)' package"
-	@exec go test -v ./pkg/$(package)/... -bench . -benchmem -cpuprofile=cpu.out -memprofile=mem.out -memprofilerate=1
+	@exec go test -v ./internal/$(package)/... -bench . -benchmem -cpuprofile=cpu.out -memprofile=mem.out -memprofilerate=1
 
 .PHONY: benchmark-ui
 benchmark-ui:

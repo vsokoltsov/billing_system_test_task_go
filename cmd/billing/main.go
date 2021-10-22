@@ -1,8 +1,8 @@
 package main
 
 import (
-	"billing_system_test_task/pkg/app"
-	"billing_system_test_task/pkg/entities"
+	"billing_system_test_task/internal/app"
+	"billing_system_test_task/internal/entities"
 	"log"
 )
 
