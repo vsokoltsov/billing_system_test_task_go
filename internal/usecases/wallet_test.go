@@ -3,6 +3,7 @@ package usecases
 import (
 	"billing_system_test_task/internal/adapters"
 	"billing_system_test_task/internal/adapters/tx"
+	"billing_system_test_task/internal/entities"
 	"billing_system_test_task/internal/repositories"
 	"context"
 	"database/sql/driver"
@@ -30,8 +31,28 @@ var walletUseCases = []walletUsecaseTest{
 		args:     []driver.Value{1, 2, decimal.NewFromInt(10)},
 		funcName: "Transfer",
 		mockQuery: func(ctx context.Context, mockWalletRepo *repositories.MockWalletsManager, mockOperationRepo *repositories.MockOperationsManager, mockTxManager *tx.MockTxBeginner, txMock *tx.MockTx) {
+			sourceWallet := &entities.Wallet{
+				ID:       1,
+				UserID:   1,
+				Balance:  decimal.NewFromInt(100),
+				Currency: "USD",
+			}
+			destinationWallet := &entities.Wallet{
+				ID:       2,
+				UserID:   2,
+				Balance:  decimal.NewFromInt(100),
+				Currency: "USD",
+			}
 			// Start wallet transfer transaction
 			mockTxManager.EXPECT().BeginTrx(ctx, nil).Return(txMock, nil)
+
+			// Receive source wallet
+			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
+			mockWalletRepo.EXPECT().GetByID(ctx, sourceWallet.ID).Return(sourceWallet, nil)
+
+			// Receive destination wallet
+			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
+			mockWalletRepo.EXPECT().GetByID(ctx, destinationWallet.ID).Return(destinationWallet, nil)
 
 			// Perform transfer itself
 			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
@@ -54,7 +75,89 @@ var walletUseCases = []walletUsecaseTest{
 		},
 	},
 	walletUsecaseTest{
-		name:     "Failed wallet transfer (strat transaction error)",
+		name:     "Failed wallet transfer (get source wallet error)",
+		args:     []driver.Value{1, 2, decimal.NewFromInt(10)},
+		funcName: "Transfer",
+		mockQuery: func(ctx context.Context, mockWalletRepo *repositories.MockWalletsManager, mockOperationRepo *repositories.MockOperationsManager, mockTxManager *tx.MockTxBeginner, txMock *tx.MockTx) {
+			sourceWallet := &entities.Wallet{
+				ID:       1,
+				UserID:   1,
+				Balance:  decimal.NewFromInt(100),
+				Currency: "USD",
+			}
+			// Start wallet transfer transaction
+			mockTxManager.EXPECT().BeginTrx(ctx, nil).Return(txMock, nil)
+
+			// Receive source wallet
+			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
+			mockWalletRepo.EXPECT().GetByID(ctx, sourceWallet.ID).Return(nil, fmt.Errorf("source wallet error"))
+
+			// Rollback wallet transfer transaction
+			txMock.EXPECT().Rollback().Return(nil)
+
+		},
+		err: fmt.Errorf("source wallet error"),
+	},
+	walletUsecaseTest{
+		name:     "Failed wallet transfer (source wallet balance is 0)",
+		args:     []driver.Value{1, 2, decimal.NewFromInt(10)},
+		funcName: "Transfer",
+		mockQuery: func(ctx context.Context, mockWalletRepo *repositories.MockWalletsManager, mockOperationRepo *repositories.MockOperationsManager, mockTxManager *tx.MockTxBeginner, txMock *tx.MockTx) {
+			sourceWallet := &entities.Wallet{
+				ID:       1,
+				UserID:   1,
+				Balance:  decimal.NewFromInt(00),
+				Currency: "USD",
+			}
+			// Start wallet transfer transaction
+			mockTxManager.EXPECT().BeginTrx(ctx, nil).Return(txMock, nil)
+
+			// Receive source wallet
+			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
+			mockWalletRepo.EXPECT().GetByID(ctx, sourceWallet.ID).Return(sourceWallet, nil)
+
+			// Rollback wallet transfer transaction
+			txMock.EXPECT().Rollback().Return(nil)
+
+		},
+		err: fmt.Errorf("source wallet balance is less or equal to zero"),
+	},
+	walletUsecaseTest{
+		name:     "Failed wallet transfer (get destination wallet error)",
+		args:     []driver.Value{1, 2, decimal.NewFromInt(10)},
+		funcName: "Transfer",
+		mockQuery: func(ctx context.Context, mockWalletRepo *repositories.MockWalletsManager, mockOperationRepo *repositories.MockOperationsManager, mockTxManager *tx.MockTxBeginner, txMock *tx.MockTx) {
+			sourceWallet := &entities.Wallet{
+				ID:       1,
+				UserID:   1,
+				Balance:  decimal.NewFromInt(100),
+				Currency: "USD",
+			}
+			destinationWallet := &entities.Wallet{
+				ID:       2,
+				UserID:   2,
+				Balance:  decimal.NewFromInt(100),
+				Currency: "USD",
+			}
+			// Start wallet transfer transaction
+			mockTxManager.EXPECT().BeginTrx(ctx, nil).Return(txMock, nil)
+
+			// Receive source wallet
+			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
+			mockWalletRepo.EXPECT().GetByID(ctx, sourceWallet.ID).Return(sourceWallet, nil)
+
+			// Receive destination wallet
+			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
+			mockWalletRepo.EXPECT().GetByID(ctx, destinationWallet.ID).Return(nil, fmt.Errorf("destination wallet error"))
+
+			// Commit wallet transfer transaction
+			txMock.EXPECT().Rollback().Return(nil)
+
+		},
+		err: fmt.Errorf("destination wallet error"),
+	},
+	walletUsecaseTest{
+		name:     "Failed wallet transfer (start transaction error)",
 		args:     []driver.Value{1, 2, decimal.NewFromInt(10)},
 		funcName: "Transfer",
 		mockQuery: func(ctx context.Context, mockWalletRepo *repositories.MockWalletsManager, mockOperationRepo *repositories.MockOperationsManager, mockTxManager *tx.MockTxBeginner, txMock *tx.MockTx) {
@@ -69,12 +172,33 @@ var walletUseCases = []walletUsecaseTest{
 		args:     []driver.Value{1, 2, decimal.NewFromInt(10)},
 		funcName: "Transfer",
 		mockQuery: func(ctx context.Context, mockWalletRepo *repositories.MockWalletsManager, mockOperationRepo *repositories.MockOperationsManager, mockTxManager *tx.MockTxBeginner, txMock *tx.MockTx) {
+			sourceWallet := &entities.Wallet{
+				ID:       1,
+				UserID:   1,
+				Balance:  decimal.NewFromInt(100),
+				Currency: "USD",
+			}
+			destinationWallet := &entities.Wallet{
+				ID:       2,
+				UserID:   2,
+				Balance:  decimal.NewFromInt(100),
+				Currency: "USD",
+			}
+
 			// Start wallet transfer transaction
 			mockTxManager.EXPECT().BeginTrx(ctx, nil).Return(txMock, nil)
 
+			// Receive source wallet
+			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
+			mockWalletRepo.EXPECT().GetByID(ctx, sourceWallet.ID).Return(sourceWallet, nil)
+
+			// Receive destination wallet
+			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
+			mockWalletRepo.EXPECT().GetByID(ctx, destinationWallet.ID).Return(destinationWallet, nil)
+
 			// Perform transfer itself
 			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
-			mockWalletRepo.EXPECT().Transfer(ctx, 1, 2, decimal.NewFromInt(10)).Return(0, fmt.Errorf("transfer error"))
+			mockWalletRepo.EXPECT().Transfer(ctx, sourceWallet.ID, destinationWallet.ID, decimal.NewFromInt(10)).Return(0, fmt.Errorf("transfer error"))
 
 			// Rollback wallet transfer transaction
 			txMock.EXPECT().Rollback().Return(nil)
@@ -87,8 +211,28 @@ var walletUseCases = []walletUsecaseTest{
 		args:     []driver.Value{1, 2, decimal.NewFromInt(10)},
 		funcName: "Transfer",
 		mockQuery: func(ctx context.Context, mockWalletRepo *repositories.MockWalletsManager, mockOperationRepo *repositories.MockOperationsManager, mockTxManager *tx.MockTxBeginner, txMock *tx.MockTx) {
+			sourceWallet := &entities.Wallet{
+				ID:       1,
+				UserID:   1,
+				Balance:  decimal.NewFromInt(100),
+				Currency: "USD",
+			}
+			destinationWallet := &entities.Wallet{
+				ID:       2,
+				UserID:   2,
+				Balance:  decimal.NewFromInt(100),
+				Currency: "USD",
+			}
 			// Start wallet transfer transaction
 			mockTxManager.EXPECT().BeginTrx(ctx, nil).Return(txMock, nil)
+
+			// Receive source wallet
+			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
+			mockWalletRepo.EXPECT().GetByID(ctx, sourceWallet.ID).Return(sourceWallet, nil)
+
+			// Receive destination wallet
+			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
+			mockWalletRepo.EXPECT().GetByID(ctx, destinationWallet.ID).Return(destinationWallet, nil)
 
 			// Perform transfer itself
 			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
@@ -109,8 +253,29 @@ var walletUseCases = []walletUsecaseTest{
 		args:     []driver.Value{1, 2, decimal.NewFromInt(10)},
 		funcName: "Transfer",
 		mockQuery: func(ctx context.Context, mockWalletRepo *repositories.MockWalletsManager, mockOperationRepo *repositories.MockOperationsManager, mockTxManager *tx.MockTxBeginner, txMock *tx.MockTx) {
+			sourceWallet := &entities.Wallet{
+				ID:       1,
+				UserID:   1,
+				Balance:  decimal.NewFromInt(100),
+				Currency: "USD",
+			}
+			destinationWallet := &entities.Wallet{
+				ID:       2,
+				UserID:   2,
+				Balance:  decimal.NewFromInt(100),
+				Currency: "USD",
+			}
+
 			// Start wallet transfer transaction
 			mockTxManager.EXPECT().BeginTrx(ctx, nil).Return(txMock, nil)
+
+			// Receive source wallet
+			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
+			mockWalletRepo.EXPECT().GetByID(ctx, sourceWallet.ID).Return(sourceWallet, nil)
+
+			// Receive destination wallet
+			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
+			mockWalletRepo.EXPECT().GetByID(ctx, destinationWallet.ID).Return(destinationWallet, nil)
 
 			// Perform transfer itself
 			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
@@ -135,8 +300,29 @@ var walletUseCases = []walletUsecaseTest{
 		args:     []driver.Value{1, 2, decimal.NewFromInt(10)},
 		funcName: "Transfer",
 		mockQuery: func(ctx context.Context, mockWalletRepo *repositories.MockWalletsManager, mockOperationRepo *repositories.MockOperationsManager, mockTxManager *tx.MockTxBeginner, txMock *tx.MockTx) {
+			sourceWallet := &entities.Wallet{
+				ID:       1,
+				UserID:   1,
+				Balance:  decimal.NewFromInt(100),
+				Currency: "USD",
+			}
+			destinationWallet := &entities.Wallet{
+				ID:       2,
+				UserID:   2,
+				Balance:  decimal.NewFromInt(100),
+				Currency: "USD",
+			}
+
 			// Start wallet transfer transaction
 			mockTxManager.EXPECT().BeginTrx(ctx, nil).Return(txMock, nil)
+
+			// Receive source wallet
+			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
+			mockWalletRepo.EXPECT().GetByID(ctx, sourceWallet.ID).Return(sourceWallet, nil)
+
+			// Receive destination wallet
+			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)
+			mockWalletRepo.EXPECT().GetByID(ctx, destinationWallet.ID).Return(destinationWallet, nil)
 
 			// Perform transfer itself
 			mockWalletRepo.EXPECT().WithTx(txMock).Return(mockWalletRepo)

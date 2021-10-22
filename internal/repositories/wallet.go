@@ -31,7 +31,7 @@ type WalletService struct {
 }
 
 // NewWalletService returns instance of WalletService
-func NewWalletService(db tx.SQLQueryAdapter) WalletsManager {
+func NewWalletService(db tx.SQLQueryAdapter) *WalletService {
 	return &WalletService{
 		db: db,
 	}
@@ -64,11 +64,6 @@ func (ws WalletService) Create(ctx context.Context, userID int64) (int64, error)
 		}
 	}
 
-	// _, walletOperationErr := ws.walletOperationRepo.Create(ctx, tx, operations.Create, 0, int(walletID), walletBalance)
-	// if walletOperationErr != nil {
-	// 	log.Printf("Error of creating 'Create' wallet operation: %s", walletOperationErr.Error())
-	// }
-
 	return walletID, nil
 }
 
@@ -79,22 +74,6 @@ func (ws WalletService) Enroll(ctx context.Context, walletID int, amount decimal
 		return 0, fmt.Errorf("amount should be greater than 0")
 	}
 
-	// Get connection from the pool
-	// conn, _ := ws.db.Conn(ctx)
-
-	// Apply AdvisoryLock for operation
-	// _, alErr := conn.ExecContext(ctx, "select pg_advisory_lock($1)", EnrollWallet)
-	// if alErr != nil {
-	// 	return 0, fmt.Errorf("error of starting advisory lock: %s", alErr)
-	// }
-
-	// Begin transaction
-	// tx, txErr := conn.BeginTx(ctx, nil)
-	// if txErr != nil {
-	// 	return 0, fmt.Errorf("error of transaction initialization: %s", txErr)
-	// }
-	// _, _ = tx.ExecContext(ctx, "set transaction isolation level serializable")
-
 	// Update wallet 'balance' column
 	_, updateErr := ws.db.ExecContext(ctx, "update wallets set balance=balance+$1 where id=$2 returning balance", amount, walletID)
 	if updateErr != nil {
@@ -102,28 +81,6 @@ func (ws WalletService) Enroll(ctx context.Context, walletID int, amount decimal
 		// _, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, EnrollWallet)
 		return 0, fmt.Errorf("error wallet enrollment: %s", updateErr)
 	}
-
-	// _, walletOperationErr := ws.walletOperationRepo.Create(ctx, tx, operations.Deposit, 0, int(walletID), amount)
-	// if walletOperationErr != nil {
-	// 	log.Printf("Error of creating 'Create' wallet operation: %s", walletOperationErr.Error())
-	// }
-
-	// txCommitErr := tx.Commit()
-	// if txCommitErr != nil {
-	// _ = tx.Rollback()
-	// _, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, EnrollWallet)
-	// return 0, fmt.Errorf("error of transaction commit: %s", txCommitErr)
-	// }
-
-	// _, auErr := conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, EnrollWallet)
-	// if auErr != nil {
-	// 	return 0, fmt.Errorf(
-	// 		"error of unlocking user's %d postgres lock: %s",
-	// 		EnrollWallet,
-	// 		auErr,
-	// 	)
-	// }
-	// conn.Close()
 
 	return walletID, nil
 }
@@ -154,75 +111,17 @@ func (ws WalletService) GetByUserId(ctx context.Context, userID int) (*entities.
 
 // Transfer moves financial resources from one wallet to another
 func (ws WalletService) Transfer(ctx context.Context, walletFrom, walletTo int, amount decimal.Decimal) (int, error) {
-	// Receive source wallet
-	sourceWallet, getSourceWalletErr := ws.GetByID(ctx, walletFrom)
-	if getSourceWalletErr != nil {
-		return 0, fmt.Errorf("error of receiving source wallet data: %s", getSourceWalletErr)
-	}
-
-	if sourceWallet.Balance.LessThanOrEqual(decimal.Zero) {
-		return 0, fmt.Errorf("source wallet balance is less or equal to zero")
-	}
-
-	// Get connection from the pool
-	// conn, _ := ws.db.Conn(ctx)
-
-	// // Apply AdvisoryLock for operation
-	// _, alErr := conn.ExecContext(ctx, "select pg_advisory_lock($1)", TransferFunds)
-	// if alErr != nil {
-	// 	return 0, fmt.Errorf("error of starting advisory lock: %s", alErr)
-	// }
-
-	// // Begin transaction
-	// tx, txErr := conn.BeginTx(ctx, nil)
-	// if txErr != nil {
-	// 	return 0, fmt.Errorf("error of transaction initialization: %s", txErr)
-	// }
-	// _, _ = tx.ExecContext(ctx, "set transaction isolation level serializable")
-
 	// Update source wallet 'balance' column
 	_, updateSourceErr := ws.db.ExecContext(ctx, "update wallets set balance=balance-$1 where id=$2", amount, walletFrom)
 	if updateSourceErr != nil {
-		// _ = tx.Rollback()
-		// _, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
 		return 0, fmt.Errorf("error source wallet debit: %s", updateSourceErr)
 	}
 
 	// Update target wallet 'balance' column
 	_, updateTargetErr := ws.db.ExecContext(ctx, "update wallets set balance=balance+$1 where id=$2", amount, walletTo)
 	if updateTargetErr != nil {
-		// _ = tx.Rollback()
-		// _, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
 		return 0, fmt.Errorf("error target wallet transfer: %s", updateTargetErr)
 	}
-
-	// _, walletDepositOperationErr := ws.walletOperationRepo.Create(ctx, tx, operations.Deposit, walletFrom, walletTo, amount)
-	// if walletDepositOperationErr != nil {
-	// 	log.Printf("Error of creating 'Deposit' wallet operation: %s", walletDepositOperationErr.Error())
-	// }
-	// _, walletWithdrawalOperationErr := ws.walletOperationRepo.Create(ctx, tx, operations.Withdrawal, walletTo, walletFrom, amount)
-	// if walletWithdrawalOperationErr != nil {
-	// 	log.Printf("Error of creating 'Withdrawal' wallet operation: %s", walletWithdrawalOperationErr.Error())
-	// }
-
-	// Commit transaction
-	// txCommitErr := tx.Commit()
-	// if txCommitErr != nil {
-	// 	_ = tx.Rollback()
-	// 	_, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
-	// 	return 0, fmt.Errorf("error of transaction commit: %s", txCommitErr)
-	// }
-
-	// Perform advisory unlock
-	// _, auErr := conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
-	// if auErr != nil {
-	// 	return 0, fmt.Errorf(
-	// 		"error of unlocking user's %d postgres lock: %s",
-	// 		TransferFunds,
-	// 		auErr,
-	// 	)
-	// }
-	// conn.Close()
 
 	return walletFrom, nil
 }

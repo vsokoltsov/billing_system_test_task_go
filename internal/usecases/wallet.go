@@ -5,6 +5,7 @@ import (
 	"billing_system_test_task/internal/adapters/tx"
 	"billing_system_test_task/internal/repositories"
 	"context"
+	"fmt"
 
 	"github.com/shopspring/decimal"
 )
@@ -37,14 +38,37 @@ func (wi *WalletInteractor) Transfer(ctx context.Context, walletFrom, walletTo i
 		return 0, wi.errFactory.DefaultError(txErr)
 	}
 
+	txWalletRepo := wi.walletRepo.WithTx(tx)
+
+	// Receive source wallet
+	sourceWallet, getSourceWalletErr := txWalletRepo.GetByID(ctx, walletFrom)
+	if getSourceWalletErr != nil {
+		_ = tx.Rollback()
+		return 0, wi.errFactory.NotFound(getSourceWalletErr)
+	}
+
+	// Check source wallet balance
+	if sourceWallet.Balance.LessThanOrEqual(decimal.Zero) {
+		_ = tx.Rollback()
+		return 0, wi.errFactory.DefaultError(fmt.Errorf("source wallet balance is less or equal to zero"))
+	}
+
+	// Receive destination wallet
+	_, getDestinationWalletErr := txWalletRepo.GetByID(ctx, walletTo)
+	if getDestinationWalletErr != nil {
+		_ = tx.Rollback()
+		return 0, wi.errFactory.NotFound(getDestinationWalletErr)
+	}
+
 	// Perform transfer
-	walletSourceID, transferErr := wi.walletRepo.WithTx(tx).Transfer(
+	walletSourceID, transferErr := txWalletRepo.Transfer(
 		ctx,
 		walletFrom,
 		walletTo,
 		amount,
 	)
 	if transferErr != nil {
+		_ = tx.Rollback()
 		return 0, wi.errFactory.DefaultError(transferErr)
 	}
 
@@ -52,12 +76,14 @@ func (wi *WalletInteractor) Transfer(ctx context.Context, walletFrom, walletTo i
 	// Create wallet operation instance for deposit
 	_, depositOpErrr := txWalletOpRepo.Create(ctx, repositories.Deposit, walletFrom, walletTo, amount)
 	if depositOpErrr != nil {
+		_ = tx.Rollback()
 		return 0, wi.errFactory.DefaultError(depositOpErrr)
 	}
 
 	// Create wallet operation instance for withdrawal
 	_, withdrawalOpErrr := txWalletOpRepo.Create(ctx, repositories.Withdrawal, walletTo, walletFrom, amount)
 	if withdrawalOpErrr != nil {
+		_ = tx.Rollback()
 		return 0, wi.errFactory.DefaultError(withdrawalOpErrr)
 	}
 
