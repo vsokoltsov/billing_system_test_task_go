@@ -54,3 +54,9 @@ func (t *tx) Commit() error {
 func (t *tx) Rollback() error {
 	return t.Tx.Rollback()
 }
+
+func RollbackTx(tx Tx, err error) {
+	if err != nil {
+		_ = tx.Rollback()
+	}
+}

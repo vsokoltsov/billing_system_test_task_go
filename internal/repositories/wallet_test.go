@@ -303,8 +303,6 @@ var WalletsRepoTestCase = []walletRepoTestCase{
 			args:  []driver.Value{1},
 		},
 		mockQuery: func(mock sqlmock.Sqlmock) {
-			rows := sqlmock.NewRows([]string{"id", "user_id", "balance", "currency"})
-			rows = rows.AddRow(1, 1, 100, "USD")
 			mock.
 				ExpectQuery("select id, user_id, balance, currency from wallets").
 				WithArgs([]driver.Value{1}...).
