@@ -5,7 +5,6 @@ import (
 	"billing_system_test_task/internal/transport/http/forms"
 	"billing_system_test_task/internal/transport/http/serializers"
 	"billing_system_test_task/internal/usecases"
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -37,7 +36,7 @@ func NewWalletsHandler(walletUseCase usecases.WalletUseCase) *WalletsHandler {
 func (wh *WalletsHandler) Transfer(w http.ResponseWriter, r *http.Request) {
 	var (
 		walletForm forms.WalletForm
-		ctx        = context.Background()
+		ctx        = r.Context()
 	)
 	decoder := json.NewDecoder(r.Body)
 	decodeErr := decoder.Decode(&walletForm)

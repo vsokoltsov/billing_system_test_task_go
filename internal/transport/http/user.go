@@ -43,9 +43,8 @@ func NewUserHandler(userUseCase usecases.UserUseCase) *UsersHandler {
 func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var (
 		userForm forms.UserForm
-		ctx      = context.Background()
+		ctx      = r.Context()
 	)
-	defer ctx.Done()
 
 	decoder := json.NewDecoder(r.Body)
 	decodeErr := decoder.Decode(&userForm)

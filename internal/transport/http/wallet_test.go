@@ -5,7 +5,6 @@ import (
 	"billing_system_test_task/internal/transport/http/serializers"
 	"billing_system_test_task/internal/usecases"
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -27,7 +26,7 @@ type walletHandlerTestCase struct {
 	url            string
 	body           map[string]interface{}
 	expectedStatus int
-	mockData       func(ctx context.Context, walletUseCase *usecases.MockWalletUseCase)
+	mockData       func(walletUseCase *usecases.MockWalletUseCase)
 	matchResults   func(actual []byte) bool
 	formError      bool
 }
@@ -42,8 +41,8 @@ var (
 			"wallet_to":   2,
 			"amount":      decimal.NewFromInt(25),
 		},
-		mockData: func(ctx context.Context, walletUseCase *usecases.MockWalletUseCase) {
-			walletUseCase.EXPECT().Transfer(ctx, 1, 2, decimal.NewFromInt(25)).Return(1, nil)
+		mockData: func(walletUseCase *usecases.MockWalletUseCase) {
+			walletUseCase.EXPECT().Transfer(gomock.Any(), 1, 2, decimal.NewFromInt(25)).Return(1, nil)
 		},
 		expectedStatus: 200,
 		matchResults: func(actual []byte) bool {
@@ -65,7 +64,7 @@ var walletTestCases = []walletHandlerTestCase{
 			"wallet_to":   2,
 			"amount":      decimal.NewFromInt(25),
 		},
-		mockData: func(ctx context.Context, walletUseCase *usecases.MockWalletUseCase) {
+		mockData: func(walletUseCase *usecases.MockWalletUseCase) {
 		},
 		expectedStatus: 400,
 		formError:      true,
@@ -82,7 +81,7 @@ var walletTestCases = []walletHandlerTestCase{
 		body: map[string]interface{}{
 			"wallet_from": 1,
 		},
-		mockData: func(ctx context.Context, walletUseCase *usecases.MockWalletUseCase) {
+		mockData: func(walletUseCase *usecases.MockWalletUseCase) {
 		},
 		expectedStatus: 400,
 		matchResults: func(actual []byte) bool {
@@ -100,8 +99,8 @@ var walletTestCases = []walletHandlerTestCase{
 			"wallet_to":   2,
 			"amount":      decimal.NewFromInt(25),
 		},
-		mockData: func(ctx context.Context, walletUseCase *usecases.MockWalletUseCase) {
-			walletUseCase.EXPECT().Transfer(ctx, 1, 2, decimal.NewFromInt(25)).Return(0, adapters.NewHTTPError(400, fmt.Errorf("Error of funds transfering")))
+		mockData: func(walletUseCase *usecases.MockWalletUseCase) {
+			walletUseCase.EXPECT().Transfer(gomock.Any(), 1, 2, decimal.NewFromInt(25)).Return(0, adapters.NewHTTPError(400, fmt.Errorf("Error of funds transfering")))
 		},
 		expectedStatus: 400,
 		matchResults: func(actual []byte) bool {
@@ -119,8 +118,7 @@ var walletTestCases = []walletHandlerTestCase{
 			"wallet_to":   1,
 			"amount":      decimal.NewFromInt(25),
 		},
-		mockData: func(ctx context.Context, walletUseCase *usecases.MockWalletUseCase) {
-			// walletUseCase.EXPECT().Transfer(ctx, 1, 2, decimal.NewFromInt(25)).Return(0, adapters.NewHTTPError(400, fmt.Errorf("Error of funds transfering")))
+		mockData: func(walletUseCase *usecases.MockWalletUseCase) {
 		},
 		expectedStatus: 400,
 		matchResults: func(actual []byte) bool {
@@ -131,12 +129,11 @@ var walletTestCases = []walletHandlerTestCase{
 	},
 }
 
-// // Test wallets handlers
+// Test wallets handlers
 func TestWalletHandlers(t *testing.T) {
 	for _, tc := range walletTestCases {
 		testLabel := strings.Join([]string{"API", tc.method, tc.url, tc.name}, " ")
 		t.Run(testLabel, func(t *testing.T) {
-			ctx := context.Background()
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -153,7 +150,7 @@ func TestWalletHandlers(t *testing.T) {
 			handler := NewWalletsHandler(mockWalletUseCase)
 			api_router := r.PathPrefix("/api").Subrouter()
 			api_router.HandleFunc("/wallets/transfer/", handler.Transfer).Methods("POST")
-			tc.mockData(ctx, mockWalletUseCase)
+			tc.mockData(mockWalletUseCase)
 
 			testServer := httptest.NewServer(r)
 			defer testServer.Close()
@@ -191,7 +188,6 @@ func BenchmarkWalletsHandler(b *testing.B) {
 	for _, tc := range walletBenchmarks {
 		testLabel := strings.Join([]string{"API", tc.method, tc.url, tc.name}, " ")
 		b.Run(testLabel, func(b *testing.B) {
-			ctx := context.Background()
 			ctrl := gomock.NewController(b)
 			defer ctrl.Finish()
 
@@ -208,7 +204,7 @@ func BenchmarkWalletsHandler(b *testing.B) {
 			handler := NewWalletsHandler(mockWalletUseCase)
 			api_router := r.PathPrefix("/api").Subrouter()
 			api_router.HandleFunc("/wallets/transfer/", handler.Transfer).Methods("POST")
-			tc.mockData(ctx, mockWalletUseCase)
+			tc.mockData(mockWalletUseCase)
 
 			testServer := httptest.NewServer(r)
 			defer testServer.Close()

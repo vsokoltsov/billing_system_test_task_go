@@ -6,7 +6,6 @@ import (
 	"billing_system_test_task/internal/transport/http/serializers"
 	"billing_system_test_task/internal/usecases"
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -28,7 +27,7 @@ type userHandlerTestCase struct {
 	url            string
 	body           map[string]interface{}
 	expectedStatus int
-	mockData       func(ctx context.Context, userUsecase *usecases.MockUserUseCase)
+	mockData       func(userUsecase *usecases.MockUserUseCase)
 	formError      bool
 	matchResults   func(actual []byte) bool
 }
@@ -41,7 +40,7 @@ var (
 		body: map[string]interface{}{
 			"email": "example@mail.com",
 		},
-		mockData: func(ctx context.Context, userUsecase *usecases.MockUserUseCase) {
+		mockData: func(userUsecase *usecases.MockUserUseCase) {
 			user := &entities.User{
 				ID:    1,
 				Email: "example@mail.com",
@@ -50,7 +49,7 @@ var (
 					Currency: "USD",
 				},
 			}
-			userUsecase.EXPECT().Create(ctx, "example@mail.com").Return(
+			userUsecase.EXPECT().Create(gomock.Any(), "example@mail.com").Return(
 				user,
 				nil,
 			).AnyTimes()
@@ -69,7 +68,7 @@ var (
 		body: map[string]interface{}{
 			"amount": "100",
 		},
-		mockData: func(ctx context.Context, userUsecase *usecases.MockUserUseCase) {
+		mockData: func(userUsecase *usecases.MockUserUseCase) {
 			user := entities.User{
 				ID:    1,
 				Email: "example@mail.com",
@@ -80,7 +79,7 @@ var (
 					Currency: "USD",
 				},
 			}
-			userUsecase.EXPECT().Enroll(ctx, 1, decimal.NewFromInt(100)).Return(
+			userUsecase.EXPECT().Enroll(gomock.Any(), 1, decimal.NewFromInt(100)).Return(
 				&user,
 				nil,
 			).AnyTimes()
@@ -103,7 +102,7 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"email": "example@mail.com",
 		},
-		mockData: func(ctx context.Context, userUsecase *usecases.MockUserUseCase) {
+		mockData: func(userUsecase *usecases.MockUserUseCase) {
 		},
 		expectedStatus: 400,
 		formError:      true,
@@ -120,7 +119,7 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"email": "test",
 		},
-		mockData: func(ctx context.Context, userUsecase *usecases.MockUserUseCase) {
+		mockData: func(userUsecase *usecases.MockUserUseCase) {
 		},
 		expectedStatus: 400,
 		matchResults: func(actual []byte) bool {
@@ -136,8 +135,8 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"email": "example@mail.com",
 		},
-		mockData: func(ctx context.Context, userUsecase *usecases.MockUserUseCase) {
-			userUsecase.EXPECT().Create(ctx, "example@mail.com").Return(
+		mockData: func(userUsecase *usecases.MockUserUseCase) {
+			userUsecase.EXPECT().Create(gomock.Any(), "example@mail.com").Return(
 				nil,
 				adapters.NewHTTPError(400, fmt.Errorf("User creation error")),
 			).AnyTimes()
@@ -156,8 +155,8 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"email": "example@mail.com",
 		},
-		mockData: func(ctx context.Context, userUsecase *usecases.MockUserUseCase) {
-			userUsecase.EXPECT().Create(ctx, "example@mail.com").Return(
+		mockData: func(userUsecase *usecases.MockUserUseCase) {
+			userUsecase.EXPECT().Create(gomock.Any(), "example@mail.com").Return(
 				nil,
 				adapters.NewHTTPError(404, fmt.Errorf("error of user retrieving")),
 			).AnyTimes()
@@ -177,7 +176,7 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"amount": "100",
 		},
-		mockData: func(ctx context.Context, userUsecase *usecases.MockUserUseCase) {
+		mockData: func(userUsecase *usecases.MockUserUseCase) {
 		},
 		expectedStatus: 500,
 		matchResults: func(actual []byte) bool {
@@ -193,7 +192,7 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"amount": "100",
 		},
-		mockData: func(ctx context.Context, userUsecase *usecases.MockUserUseCase) {
+		mockData: func(userUsecase *usecases.MockUserUseCase) {
 		},
 		expectedStatus: 400,
 		matchResults: func(actual []byte) bool {
@@ -209,7 +208,7 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"amount": "100",
 		},
-		mockData: func(ctx context.Context, userUsecase *usecases.MockUserUseCase) {
+		mockData: func(userUsecase *usecases.MockUserUseCase) {
 		},
 		expectedStatus: 400,
 		formError:      true,
@@ -226,7 +225,7 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"amount": 0,
 		},
-		mockData: func(ctx context.Context, userUsecase *usecases.MockUserUseCase) {
+		mockData: func(userUsecase *usecases.MockUserUseCase) {
 		},
 		expectedStatus: 400,
 		matchResults: func(actual []byte) bool {
@@ -242,8 +241,8 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"amount": "100",
 		},
-		mockData: func(ctx context.Context, userUsecase *usecases.MockUserUseCase) {
-			userUsecase.EXPECT().Enroll(ctx, 1, decimal.NewFromInt(100)).Return(
+		mockData: func(userUsecase *usecases.MockUserUseCase) {
+			userUsecase.EXPECT().Enroll(gomock.Any(), 1, decimal.NewFromInt(100)).Return(
 				nil,
 				adapters.NewHTTPError(404, fmt.Errorf("user not found")),
 			).AnyTimes()
@@ -262,8 +261,8 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"amount": "100",
 		},
-		mockData: func(ctx context.Context, userUsecase *usecases.MockUserUseCase) {
-			userUsecase.EXPECT().Enroll(ctx, 1, decimal.NewFromInt(100)).Return(
+		mockData: func(userUsecase *usecases.MockUserUseCase) {
+			userUsecase.EXPECT().Enroll(gomock.Any(), 1, decimal.NewFromInt(100)).Return(
 				nil,
 				adapters.NewHTTPError(400, fmt.Errorf("enroll has failed")),
 			).AnyTimes()
@@ -282,8 +281,8 @@ var testCases = []userHandlerTestCase{
 		body: map[string]interface{}{
 			"amount": "100",
 		},
-		mockData: func(ctx context.Context, userUsecase *usecases.MockUserUseCase) {
-			userUsecase.EXPECT().Enroll(ctx, 1, decimal.NewFromInt(100)).Return(
+		mockData: func(userUsecase *usecases.MockUserUseCase) {
+			userUsecase.EXPECT().Enroll(gomock.Any(), 1, decimal.NewFromInt(100)).Return(
 				nil,
 				adapters.NewHTTPError(404, fmt.Errorf("error of user retrieving")),
 			).AnyTimes()
@@ -302,7 +301,6 @@ func TestUsersHandlers(t *testing.T) {
 	for _, tc := range testCases {
 		testLabel := strings.Join([]string{"API", tc.method, tc.url, tc.name}, " ")
 		t.Run(testLabel, func(t *testing.T) {
-			ctx := context.Background()
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -323,7 +321,7 @@ func TestUsersHandlers(t *testing.T) {
 			api_router := r.PathPrefix("/api").Subrouter()
 			api_router.HandleFunc("/users/", handler.Create).Methods("POST")
 			api_router.HandleFunc(enrollRoute, handler.Enroll).Methods("POST")
-			tc.mockData(ctx, interactor)
+			tc.mockData(interactor)
 
 			testServer := httptest.NewServer(r)
 			defer testServer.Close()
@@ -362,7 +360,6 @@ func BenchmarkUsers(b *testing.B) {
 	for _, tc := range benchmarks {
 		testLabel := strings.Join([]string{"API", tc.method, tc.url, tc.name}, " ")
 		b.Run(testLabel, func(b *testing.B) {
-			ctx := context.Background()
 			ctrl := gomock.NewController(b)
 			defer ctrl.Finish()
 
@@ -384,7 +381,7 @@ func BenchmarkUsers(b *testing.B) {
 			api_router := r.PathPrefix("/api").Subrouter()
 			api_router.HandleFunc("/users/", handler.Create).Methods("POST")
 			api_router.HandleFunc(enrollRoute, handler.Enroll).Methods("POST")
-			tc.mockData(ctx, interactor)
+			tc.mockData(interactor)
 
 			testServer := httptest.NewServer(r)
 			defer testServer.Close()

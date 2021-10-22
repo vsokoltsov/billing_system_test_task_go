@@ -2,7 +2,6 @@ package http
 
 import (
 	"billing_system_test_task/internal/usecases"
-	"context"
 	"net/http"
 	"os"
 )
@@ -33,7 +32,7 @@ func NewOperationsHandler(woUseCase usecases.WalletOperationUsecase) *Operations
 // @Header 200 {string} Content-Type "application/octet-stream"
 // @Header 200 {string} Expires "0"
 func (oh *OperationsHandler) List(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	ctx := r.Context()
 
 	v := r.URL.Query()
 	fileMetadata, grErr := oh.woUseCase.GenerateReport(ctx, v)

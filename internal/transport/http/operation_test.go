@@ -35,7 +35,7 @@ type operationWalletTest struct {
 	url            string
 	body           map[string]interface{}
 	expectedStatus int
-	mockData       func(ctx context.Context, operationUseCase *usecases.MockWalletOperationUsecase)
+	mockData       func(operationUseCase *usecases.MockWalletOperationUsecase)
 	formError      bool
 	errMsg         string
 }
@@ -48,9 +48,9 @@ var httpTests = []operationWalletTest{
 		body: map[string]interface{}{
 			"email": "example@mail.com",
 		},
-		mockData: func(ctx context.Context, operationUseCase *usecases.MockWalletOperationUsecase) {
+		mockData: func(operationUseCase *usecases.MockWalletOperationUsecase) {
 			f, _ := os.CreateTemp("", "_example_file")
-			operationUseCase.EXPECT().GenerateReport(ctx, gomock.Any()).Return(&entities.FileMetadata{
+			operationUseCase.EXPECT().GenerateReport(gomock.Any(), gomock.Any()).Return(&entities.FileMetadata{
 				File:        f,
 				Path:        "/a/b/c/" + f.Name(),
 				Size:        "100",
@@ -66,8 +66,8 @@ var httpTests = []operationWalletTest{
 		body: map[string]interface{}{
 			"email": "example@mail.com",
 		},
-		mockData: func(ctx context.Context, operationUseCase *usecases.MockWalletOperationUsecase) {
-			operationUseCase.EXPECT().GenerateReport(ctx, gomock.Any()).Return(nil, adapters.NewHTTPError(400, fmt.Errorf("generate report error")))
+		mockData: func(operationUseCase *usecases.MockWalletOperationUsecase) {
+			operationUseCase.EXPECT().GenerateReport(gomock.Any(), gomock.Any()).Return(nil, adapters.NewHTTPError(400, fmt.Errorf("generate report error")))
 		},
 		expectedStatus: 400,
 	},
@@ -78,7 +78,6 @@ func TestOperationsHandler(t *testing.T) {
 	for _, tc := range httpTests {
 		testLabel := strings.Join([]string{"API", tc.method, tc.url, tc.name}, " ")
 		t.Run(testLabel, func(t *testing.T) {
-			ctx := context.Background()
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -88,7 +87,7 @@ func TestOperationsHandler(t *testing.T) {
 			handler := NewOperationsHandler(useCase)
 			api_router := r.PathPrefix("/api").Subrouter()
 			api_router.HandleFunc("/operations/", handler.List).Methods("GET")
-			tc.mockData(ctx, useCase)
+			tc.mockData(useCase)
 
 			testServer := httptest.NewServer(r)
 			defer testServer.Close()

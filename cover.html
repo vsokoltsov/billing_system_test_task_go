@@ -1041,7 +1041,6 @@ func JsonResponseError(w http.ResponseWriter, status int, message string) <span 
 
 import (
         "billing_system_test_task/internal/usecases"
-        "context"
         "net/http"
         "os"
 )
@@ -1072,7 +1071,7 @@ func NewOperationsHandler(woUseCase usecases.WalletOperationUsecase) *Operations
 // @Header 200 {string} Content-Type "application/octet-stream"
 // @Header 200 {string} Expires "0"
 func (oh *OperationsHandler) List(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
-        ctx := context.Background()
+        ctx := r.Context()
 
         v := r.URL.Query()
         fileMetadata, grErr := oh.woUseCase.GenerateReport(ctx, v)
@@ -1140,9 +1139,8 @@ func NewUserHandler(userUseCase usecases.UserUseCase) *UsersHandler <span class=
 func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
         var (
                 userForm forms.UserForm
-                ctx      = context.Background()
+                ctx      = r.Context()
         )
-        defer ctx.Done()
 
         decoder := json.NewDecoder(r.Body)
         decodeErr := decoder.Decode(&amp;userForm)
@@ -1247,7 +1245,6 @@ import (
         "billing_system_test_task/internal/transport/http/forms"
         "billing_system_test_task/internal/transport/http/serializers"
         "billing_system_test_task/internal/usecases"
-        "context"
         "encoding/json"
         "fmt"
         "log"
@@ -1279,7 +1276,7 @@ func NewWalletsHandler(walletUseCase usecases.WalletUseCase) *WalletsHandler <sp
 func (wh *WalletsHandler) Transfer(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
         var (
                 walletForm forms.WalletForm
-                ctx        = context.Background()
+                ctx        = r.Context()
         )
         decoder := json.NewDecoder(r.Body)
         decodeErr := decoder.Decode(&amp;walletForm)
