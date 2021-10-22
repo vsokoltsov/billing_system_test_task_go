@@ -105,7 +105,6 @@ func (a App) Run() {
 	shutdownErr := a.server.Shutdown(ctx)
 	if shutdownErr != nil {
 		log.Fatalf("Error of server shutdown: %s", shutdownErr)
-		os.Exit(0)
 	}
 
 	log.Println("Shutting down the service...")
