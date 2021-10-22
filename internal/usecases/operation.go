@@ -21,7 +21,7 @@ type WalletOperationInteractor struct {
 	errorsFactory           adapters.ErrorsFactory
 }
 
-func NewWalletOperationInteractor(walletOperationRepo repositories.OperationsManager, queryParameters reports.QueryReaderManager, fileHandler reports.FileHandlingManager, operationProcessManager reports.PipelineManager, errorsFactory adapters.ErrorsFactory) WalletOperationUsecase {
+func NewWalletOperationInteractor(walletOperationRepo repositories.OperationsManager, queryParameters reports.QueryReaderManager, fileHandler reports.FileHandlingManager, operationProcessManager reports.PipelineManager, errorsFactory adapters.ErrorsFactory) *WalletOperationInteractor {
 	return &WalletOperationInteractor{
 		walletOperationRepo:     walletOperationRepo,
 		queryParameters:         queryParameters,

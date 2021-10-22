@@ -18,7 +18,7 @@ import (
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 // @host localhost:8000
 // @BasePath /
-func NewRouter(usersHandler UsersHandler, walletsHandler WalletsHandler, operationsHandler OperationsHandler) http.Handler {
+func NewRouter(usersHandler *UsersHandler, walletsHandler *WalletsHandler, operationsHandler *OperationsHandler) http.Handler {
 	r := mux.NewRouter()
 
 	api := r.PathPrefix("/api").Subrouter()

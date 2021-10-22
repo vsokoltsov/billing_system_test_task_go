@@ -351,8 +351,7 @@ func TestWithTransactionWalletOperationService(t *testing.T) {
 func TestNewWalletOperationService(t *testing.T) {
 	db, _, _ := sqlmock.New()
 	walletOperation := NewWalletOperationRepo(db)
-	_, correctType := walletOperation.(*WalletOperationService)
-	if !correctType {
+	if walletOperation == nil {
 		t.Errorf("Wrong type of WalletOperationService")
 	}
 }

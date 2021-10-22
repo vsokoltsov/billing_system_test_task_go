@@ -387,7 +387,7 @@ func TestUserUsecase(t *testing.T) {
 		usersRepo := repositories.NewMockUsersManager(ctrl)
 		operationsRepo := repositories.NewMockOperationsManager(ctrl)
 
-		interactor := NewUserInteractor(usersRepo, walletsRepo, operationsRepo, txManager, errFactory).(UserInteractor)
+		interactor := NewUserInteractor(usersRepo, walletsRepo, operationsRepo, txManager, errFactory)
 
 		for _, arg := range tc.args {
 			realArgs = append(realArgs, reflect.ValueOf(arg))
@@ -397,7 +397,7 @@ func TestUserUsecase(t *testing.T) {
 		var result []reflect.Value
 		if len(tc.args) > 0 {
 			result = reflect.ValueOf(
-				&interactor,
+				interactor,
 			).MethodByName(
 				tc.funcName,
 			).Call(realArgs)

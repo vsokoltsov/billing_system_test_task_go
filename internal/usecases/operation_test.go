@@ -189,7 +189,7 @@ func TestWalletOperationUsecase(t *testing.T) {
 		mockFileMarshaller := reports.NewMockFileMarshallingManager(ctrl)
 		mockFileHandler := reports.NewMockFileHandlingManager(ctrl)
 
-		interactor := NewWalletOperationInteractor(operationsRepo, mockQueryParams, mockFileHandler, mockPipes, errFactory).(*WalletOperationInteractor)
+		interactor := NewWalletOperationInteractor(operationsRepo, mockQueryParams, mockFileHandler, mockPipes, errFactory)
 
 		for _, arg := range tc.args {
 			realArgs = append(realArgs, reflect.ValueOf(arg))

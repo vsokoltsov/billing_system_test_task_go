@@ -14,8 +14,8 @@ type OperationsHandler struct {
 }
 
 // NewOperationsHandler returns controller instance
-func NewOperationsHandler(woUseCase usecases.WalletOperationUsecase) OperationsHandler {
-	return OperationsHandler{
+func NewOperationsHandler(woUseCase usecases.WalletOperationUsecase) *OperationsHandler {
+	return &OperationsHandler{
 		woUseCase: woUseCase,
 	}
 }

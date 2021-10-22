@@ -365,7 +365,7 @@ func TestWalletUsecase(t *testing.T) {
 		walletsRepo := repositories.NewMockWalletsManager(ctrl)
 		operationsRepo := repositories.NewMockOperationsManager(ctrl)
 
-		interactor := NewWalletInteractor(walletsRepo, operationsRepo, errFactory, txManager).(*WalletInteractor)
+		interactor := NewWalletInteractor(walletsRepo, operationsRepo, errFactory, txManager)
 
 		for _, arg := range tc.args {
 			realArgs = append(realArgs, reflect.ValueOf(arg))

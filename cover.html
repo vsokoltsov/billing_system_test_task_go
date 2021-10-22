@@ -161,7 +161,7 @@ type ListParams struct {
         Date    string
 }
 
-func NewWalletOperationRepo(db tx.SQLQueryAdapter) OperationsManager <span class="cov8" title="1">{
+func NewWalletOperationRepo(db tx.SQLQueryAdapter) *WalletOperationService <span class="cov8" title="1">{
         return &amp;WalletOperationService{
                 db: db,
         }
@@ -308,8 +308,8 @@ func NewFileStorage() *FileStorage <span class="cov8" title="1">{
 }</span>
 
 // NewFileHandler returns new instance of FileHandler
-func NewFileHandler(storage FileStorageManager) FileHandler <span class="cov8" title="1">{
-        return FileHandler{
+func NewFileHandler(storage FileStorageManager) *FileHandler <span class="cov8" title="1">{
+        return &amp;FileHandler{
                 fileStorage: storage,
         }
 }</span>
@@ -750,12 +750,10 @@ type UsersManager interface {
 // UsersService implements SQLRepository
 type UsersService struct {
         db tx.SQLQueryAdapter
-        // db *sql.DB
-        // walletsRepo wallets.WalletsManager
 }
 
 // NewUsersService returns instance of UserService
-func NewUsersService(db tx.SQLQueryAdapter) UsersManager <span class="cov8" title="1">{
+func NewUsersService(db tx.SQLQueryAdapter) *UsersService <span class="cov8" title="1">{
         return &amp;UsersService{
                 db: db,
         }
@@ -834,18 +832,6 @@ func (ds UsersService) GetByWalletID(ctx context.Context, walletID int) (*entiti
 
 // Create creates new user
 func (us UsersService) Create(ctx context.Context, email string) (int64, error) <span class="cov8" title="1">{
-        // conn, _ := ds.db.Conn(ctx)
-        // _, alErr := conn.ExecContext(ctx, `select pg_advisory_lock($1)`, CreateUser)
-        // if alErr != nil {
-        //         return 0, fmt.Errorf("Error of starting advisory lock: %s", alErr)
-        // }
-
-        // transaction, transactionErr := conn.BeginTx(ctx, nil)
-        // if transactionErr != nil {
-        //         return 0, fmt.Errorf("Error of transaction initialization: %s", transactionErr)
-        // }
-        // _, _ = transaction.ExecContext(ctx, "set transaction isolation level serializable")
-
         var userID int
         // Creates new user
         statement, insertErr := us.db.QueryContext(ctx, "insert into users(\"email\") values($1) returning id", email)
@@ -853,7 +839,6 @@ func (us UsersService) Create(ctx context.Context, email string) (int64, error) 
         if insertErr != nil </span><span class="cov8" title="1">{
                 return 0, fmt.Errorf("error user creation: %s", insertErr)
         }</span>
-        // defer statement.Close()
 
         <span class="cov8" title="1">for statement.Next() </span><span class="cov8" title="1">{
                 userIDErr := statement.Scan(&amp;userID)
@@ -861,31 +846,6 @@ func (us UsersService) Create(ctx context.Context, email string) (int64, error) 
                         return 0, fmt.Errorf("error user retrieving id: %s", userIDErr)
                 }</span>
         }
-
-        // Creates wallet for user
-        // _, insertWalletErr := ds.walletsRepo.Create(ctx, transaction, int64(userID))
-        // if insertWalletErr != nil {
-        //         _ = transaction.Rollback()
-        //         _, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
-        //         return 0, fmt.Errorf("Error of wallet transaction commit: %s", insertWalletErr)
-        // }
-
-        // transactionCommitErr := transaction.Commit()
-        // if transactionCommitErr != nil {
-        //         _ = transaction.Rollback()
-        //         _, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
-        //         return 0, fmt.Errorf("Error of transaction commit: %s", transactionCommitErr)
-        // }
-
-        // _, auErr := conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, CreateUser)
-        // if auErr != nil {
-        //         return 0, fmt.Errorf(
-        //                 "Error of unlocking user's %d postgres lock: %s",
-        //                 CreateUser,
-        //                 auErr,
-        //         )
-        // }
-        // conn.Close()
 
         <span class="cov8" title="1">return int64(userID), nil</span>
 }
@@ -924,7 +884,7 @@ type WalletService struct {
 }
 
 // NewWalletService returns instance of WalletService
-func NewWalletService(db tx.SQLQueryAdapter) WalletsManager <span class="cov8" title="1">{
+func NewWalletService(db tx.SQLQueryAdapter) *WalletService <span class="cov8" title="1">{
         return &amp;WalletService{
                 db: db,
         }
@@ -957,11 +917,6 @@ func (ws WalletService) Create(ctx context.Context, userID int64) (int64, error)
                 }</span>
         }
 
-        // _, walletOperationErr := ws.walletOperationRepo.Create(ctx, tx, operations.Create, 0, int(walletID), walletBalance)
-        // if walletOperationErr != nil {
-        //         log.Printf("Error of creating 'Create' wallet operation: %s", walletOperationErr.Error())
-        // }
-
         <span class="cov8" title="1">return walletID, nil</span>
 }
 
@@ -972,22 +927,6 @@ func (ws WalletService) Enroll(ctx context.Context, walletID int, amount decimal
                 return 0, fmt.Errorf("amount should be greater than 0")
         }</span>
 
-        // Get connection from the pool
-        // conn, _ := ws.db.Conn(ctx)
-
-        // Apply AdvisoryLock for operation
-        // _, alErr := conn.ExecContext(ctx, "select pg_advisory_lock($1)", EnrollWallet)
-        // if alErr != nil {
-        //         return 0, fmt.Errorf("error of starting advisory lock: %s", alErr)
-        // }
-
-        // Begin transaction
-        // tx, txErr := conn.BeginTx(ctx, nil)
-        // if txErr != nil {
-        //         return 0, fmt.Errorf("error of transaction initialization: %s", txErr)
-        // }
-        // _, _ = tx.ExecContext(ctx, "set transaction isolation level serializable")
-
         // Update wallet 'balance' column
         <span class="cov8" title="1">_, updateErr := ws.db.ExecContext(ctx, "update wallets set balance=balance+$1 where id=$2 returning balance", amount, walletID)
         if updateErr != nil </span><span class="cov8" title="1">{
@@ -995,28 +934,6 @@ func (ws WalletService) Enroll(ctx context.Context, walletID int, amount decimal
                 // _, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, EnrollWallet)
                 return 0, fmt.Errorf("error wallet enrollment: %s", updateErr)
         }</span>
-
-        // _, walletOperationErr := ws.walletOperationRepo.Create(ctx, tx, operations.Deposit, 0, int(walletID), amount)
-        // if walletOperationErr != nil {
-        //         log.Printf("Error of creating 'Create' wallet operation: %s", walletOperationErr.Error())
-        // }
-
-        // txCommitErr := tx.Commit()
-        // if txCommitErr != nil {
-        // _ = tx.Rollback()
-        // _, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, EnrollWallet)
-        // return 0, fmt.Errorf("error of transaction commit: %s", txCommitErr)
-        // }
-
-        // _, auErr := conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, EnrollWallet)
-        // if auErr != nil {
-        //         return 0, fmt.Errorf(
-        //                 "error of unlocking user's %d postgres lock: %s",
-        //                 EnrollWallet,
-        //                 auErr,
-        //         )
-        // }
-        // conn.Close()
 
         <span class="cov8" title="1">return walletID, nil</span>
 }
@@ -1047,75 +964,17 @@ func (ws WalletService) GetByUserId(ctx context.Context, userID int) (*entities.
 
 // Transfer moves financial resources from one wallet to another
 func (ws WalletService) Transfer(ctx context.Context, walletFrom, walletTo int, amount decimal.Decimal) (int, error) <span class="cov8" title="1">{
-        // Receive source wallet
-        sourceWallet, getSourceWalletErr := ws.GetByID(ctx, walletFrom)
-        if getSourceWalletErr != nil </span><span class="cov8" title="1">{
-                return 0, fmt.Errorf("error of receiving source wallet data: %s", getSourceWalletErr)
-        }</span>
-
-        <span class="cov8" title="1">if sourceWallet.Balance.LessThanOrEqual(decimal.Zero) </span><span class="cov8" title="1">{
-                return 0, fmt.Errorf("source wallet balance is less or equal to zero")
-        }</span>
-
-        // Get connection from the pool
-        // conn, _ := ws.db.Conn(ctx)
-
-        // // Apply AdvisoryLock for operation
-        // _, alErr := conn.ExecContext(ctx, "select pg_advisory_lock($1)", TransferFunds)
-        // if alErr != nil {
-        //         return 0, fmt.Errorf("error of starting advisory lock: %s", alErr)
-        // }
-
-        // // Begin transaction
-        // tx, txErr := conn.BeginTx(ctx, nil)
-        // if txErr != nil {
-        //         return 0, fmt.Errorf("error of transaction initialization: %s", txErr)
-        // }
-        // _, _ = tx.ExecContext(ctx, "set transaction isolation level serializable")
-
         // Update source wallet 'balance' column
-        <span class="cov8" title="1">_, updateSourceErr := ws.db.ExecContext(ctx, "update wallets set balance=balance-$1 where id=$2", amount, walletFrom)
+        _, updateSourceErr := ws.db.ExecContext(ctx, "update wallets set balance=balance-$1 where id=$2", amount, walletFrom)
         if updateSourceErr != nil </span><span class="cov8" title="1">{
-                // _ = tx.Rollback()
-                // _, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
                 return 0, fmt.Errorf("error source wallet debit: %s", updateSourceErr)
         }</span>
 
         // Update target wallet 'balance' column
         <span class="cov8" title="1">_, updateTargetErr := ws.db.ExecContext(ctx, "update wallets set balance=balance+$1 where id=$2", amount, walletTo)
         if updateTargetErr != nil </span><span class="cov8" title="1">{
-                // _ = tx.Rollback()
-                // _, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
                 return 0, fmt.Errorf("error target wallet transfer: %s", updateTargetErr)
         }</span>
-
-        // _, walletDepositOperationErr := ws.walletOperationRepo.Create(ctx, tx, operations.Deposit, walletFrom, walletTo, amount)
-        // if walletDepositOperationErr != nil {
-        //         log.Printf("Error of creating 'Deposit' wallet operation: %s", walletDepositOperationErr.Error())
-        // }
-        // _, walletWithdrawalOperationErr := ws.walletOperationRepo.Create(ctx, tx, operations.Withdrawal, walletTo, walletFrom, amount)
-        // if walletWithdrawalOperationErr != nil {
-        //         log.Printf("Error of creating 'Withdrawal' wallet operation: %s", walletWithdrawalOperationErr.Error())
-        // }
-
-        // Commit transaction
-        // txCommitErr := tx.Commit()
-        // if txCommitErr != nil {
-        //         _ = tx.Rollback()
-        //         _, _ = conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
-        //         return 0, fmt.Errorf("error of transaction commit: %s", txCommitErr)
-        // }
-
-        // Perform advisory unlock
-        // _, auErr := conn.ExecContext(ctx, `select pg_advisory_unlock($1)`, TransferFunds)
-        // if auErr != nil {
-        //         return 0, fmt.Errorf(
-        //                 "error of unlocking user's %d postgres lock: %s",
-        //                 TransferFunds,
-        //                 auErr,
-        //         )
-        // }
-        // conn.Close()
 
         <span class="cov8" title="1">return walletFrom, nil</span>
 }
@@ -1141,7 +1000,7 @@ import (
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 // @host localhost:8000
 // @BasePath /
-func NewRouter(usersHandler UsersHandler, walletsHandler WalletsHandler, operationsHandler OperationsHandler) http.Handler <span class="cov8" title="1">{
+func NewRouter(usersHandler *UsersHandler, walletsHandler *WalletsHandler, operationsHandler *OperationsHandler) http.Handler <span class="cov8" title="1">{
         r := mux.NewRouter()
 
         api := r.PathPrefix("/api").Subrouter()
@@ -1171,8 +1030,8 @@ type OperationsHandler struct {
 }
 
 // NewOperationsHandler returns controller instance
-func NewOperationsHandler(woUseCase usecases.WalletOperationUsecase) OperationsHandler <span class="cov8" title="1">{
-        return OperationsHandler{
+func NewOperationsHandler(woUseCase usecases.WalletOperationUsecase) *OperationsHandler <span class="cov8" title="1">{
+        return &amp;OperationsHandler{
                 woUseCase: woUseCase,
         }
 }</span>
@@ -1262,6 +1121,8 @@ func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) <span cla
                 userForm forms.UserForm
                 ctx      = context.Background()
         )
+        defer ctx.Done()
+
         decoder := json.NewDecoder(r.Body)
         decodeErr := decoder.Decode(&amp;userForm)
         if decodeErr != nil </span><span class="cov8" title="1">{
@@ -1451,7 +1312,7 @@ type WalletOperationInteractor struct {
         errorsFactory           adapters.ErrorsFactory
 }
 
-func NewWalletOperationInteractor(walletOperationRepo repositories.OperationsManager, queryParameters reports.QueryReaderManager, fileHandler reports.FileHandlingManager, operationProcessManager reports.PipelineManager, errorsFactory adapters.ErrorsFactory) WalletOperationUsecase <span class="cov8" title="1">{
+func NewWalletOperationInteractor(walletOperationRepo repositories.OperationsManager, queryParameters reports.QueryReaderManager, fileHandler reports.FileHandlingManager, operationProcessManager reports.PipelineManager, errorsFactory adapters.ErrorsFactory) *WalletOperationInteractor <span class="cov8" title="1">{
         return &amp;WalletOperationInteractor{
                 walletOperationRepo:     walletOperationRepo,
                 queryParameters:         queryParameters,
@@ -1530,8 +1391,8 @@ type UserInteractor struct {
         txManager         tx.TxBeginner
 }
 
-func NewUserInteractor(userRepo repositories.UsersManager, walletsRepo repositories.WalletsManager, operationsManager repositories.OperationsManager, txManager tx.TxBeginner, errorsFactory adapters.ErrorsFactory) UserUseCase <span class="cov8" title="1">{
-        return UserInteractor{
+func NewUserInteractor(userRepo repositories.UsersManager, walletsRepo repositories.WalletsManager, operationsManager repositories.OperationsManager, txManager tx.TxBeginner, errorsFactory adapters.ErrorsFactory) *UserInteractor <span class="cov8" title="1">{
+        return &amp;UserInteractor{
                 userRepo:          userRepo,
                 walletsRepo:       walletsRepo,
                 txManager:         txManager,
@@ -1622,6 +1483,7 @@ import (
         "billing_system_test_task/internal/adapters/tx"
         "billing_system_test_task/internal/repositories"
         "context"
+        "fmt"
 
         "github.com/shopspring/decimal"
 )
@@ -1638,7 +1500,7 @@ type WalletInteractor struct {
         operationsManager repositories.OperationsManager
 }
 
-func NewWalletInteractor(walletRepo repositories.WalletsManager, operationsManager repositories.OperationsManager, errFactory adapters.ErrorsFactory, txManager tx.TxBeginner) WalletUseCase <span class="cov8" title="1">{
+func NewWalletInteractor(walletRepo repositories.WalletsManager, operationsManager repositories.OperationsManager, errFactory adapters.ErrorsFactory, txManager tx.TxBeginner) *WalletInteractor <span class="cov8" title="1">{
         return &amp;WalletInteractor{
                 walletRepo:        walletRepo,
                 errFactory:        errFactory,
@@ -1654,14 +1516,37 @@ func (wi *WalletInteractor) Transfer(ctx context.Context, walletFrom, walletTo i
                 return 0, wi.errFactory.DefaultError(txErr)
         }</span>
 
+        <span class="cov8" title="1">txWalletRepo := wi.walletRepo.WithTx(tx)
+
+        // Receive source wallet
+        sourceWallet, getSourceWalletErr := txWalletRepo.GetByID(ctx, walletFrom)
+        if getSourceWalletErr != nil </span><span class="cov8" title="1">{
+                _ = tx.Rollback()
+                return 0, wi.errFactory.NotFound(getSourceWalletErr)
+        }</span>
+
+        // Check source wallet balance
+        <span class="cov8" title="1">if sourceWallet.Balance.LessThanOrEqual(decimal.Zero) </span><span class="cov8" title="1">{
+                _ = tx.Rollback()
+                return 0, wi.errFactory.DefaultError(fmt.Errorf("source wallet balance is less or equal to zero"))
+        }</span>
+
+        // Receive destination wallet
+        <span class="cov8" title="1">_, getDestinationWalletErr := txWalletRepo.GetByID(ctx, walletTo)
+        if getDestinationWalletErr != nil </span><span class="cov8" title="1">{
+                _ = tx.Rollback()
+                return 0, wi.errFactory.NotFound(getDestinationWalletErr)
+        }</span>
+
         // Perform transfer
-        <span class="cov8" title="1">walletSourceID, transferErr := wi.walletRepo.WithTx(tx).Transfer(
+        <span class="cov8" title="1">walletSourceID, transferErr := txWalletRepo.Transfer(
                 ctx,
                 walletFrom,
                 walletTo,
                 amount,
         )
         if transferErr != nil </span><span class="cov8" title="1">{
+                _ = tx.Rollback()
                 return 0, wi.errFactory.DefaultError(transferErr)
         }</span>
 
@@ -1669,12 +1554,14 @@ func (wi *WalletInteractor) Transfer(ctx context.Context, walletFrom, walletTo i
         // Create wallet operation instance for deposit
         _, depositOpErrr := txWalletOpRepo.Create(ctx, repositories.Deposit, walletFrom, walletTo, amount)
         if depositOpErrr != nil </span><span class="cov8" title="1">{
+                _ = tx.Rollback()
                 return 0, wi.errFactory.DefaultError(depositOpErrr)
         }</span>
 
         // Create wallet operation instance for withdrawal
         <span class="cov8" title="1">_, withdrawalOpErrr := txWalletOpRepo.Create(ctx, repositories.Withdrawal, walletTo, walletFrom, amount)
         if withdrawalOpErrr != nil </span><span class="cov8" title="1">{
+                _ = tx.Rollback()
                 return 0, wi.errFactory.DefaultError(withdrawalOpErrr)
         }</span>
 

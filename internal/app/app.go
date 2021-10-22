@@ -33,7 +33,7 @@ type App struct {
 	wait   time.Duration
 }
 
-func NewApp(config entities.ConfigAdapter) AppAdapter {
+func NewApp(config entities.ConfigAdapter) *App {
 	var (
 		sqlDB        *sql.DB
 		sqlDbOpenErr error
@@ -68,11 +68,11 @@ func NewApp(config entities.ConfigAdapter) AppAdapter {
 	usersHandler := httpHandlers.NewUserHandler(userInteractor)
 	walletsHandler := httpHandlers.NewWalletsHandler(walletInteractor)
 	operationsHandler := httpHandlers.NewOperationsHandler(operationsInteractor)
-	router := httpHandlers.NewRouter(*usersHandler, *walletsHandler, operationsHandler)
+	router := httpHandlers.NewRouter(usersHandler, walletsHandler, operationsHandler)
 
 	url := strings.Join([]string{host, port}, ":")
 
-	return App{
+	return &App{
 		host: host,
 		port: port,
 		wait: time.Second * 5,

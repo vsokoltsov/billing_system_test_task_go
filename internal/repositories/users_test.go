@@ -272,8 +272,7 @@ func TestUsersRepo(t *testing.T) {
 func TestNewUserService(t *testing.T) {
 	db, _, _ := sqlmock.New()
 	repo := NewUsersService(db)
-	_, correctType := repo.(*UsersService)
-	if !correctType {
+	if repo == nil {
 		t.Errorf("Wrong type of UserService")
 	}
 }

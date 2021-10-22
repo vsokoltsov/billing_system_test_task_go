@@ -32,7 +32,7 @@ type ListParams struct {
 	Date    string
 }
 
-func NewWalletOperationRepo(db tx.SQLQueryAdapter) OperationsManager {
+func NewWalletOperationRepo(db tx.SQLQueryAdapter) *WalletOperationService {
 	return &WalletOperationService{
 		db: db,
 	}

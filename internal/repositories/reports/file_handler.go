@@ -43,8 +43,8 @@ func NewFileStorage() *FileStorage {
 }
 
 // NewFileHandler returns new instance of FileHandler
-func NewFileHandler(storage FileStorageManager) FileHandler {
-	return FileHandler{
+func NewFileHandler(storage FileStorageManager) *FileHandler {
+	return &FileHandler{
 		fileStorage: storage,
 	}
 }

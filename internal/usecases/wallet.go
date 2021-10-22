@@ -22,7 +22,7 @@ type WalletInteractor struct {
 	operationsManager repositories.OperationsManager
 }
 
-func NewWalletInteractor(walletRepo repositories.WalletsManager, operationsManager repositories.OperationsManager, errFactory adapters.ErrorsFactory, txManager tx.TxBeginner) WalletUseCase {
+func NewWalletInteractor(walletRepo repositories.WalletsManager, operationsManager repositories.OperationsManager, errFactory adapters.ErrorsFactory, txManager tx.TxBeginner) *WalletInteractor {
 	return &WalletInteractor{
 		walletRepo:        walletRepo,
 		errFactory:        errFactory,

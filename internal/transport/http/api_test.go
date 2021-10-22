@@ -19,7 +19,7 @@ func TestAPINewRouter(t *testing.T) {
 	walletHandler := NewWalletsHandler(walletUseCase)
 	operationHandler := NewOperationsHandler(operationUseCase)
 
-	router := NewRouter(*userHandler, *walletHandler, operationHandler)
+	router := NewRouter(userHandler, walletHandler, operationHandler)
 	if router == nil {
 		t.Error("Expected implementation of http.Handler, got nil")
 	}

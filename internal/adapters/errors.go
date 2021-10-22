@@ -12,7 +12,7 @@ type ErrorsFactory interface {
 
 type HTTPErrorsFactory struct{}
 
-func NewHTTPErrorsFactory() ErrorsFactory {
+func NewHTTPErrorsFactory() *HTTPErrorsFactory {
 	return &HTTPErrorsFactory{}
 }
 
@@ -33,7 +33,7 @@ type HTTPError struct {
 	err    error
 }
 
-func NewHTTPError(status int, err error) Error {
+func NewHTTPError(status int, err error) *HTTPError {
 	return &HTTPError{
 		status: status,
 		err:    err,

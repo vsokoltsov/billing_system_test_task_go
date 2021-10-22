@@ -24,8 +24,8 @@ type ConfigAdapter interface {
 type EnvConfig struct {
 }
 
-func NewEnvConfig() ConfigAdapter {
-	return EnvConfig{}
+func NewEnvConfig() *EnvConfig {
+	return &EnvConfig{}
 }
 
 func (ec EnvConfig) GetPathDelimiter() string {

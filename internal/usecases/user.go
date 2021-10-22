@@ -24,8 +24,8 @@ type UserInteractor struct {
 	txManager         tx.TxBeginner
 }
 
-func NewUserInteractor(userRepo repositories.UsersManager, walletsRepo repositories.WalletsManager, operationsManager repositories.OperationsManager, txManager tx.TxBeginner, errorsFactory adapters.ErrorsFactory) UserUseCase {
-	return UserInteractor{
+func NewUserInteractor(userRepo repositories.UsersManager, walletsRepo repositories.WalletsManager, operationsManager repositories.OperationsManager, txManager tx.TxBeginner, errorsFactory adapters.ErrorsFactory) *UserInteractor {
+	return &UserInteractor{
 		userRepo:          userRepo,
 		walletsRepo:       walletsRepo,
 		txManager:         txManager,
