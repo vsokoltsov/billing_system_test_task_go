@@ -2,7 +2,6 @@ package http
 
 import (
 	"billing_system_test_task/internal/usecases"
-	"billing_system_test_task/internal/utils"
 	"context"
 	"net/http"
 	"os"
@@ -39,7 +38,7 @@ func (oh *OperationsHandler) List(w http.ResponseWriter, r *http.Request) {
 	v := r.URL.Query()
 	fileMetadata, grErr := oh.woUseCase.GenerateReport(ctx, v)
 	if grErr != nil {
-		utils.JsonResponseError(w, grErr.GetStatus(), grErr.GetError().Error())
+		JsonResponseError(w, grErr.GetStatus(), grErr.GetError().Error())
 		return
 	}
 

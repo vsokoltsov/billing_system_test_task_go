@@ -104,13 +104,13 @@ var doc = `{
                     "400": {
                         "description": "User form validation error",
                         "schema": {
-                            "$ref": "#/definitions/utils.FormErrorSerializer"
+                            "$ref": "#/definitions/http.FormErrorSerializer"
                         }
                     },
                     "default": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/utils.ErrorMsg"
+                            "$ref": "#/definitions/http.ErrorMsg"
                         }
                     }
                 }
@@ -157,13 +157,13 @@ var doc = `{
                     "400": {
                         "description": "Enroll form validation error",
                         "schema": {
-                            "$ref": "#/definitions/utils.FormErrorSerializer"
+                            "$ref": "#/definitions/http.FormErrorSerializer"
                         }
                     },
                     "default": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/utils.ErrorMsg"
+                            "$ref": "#/definitions/http.ErrorMsg"
                         }
                     }
                 }
@@ -203,13 +203,13 @@ var doc = `{
                     "400": {
                         "description": "Wallet transfer validation error",
                         "schema": {
-                            "$ref": "#/definitions/utils.FormErrorSerializer"
+                            "$ref": "#/definitions/http.FormErrorSerializer"
                         }
                     },
                     "default": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/utils.ErrorMsg"
+                            "$ref": "#/definitions/http.ErrorMsg"
                         }
                     }
                 }
@@ -258,6 +258,28 @@ var doc = `{
                 }
             }
         },
+        "http.ErrorMsg": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.FormErrorSerializer": {
+            "type": "object",
+            "properties": {
+                "messages": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "serializers.UserSerializer": {
             "type": "object",
             "properties": {
@@ -280,28 +302,6 @@ var doc = `{
             "properties": {
                 "wallet_from": {
                     "type": "integer"
-                }
-            }
-        },
-        "utils.ErrorMsg": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "utils.FormErrorSerializer": {
-            "type": "object",
-            "properties": {
-                "messages": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    }
                 }
             }
         }

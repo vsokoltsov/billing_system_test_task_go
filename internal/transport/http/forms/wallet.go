@@ -1,8 +1,6 @@
 package forms
 
 import (
-	"billing_system_test_task/internal/utils"
-
 	"github.com/shopspring/decimal"
 )
 
@@ -16,7 +14,7 @@ type WalletForm struct {
 // Submit validates form attributes
 func (wf *WalletForm) Submit() *map[string][]string {
 	var (
-		errors = utils.ValidateForm(wf, make(map[string][]string))
+		errors = ValidateForm(wf, make(map[string][]string))
 	)
 	if !wf.Amount.IsPositive() {
 		errors["amount"] = []string{

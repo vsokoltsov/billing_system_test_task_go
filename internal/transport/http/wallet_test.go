@@ -4,7 +4,6 @@ import (
 	"billing_system_test_task/internal/adapters"
 	"billing_system_test_task/internal/transport/http/serializers"
 	"billing_system_test_task/internal/usecases"
-	"billing_system_test_task/internal/utils"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -71,7 +70,7 @@ var walletTestCases = []walletHandlerTestCase{
 		expectedStatus: 400,
 		formError:      true,
 		matchResults: func(actual []byte) bool {
-			var errors utils.ErrorMsg
+			var errors ErrorMsg
 			_ = json.Unmarshal(actual, &errors)
 			return strings.Contains(errors.Message, "unexpected EOF")
 		},
@@ -87,7 +86,7 @@ var walletTestCases = []walletHandlerTestCase{
 		},
 		expectedStatus: 400,
 		matchResults: func(actual []byte) bool {
-			var errors utils.FormErrorSerializer
+			var errors FormErrorSerializer
 			_ = json.Unmarshal(actual, &errors)
 			return errors.Messages["amount"][0] == "less than a zero"
 		},
@@ -106,7 +105,7 @@ var walletTestCases = []walletHandlerTestCase{
 		},
 		expectedStatus: 400,
 		matchResults: func(actual []byte) bool {
-			var errors utils.ErrorMsg
+			var errors ErrorMsg
 			_ = json.Unmarshal(actual, &errors)
 			return strings.Contains(errors.Message, "Error of funds transfering")
 		},
@@ -125,7 +124,7 @@ var walletTestCases = []walletHandlerTestCase{
 		},
 		expectedStatus: 400,
 		matchResults: func(actual []byte) bool {
-			var errors utils.FormErrorSerializer
+			var errors FormErrorSerializer
 			_ = json.Unmarshal(actual, &errors)
 			return errors.Messages["wallet_from"][0] == "source wallet is equal to destination wallet"
 		},

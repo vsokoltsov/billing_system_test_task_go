@@ -1,8 +1,6 @@
 package forms
 
 import (
-	"billing_system_test_task/internal/utils"
-
 	"github.com/shopspring/decimal"
 )
 
@@ -14,7 +12,7 @@ type UserForm struct {
 // Submit validates given parameter for user
 func (uf *UserForm) Submit() *map[string][]string {
 	var (
-		errors = utils.ValidateForm(uf, make(map[string][]string))
+		errors = ValidateForm(uf, make(map[string][]string))
 	)
 
 	// Perform validations by tags

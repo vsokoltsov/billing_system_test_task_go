@@ -27,6 +27,20 @@ definitions:
     - wallet_from
     - wallet_to
     type: object
+  http.ErrorMsg:
+    properties:
+      message:
+        type: string
+    type: object
+  http.FormErrorSerializer:
+    properties:
+      messages:
+        additionalProperties:
+          items:
+            type: string
+          type: array
+        type: object
+    type: object
   serializers.UserSerializer:
     properties:
       balance:
@@ -42,20 +56,6 @@ definitions:
     properties:
       wallet_from:
         type: integer
-    type: object
-  utils.ErrorMsg:
-    properties:
-      message:
-        type: string
-    type: object
-  utils.FormErrorSerializer:
-    properties:
-      messages:
-        additionalProperties:
-          items:
-            type: string
-          type: array
-        type: object
     type: object
 host: localhost:8000
 info:
@@ -117,11 +117,11 @@ paths:
         "400":
           description: User form validation error
           schema:
-            $ref: '#/definitions/utils.FormErrorSerializer'
+            $ref: '#/definitions/http.FormErrorSerializer'
         default:
           description: ""
           schema:
-            $ref: '#/definitions/utils.ErrorMsg'
+            $ref: '#/definitions/http.ErrorMsg'
       summary: Create new user
       tags:
       - users
@@ -152,11 +152,11 @@ paths:
         "400":
           description: Enroll form validation error
           schema:
-            $ref: '#/definitions/utils.FormErrorSerializer'
+            $ref: '#/definitions/http.FormErrorSerializer'
         default:
           description: ""
           schema:
-            $ref: '#/definitions/utils.ErrorMsg'
+            $ref: '#/definitions/http.ErrorMsg'
       summary: Enroll wallet
       tags:
       - users
@@ -182,11 +182,11 @@ paths:
         "400":
           description: Wallet transfer validation error
           schema:
-            $ref: '#/definitions/utils.FormErrorSerializer'
+            $ref: '#/definitions/http.FormErrorSerializer'
         default:
           description: ""
           schema:
-            $ref: '#/definitions/utils.ErrorMsg'
+            $ref: '#/definitions/http.ErrorMsg'
       summary: Transfer funds
       tags:
       - wallets

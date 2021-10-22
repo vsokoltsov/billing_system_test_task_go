@@ -6,7 +6,6 @@ import (
 	"billing_system_test_task/internal/transport/http/forms"
 	"billing_system_test_task/internal/transport/http/serializers"
 	"billing_system_test_task/internal/usecases"
-	"billing_system_test_task/internal/utils"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -38,8 +37,8 @@ func NewUserHandler(userUseCase usecases.UserUseCase) *UsersHandler {
 // @Produce  json
 // @Param user body forms.UserForm true "User attributes"
 // @Success 201 {object} serializers.UserSerializer "Create user response"
-// @Failure 400 {object} utils.FormErrorSerializer "User form validation error"
-// @Failure default {object} utils.ErrorMsg
+// @Failure 400 {object} FormErrorSerializer "User form validation error"
+// @Failure default {object} ErrorMsg
 // @Router /api/users/ [post]
 func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var (
@@ -51,7 +50,7 @@ func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	decodeErr := decoder.Decode(&userForm)
 	if decodeErr != nil {
-		utils.JsonResponseError(w, http.StatusBadRequest, fmt.Sprintf("Error json form decoding: %s", decodeErr))
+		JsonResponseError(w, http.StatusBadRequest, fmt.Sprintf("Error json form decoding: %s", decodeErr))
 		return
 	}
 
@@ -60,7 +59,7 @@ func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if formError != nil {
 		log.Println(fmt.Sprintf("[ERROR] Create user: %s", formError))
 		w.WriteHeader(http.StatusBadRequest)
-		serializer := utils.FormErrorSerializer{Messages: *formError}
+		serializer := FormErrorSerializer{Messages: *formError}
 		_ = json.NewEncoder(w).Encode(serializer)
 		return
 	}
@@ -68,7 +67,7 @@ func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 	user, createUserErr := uh.userUseCase.Create(ctx, userForm.Email)
 
 	if createUserErr != nil {
-		utils.JsonResponseError(w, createUserErr.GetStatus(), createUserErr.GetError().Error())
+		JsonResponseError(w, createUserErr.GetStatus(), createUserErr.GetError().Error())
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
@@ -88,8 +87,8 @@ func (uh *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Param id path int true "User ID"
 // @Param enroll body forms.EnrollForm true "Enrollment attributes"
 // @Success 200 {object} serializers.UserSerializer "Retrieving user information with updated balance"
-// @Failure 400 {object} utils.FormErrorSerializer "Enroll form validation error"
-// @Failure default {object} utils.ErrorMsg
+// @Failure 400 {object} FormErrorSerializer "Enroll form validation error"
+// @Failure default {object} ErrorMsg
 // @Router /api/users/{id}/enroll/ [post]
 func (uh *UsersHandler) Enroll(w http.ResponseWriter, r *http.Request) {
 	var (
@@ -101,21 +100,21 @@ func (uh *UsersHandler) Enroll(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userIDVar, userIDExists := vars["id"]
 	if !userIDExists {
-		utils.JsonResponseError(w, http.StatusInternalServerError, "user's id attribute does not exists")
+		JsonResponseError(w, http.StatusInternalServerError, "user's id attribute does not exists")
 		return
 	}
 
 	userID, errIntConv := strconv.Atoi(userIDVar)
 	if errIntConv != nil {
 		errorMsg := fmt.Sprintf("Error formatting user id to int: %s", errIntConv)
-		utils.JsonResponseError(w, http.StatusBadRequest, errorMsg)
+		JsonResponseError(w, http.StatusBadRequest, errorMsg)
 		return
 	}
 
 	decoder := json.NewDecoder(r.Body)
 	decodeErr := decoder.Decode(&enrollForm)
 	if decodeErr != nil {
-		utils.JsonResponseError(w, http.StatusBadRequest, fmt.Sprintf("Error json form decoding: %s", decodeErr))
+		JsonResponseError(w, http.StatusBadRequest, fmt.Sprintf("Error json form decoding: %s", decodeErr))
 		return
 	}
 
@@ -124,13 +123,13 @@ func (uh *UsersHandler) Enroll(w http.ResponseWriter, r *http.Request) {
 	if formError != nil {
 		log.Println(fmt.Sprintf("[ERROR] Enroll user wallet: %s", formError))
 		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(utils.FormErrorSerializer{Messages: *formError})
+		_ = json.NewEncoder(w).Encode(FormErrorSerializer{Messages: *formError})
 		return
 	}
 
 	user, walletEnrollErr := uh.userUseCase.Enroll(ctx, userID, enrollForm.Amount)
 	if walletEnrollErr != nil {
-		utils.JsonResponseError(w, walletEnrollErr.GetStatus(), fmt.Sprintf("Error of wallet enroll: %s", walletEnrollErr.GetError()))
+		JsonResponseError(w, walletEnrollErr.GetStatus(), fmt.Sprintf("Error of wallet enroll: %s", walletEnrollErr.GetError()))
 		return
 	}
 
